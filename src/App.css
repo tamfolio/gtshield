@@ -1,0 +1,15 @@
+.faq-wrapper .icon-wrapper {
+    background-color: #ffffff;
+    border: 2px solid #444CE7;
+    color: #444CE7!important;          
+    border-radius: 50%;
+    padding: 4px 10px;
+    font-weight: bold;
+    font-size: 16px;
+    display: flex;
+    align-items: center!important;
+    justify-content: center!important;
+    height: 32px;
+    width: 32px;
+  }
+  
