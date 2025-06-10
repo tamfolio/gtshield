@@ -4,8 +4,8 @@ import { FaRegCirclePlay } from "react-icons/fa6";
 function Hero() {
   return (
     <>
-      <div className="px-4 md:!px-[208px] bg-white flex flex-col items-center justify- pt-16 md:pt-[96px]">
-        <h1 className="font-semibold text-4xl lg:text-6xl text-center leading-[44px] lg:leading-[72px] mb-4 md:mb-8 px-4 md:px-[96px]">
+      <div className="px-4 md:!px-[208px]  bg-white flex flex-col items-center justify- pt-16 md:pt-[96px]">
+        <h1 className="font-semibold !mt-10 text-4xl lg:text-6xl text-center leading-[44px] lg:leading-[72px] mb-4 md:mb-8 px-4 md:px-[96px]">
           Report Incidents. Save Lives. Stay Informed
         </h1>
         <p className="px-4 md:!px-[128px] text-[20px] text-center text-[#535862]">

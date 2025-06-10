@@ -16,9 +16,9 @@ function Navbar() {
   const scrollToSection = (sectionId) => {
     const element = document.getElementById(sectionId);
     if (element) {
-      element.scrollIntoView({ 
-        behavior: 'smooth',
-        block: 'start'
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
       });
     }
     closeMobileMenu(); // Close mobile menu after clicking
@@ -26,66 +26,63 @@ function Navbar() {
 
   return (
     <>
-      {/* Fixed Navbar Container */}
-      <div className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
-        <div className="px-4 md:!px-[112px] flex items-center justify-between py-5">
-          <div className="flex items-center gap-8">
-            <div className="flex items-center justify-center gap-2">
-              <img src="/assets/logo2.png" alt="Gateway Shield Logo" />
-              <h3 className="font-bold text-xl">Gateway Shield</h3>
-            </div>
-
-            <div className="md:flex gap-5 hidden">
-              <Link to="/" className="text-[#535862] font-semibold">
-                Home
-              </Link>
-              <button 
-                onClick={() => scrollToSection('about-section')} 
-                className="text-[#535862] font-semibold hover:text-[#444CE7] transition-colors"
-              >
-                About
-              </button>
-              <button 
-                onClick={() => scrollToSection('faq-section')} 
-                className="text-[#535862] font-semibold hover:text-[#444CE7] transition-colors"
-              >
-                FAQs
-              </button>
-              <Link to="/news" className="text-[#535862] font-semibold">
-                News
-              </Link>
-              <Link to="/crime-map" className="text-[#535862] font-semibold">
-                Crime Map
-              </Link>
-            </div>
+      <div className="px-4 md:!px-[112px] flex items-center justify-between py-5 relative z-50">
+        <div className="flex items-center gap-8">
+          <div className="flex items-center justify-center gap-2">
+            <img src="/assets/logo2.png" alt="Gateway Shield Logo" />
+            <h3 className="font-bold text-xl">Gateway Shield</h3>
           </div>
 
-          <div className="hidden md:flex items-center gap-8">
-            <Link
-              to="/report-anonymously"
-              className="text-[#535862] font-semibold text-md"
-            >
-              Report Anonymously
+          <div className="md:flex gap-5 hidden">
+            <Link to="/" className="text-[#535862] font-semibold">
+              Home
             </Link>
-            <div className="flex gap-3">
-              <div className="border border-[#D5D7DA] rounded-md px-4 py-2">
-              <Link to='/sign-up'>Sign Up</Link> 
-              </div>
-              <div className="text-white border border-[#444CE7] bg-[#444CE7] rounded-md px-4 py-2">
-               <Link to='/login'>Login</Link> 
-              </div>
+            <button
+              onClick={() => scrollToSection("about-section")}
+              className="text-[#535862] font-semibold hover:text-[#444CE7] transition-colors"
+            >
+              About
+            </button>
+            <button
+              onClick={() => scrollToSection("faq-section")}
+              className="text-[#535862] font-semibold hover:text-[#444CE7] transition-colors"
+            >
+              FAQs
+            </button>
+            <Link to="/news" className="text-[#535862] font-semibold">
+              News
+            </Link>
+            <Link to="/crime-map" className="text-[#535862] font-semibold">
+              Crime Map
+            </Link>
+          </div>
+        </div>
+
+        <div className="hidden md:flex items-center gap-8">
+          <Link
+            to="/report-anonymously"
+            className="text-[#535862] font-semibold text-md"
+          >
+            Report Anonymously
+          </Link>
+          <div className="flex gap-3">
+            <div className="border border-[#D5D7DA] rounded-md px-4 py-2">
+              <Link to="/sign-up">Sign Up</Link>
+            </div>
+            <div className="text-white border border-[#444CE7] bg-[#444CE7] rounded-md px-4 py-2">
+              <Link to="/login">Login</Link>
             </div>
           </div>
+        </div>
 
-          <div className="block md:hidden">
-            <button onClick={toggleMobileMenu} className="focus:outline-none">
-              {isMobileMenuOpen ? (
-                <IoClose size={40} color="#414651" />
-              ) : (
-                <IoMenuSharp size={40} color="#414651" />
-              )}
-            </button>
-          </div>
+        <div className="block md:hidden">
+          <button onClick={toggleMobileMenu} className="focus:outline-none">
+            {isMobileMenuOpen ? (
+              <IoClose size={40} color="#414651" />
+            ) : (
+              <IoMenuSharp size={40} color="#414651" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -128,18 +125,20 @@ function Navbar() {
             >
               Home
             </Link>
-            <button 
-                onClick={() => scrollToSection('about-section')} 
-                className="text-[#535862] font-semibold hover:text-[#444CE7] transition-colors"
-              >
-                About
-              </button>
-              <button 
-                onClick={() => scrollToSection('faq-section')} 
+            <button
+              onClick={() => scrollToSection("about-section")}
+              className="text-[#535862] font-semibold hover:text-[#444CE7] transition-colors"
+            >
+              About
+            </button>
+            <div>
+              <button
+                onClick={() => scrollToSection("faq-section")}
                 className="text-[#535862] font-semibold hover:text-[#444CE7] transition-colors"
               >
                 FAQs
               </button>
+            </div>
             <Link
               to="/news"
               className="block text-[#414651] font-medium text-lg py-2"
@@ -200,13 +199,13 @@ function Navbar() {
                 className="w-full bg-[#444CE7] text-white font-semibold py-3 px-4 rounded-md"
                 onClick={closeMobileMenu}
               >
-               <Link to='/sign-up'>Sign Up</Link>
+                <Link to="/sign-up">Sign Up</Link>
               </button>
               <button
                 className="w-full border border-[#D5D7DA] text-[#414651] font-semibold py-3 px-4 rounded-md"
                 onClick={closeMobileMenu}
               >
-                <Link to='/login'>Log In</Link>
+                <Link to="/login">Log In</Link>
               </button>
               <Link
                 to="/report-anonymously"
