@@ -77,7 +77,7 @@ const config = {
 
 function FAQ() {
   return (
-    <div className="px-4 lg:px-[112px] bg-white py-8 lg:py-14 w-full">
+    <div className="px-4 lg:px-[112px] bg-white py-8 lg:py-14 w-full" id="faq-section">
       <div className="w-full flex flex-col items-center justify-center">
         <h1 className="text-3xl md:text-4xl text-center font-semibold text-[#181D27] mb-5">
           Frequently Asked Questions

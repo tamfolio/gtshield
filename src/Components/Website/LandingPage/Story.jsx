@@ -2,7 +2,7 @@ import React from "react";
 
 function Story() {
   return (
-    <div className="px-4 lg:px-[112px] bg-white py-8 lg:py-14 w-full">
+    <div className="px-4 lg:px-[112px] bg-white py-8 lg:py-14 w-full" id="about-section">
       <div className="w-full lg:max-w-[768px]">
         <h1 className="text-[#3538CD] text-[14px] lg:text-[16px] font-semibold mb-3">Our Story</h1>
         <span className="text-[30px] lg:!text-[36px] text-[#181D27] font-bold tracking-0 leading-[38px]">
