@@ -10,9 +10,10 @@ import Join from '../../Components/Website/LandingPage/Join'
 import Footer from '../../Components/Website/LandingPage/Footer'
 
 function Homepage() {
+  localStorage.setItem("isAuthenticated", "false");
   return (
     <div>
-      <Navbar/>
+      <Navbar isAuthenticated={false}/>
       <Hero/>
       <Story/>
       <HowItWorks/>

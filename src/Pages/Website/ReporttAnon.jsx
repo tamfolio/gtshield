@@ -6,7 +6,7 @@ import IncidentReportingSystem from '../../Components/Website/Report/IncidentRep
 function ReporttAnon() {
   return (
     <div>
-      <Navbar/>
+      <Navbar isAuthenticated={false}/>
       <IncidentReportingSystem/>
       <Footer/>
     </div>

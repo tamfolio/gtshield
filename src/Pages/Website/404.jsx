@@ -6,7 +6,7 @@ import ErrorPageDetails from '../../Components/Website/LandingPage/ErrorPage'
 function ErrorPage() {
   return (
     <div>
-      <Navbar/>
+     <Navbar isAuthenticated={false}/>
       <ErrorPageDetails/>
       <Footer/>
     </div>

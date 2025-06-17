@@ -1,0 +1,116 @@
+import React from "react";
+import { Mail, MoreHorizontal } from "lucide-react";
+
+const ViewProfile = ({ formData, onEdit }) => {
+  return (
+    <>
+      {/* Header Section */}
+      <div className="hidden lg:block bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 rounded-xl p-8 mb-8">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-20 h-20 bg-white rounded-full overflow-hidden border-4 border-white shadow-sm">
+              <img
+                src="/api/placeholder/80/80"
+                alt="Profile"
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <div className="ml-6">
+              <h1 className="text-2xl font-semibold text-gray-900">Profile</h1>
+              <p className="text-gray-600 mt-1">
+                Update your photo and personal details.
+              </p>
+            </div>
+          </div>
+          <div className="flex space-x-3">
+            <button
+              onClick={onEdit}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+            >
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Header */}
+      <div className="lg:hidden mb-6">
+        <div className="flex items-center justify-between mb-2">
+          <h1 className="text-xl font-semibold text-gray-900">Profile</h1>
+          <button className="p-2">
+            <MoreHorizontal className="w-5 h-5 text-gray-600" />
+          </button>
+        </div>
+        <p className="text-gray-600 text-sm">
+          Update your photo and personal details here.
+        </p>
+      </div>
+
+      {/* Info Card */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 lg:p-8 space-y-6 lg:space-y-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <label className="text-sm font-medium text-gray-700">Username</label>
+            <input
+              type="text"
+              value={`gatewayshield.ng/${formData.username}`}
+              readOnly
+              className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700">Email</label>
+            <input
+              type="email"
+              value={formData.email}
+              readOnly
+              className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5 pl-10"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div>
+            <label className="text-sm font-medium text-gray-700">Full Name</label>
+            <input
+              type="text"
+              value={formData.fullName}
+              readOnly
+              className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5"
+            />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-gray-700">Address</label>
+            <input
+              type="text"
+              value={formData.address}
+              readOnly
+              className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5"
+            />
+          </div>
+        </div>
+
+        <div className="w-full lg:w-1/2">
+          <label className="text-sm font-medium text-gray-700">Gender</label>
+          <input
+            type="text"
+            value={formData.gender}
+            readOnly
+            className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5"
+          />
+        </div>
+
+        <div className="lg:hidden">
+          <button
+            onClick={onEdit}
+            className="w-full mt-4 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            Edit
+          </button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default ViewProfile;

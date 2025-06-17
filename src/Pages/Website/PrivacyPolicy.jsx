@@ -6,7 +6,7 @@ import PrivacyPolicyContent from '../../Components/Website/LandingPage/PrivacyPo
 function PrivacyPolicy() {
   return (
     <div>
-      <Navbar/>
+      <Navbar isAuthenticated={false}/>
       <PrivacyPolicyContent/>
       <Footer/>
     </div>

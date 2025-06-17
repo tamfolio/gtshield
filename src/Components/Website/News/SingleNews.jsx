@@ -45,7 +45,7 @@ const SingleNewsPage = ({ article }) => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <Navbar/>
+      <Navbar isAuthenticated={false}/>
 
       {/* Article Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">

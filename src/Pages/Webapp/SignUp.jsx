@@ -148,7 +148,7 @@ function SignUp() {
 
   return (
     <div>
-      <Navbar />
+      <Navbar isAuthenticated={false}/>
       {currentPage === 1 && <SignUpFirstPage onNext={goToNextPage} />}
       {currentPage === 2 && <SignUpSecondPage onPrevious={goToPreviousPage} onSubmit={handleSecondPageSubmit}/>}
       {currentPermission === 1 && (

@@ -5,7 +5,7 @@ import SignIn from '../../Components/Webapp/Auth/SignIn'
 function Login() {
   return (
     <div>
-      <Navbar/>
+      <Navbar isAuthenticated={false}/>
       <SignIn/>
     </div>
   )

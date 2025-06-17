@@ -4,7 +4,7 @@ import Navbar from '../../Components/Website/Navbar'
 function Aboutpage() {
   return (
     <div>
-        <Navbar/>
+       <Navbar isAuthenticated={false}/>
     </div>
   )
 }

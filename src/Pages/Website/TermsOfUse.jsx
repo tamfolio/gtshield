@@ -6,7 +6,7 @@ import TermsOfUseContent from '../../Components/Website/LandingPage/TermsOfUse'
 function TermsOfUse() {
   return (
     <div>
-      <Navbar/>
+      <Navbar isAuthenticated={false}/>
       <TermsOfUseContent/>
       <Footer/>
     </div>

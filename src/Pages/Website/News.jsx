@@ -8,7 +8,7 @@ import GetApp from '../../Components/Website/News/GetApp'
 function News() {
   return (
     <div>
-      <Navbar/>
+      <Navbar isAuthenticated={false}/>
       <NewsHero/>
       <NewsBlog/>
       <GetApp/>

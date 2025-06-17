@@ -11,6 +11,15 @@ import ErrorPage from "./Pages/Website/404";
 import SingleNewsPage from "./Components/Website/News/SingleNews";
 import Login from "./Pages/Webapp/Login";
 import SignUp from "./Pages/Webapp/SignUp";
+import Dashboard from "./Pages/Webapp/Dashboard/Home";
+import GatewayShieldReports from "./Pages/Webapp/Dashboard/Reports";
+import ReportDetails from "./Pages/Webapp/Dashboard/ReportDetails";
+import FeedbackPage from "./Pages/Webapp/Dashboard/Pages/Feedback";
+import Notifications from "./Pages/Webapp/Dashboard/Pages/Notifications";
+import Community from "./Pages/Webapp/Dashboard/Pages/Community";
+import BlogPostDetail from "./Pages/Webapp/Dashboard/Pages/BlogPostDetails";
+import Survey from "./Pages/Webapp/Dashboard/Pages/Survey";
+import Profile from "./Pages/Webapp/Dashboard/Pages/Profile/Profile";
 
 function App() {
   return (
@@ -25,6 +34,15 @@ function App() {
       <Route path="/report-anonymously" element={<ReporttAnon />} />
       <Route path="/terms-of-use" element={<TermsOfUse />} />
       <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+      <Route path="/notifications" element={<Notifications />} />
+      <Route path="/home" element={<Dashboard />} />
+      <Route path="/reports" element={<GatewayShieldReports />} />
+      <Route path="/feedback" element={<FeedbackPage />} />
+      <Route path="/communities" element={<Community />} />
+      <Route path="/survey" element={<Survey />} />
+      <Route path="/profile" element={<Profile />} />
+      <Route path="/communities/:id" element={<BlogPostDetail />} />
+      <Route path="/reports/:id" element={<ReportDetails />} />
       <Route path="*" element={<ErrorPage />} />
     </Routes>
   )
