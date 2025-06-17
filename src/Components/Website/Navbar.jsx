@@ -6,6 +6,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
   console.log(isAuthenticated);
+  
   const handleCrimeMapClick = (e) => {
     e.preventDefault();
 
@@ -92,8 +93,8 @@ const Navbar = ({ isAuthenticated, user = null }) => {
 
   return (
     <>
-      {/* Desktop Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200 hidden md:block">
+      {/* Desktop Navigation - Now shows from lg screens and up */}
+      <nav className="bg-white shadow-sm border-b border-gray-200 hidden lg:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             {/* Logo and Navigation Items */}
@@ -191,7 +192,105 @@ const Navbar = ({ isAuthenticated, user = null }) => {
         </div>
       </nav>
 
-      {/* Mobile Navigation */}
+      {/* Tablet Navigation - Shows on md screens only */}
+      <nav className="bg-white shadow-sm border-b border-gray-200 hidden md:block lg:hidden">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <div className="flex items-center">
+              <img src="/assets/logo2.png" alt="Gateway Shield Logo" />
+              <span className="ml-2 text-lg font-bold text-gray-900">
+                Gateway Shield
+              </span>
+            </div>
+
+            {/* Condensed Navigation - fewer items for md screens */}
+            <div className="flex items-center space-x-4">
+              {/* Key navigation items only */}
+              <div className="flex space-x-1">
+                {isAuthenticated ? (
+                  <>
+                    <a href="/home" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                      Home
+                    </a>
+                    <a href="/dashboard" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                      Dashboard
+                    </a>
+                    <a href="/reports" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                      Reports
+                    </a>
+                    <button
+                      onClick={handleCrimeMapClick}
+                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                    >
+                      Crime Map
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <a href="/" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                      Home
+                    </a>
+                    <button
+                      onClick={() => scrollToSection('about-section')}
+                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                    >
+                      About
+                    </button>
+                    <a href="/news" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                      News
+                    </a>
+                    <button
+                      onClick={handleCrimeMapClick}
+                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                    >
+                      Crime Map
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Right side items for tablet */}
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-2">
+                  <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                    <Link to="/notifications">
+                      <Bell className="w-5 h-5" />
+                    </Link>
+                  </button>
+                  <Link to='/profile'>
+                    <img
+                      className="w-8 h-8 rounded-full"
+                      src={
+                        user?.avatar ||
+                        "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
+                      }
+                      alt="User avatar"
+                    />
+                  </Link>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <a
+                    href="/sign-up"
+                    className="border border-gray-300 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                  >
+                    Sign Up
+                  </a>
+                  <a
+                    href="/login"
+                    className="text-white border border-blue-600 bg-blue-600 rounded-md px-3 py-1.5 text-sm font-medium hover:bg-blue-700 transition-colors"
+                  >
+                    Login
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      {/* Mobile Navigation - Shows on sm screens and below */}
       <nav className="bg-white shadow-sm border-b border-gray-200 md:hidden">
         <div className="px-4 sm:px-6">
           <div className="flex justify-between items-center h-16">

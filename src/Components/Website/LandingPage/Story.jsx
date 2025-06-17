@@ -10,7 +10,7 @@ function Story() {
         </span>
       </div>
       <div className="flex flex-col lg:flex-row mt-8 lg:mt-16 items-start justify-center gap-8 lg:gap-16 w-full">
-        <div className="flex flex-col w-full md:w-1/2 gap-5">
+        <div className="flex flex-col w-full lg:w-1/2 gap-5">
           <p className="leading-[28px] font-normal text-[18px] text-[#535862]">
             Gateway Shield is the official community safety and intelligence
             platform of the Ogun State Police Command. Developed to enhance
@@ -27,7 +27,7 @@ function Story() {
             informed Ogun State.
           </p>
         </div>
-        <div className="flex flex-col w-full md:w-1/2 gap-5">
+        <div className="flex flex-col w-full lg:w-1/2 gap-5">
           <p className="leading-[28px] font-normal text-[18px] text-[#535862]">
             By leveraging data, technology, and public participation, Gateway
             Shield represents a new chapter in community policing, one where

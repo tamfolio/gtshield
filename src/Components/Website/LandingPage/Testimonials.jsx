@@ -15,239 +15,41 @@ function Testimonials() {
         </span>
       </div>
       <div className="relative">
-        <div className="flex items-center justify-between mt-16">
-          <div className="w-1/3 hidden md:flex flex-col gap-8 mt-12">
-            <div className="w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
+        <div className="mt-16 px-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[...Array(9)].map((_, index) => (
+              <div
+                key={index}
+                className="w-full border border-[#E9EAEB] rounded-[12px] p-6 sm:p-8"
+              >
+                <p className="text-[#535862] text-[16px] mb-8 sm:mb-12">
+                  Untitled has been a lifesaver for our team—everything we need
+                  is right at our fingertips, and it helps us jump right into
+                  new design projects.
+                </p>
+                <div className="flex items-center gap-3">
+                  <img src="/assets/Avatar.png" alt="" />
+                  <div>
+                    <div className="flex gap-1 items-center">
+                      <span className="font-semibold text-[16px]">
+                        Nikolas Gibbons
+                      </span>
+                      <img
+                        src="/assets/Verified tick.png"
+                        alt=""
+                        className="w-4 h-4"
+                      />
+                    </div>
+                    <p className="text-[#535862] text-[16px]">
+                      City They come from
+                    </p>
                   </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
                 </div>
               </div>
-            </div>
-            <div className="w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
-                  </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
-                  </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="w-full lg:w-1/3 flex flex-col gap-8">
-            <div className="w-full lg:w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
-                  </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="w-full lg:w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
-                  </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="w-full lg:w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
-                  </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="w-1/3 hidden md:flex flex-col gap-8 mt-12">
-            <div className="w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
-                  </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
-                  </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
-                </div>
-              </div>
-            </div>
-            <div className="w-[384px] h-[256px] border-[1px] border-solid border-[#E9EAEB] rounded-[12px] p-8">
-              <p className="text-[#535862] text-[16px] mb-12">
-                Untitled has been a lifesaver for our team—everything we need is
-                right at our fingertips, and it helps us jump right into new
-                design projects.
-              </p>
-              <div className="flex items-center justify-start gap-3">
-                <img src="/assets/Avatar.png" alt="" />
-                <div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-semibold text-[16px]">
-                      Nikolas Gibbons
-                    </span>
-                    <img
-                      src="/assets/Verified tick.png"
-                      alt=""
-                      className="w-4 h-4"
-                    />
-                  </div>
-                  <p className="text-[#535862] text-[16px]">
-                    City They come from
-                  </p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
+
         <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white via-white/90 to-transparent pointer-events-none"></div>
       </div>
     </div>

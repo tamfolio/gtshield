@@ -55,7 +55,7 @@ function HowItWorks() {
   const activeSection = sections[activeIndex];
 
   return (
-    <div className="bg-[linear-gradient(45deg,_#4338ca,_#4f46e5)] w-full py-20 flex flex-col items-center justify-center">
+    <div className="bg-[linear-gradient(45deg,_#4338ca,_#4f46e5)] w-full py-20 flex flex-col items-center justify-center" id="How-it-Works">
       <div className="w-full max-w-4xl text-center px-4 md:px-0">
         <h1 className="text-white font-semibold text-[16px] mb-3">
           How it Works
@@ -105,7 +105,7 @@ function HowItWorks() {
           />
         </div>
       </div>
-      <div className="hidden md:block px-[336px] text-center mt-[80px]">
+      <div className="hidden md:block px-4 lg:px-[336px] text-center mt-[80px]">
         <p className="text-[#D5D7DA] text-[20px]">Each report is securely routed from state command to the appropriate officer for follow-up, with updates sent to you along the way.</p>
       </div>
       <div className="block md:hidden w-full mt-12 px-4">
