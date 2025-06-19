@@ -8,57 +8,58 @@ const data = {
       content: `No. You can report anonymously through the web, app, USSD, SMS, or IVR. Creating an account allows you to track your report, receive updates, and rate your experience.`,
     },
     {
-      title: "What types of incidents can i report?",
-      content:
-        "Nunc maximus, magna at ultricies elementum, risus turpis vulputate quam, vitae convallis ex tortor sed dolor.",
+      title: "What types of incidents can I report?",
+      content: `You can report anything that affects your safety or your community's wellbeing, including:
+• Theft
+• Assault or abuse
+• Domestic violence
+• Kidnapping
+• Murder
+• Police misconduct
+• Public disturbance
+• Emergency situations (via SOS button)`,
     },
     {
-      title: "Can i report anonymously?",
-      content: `Curabitur laoreet, mauris vel blandit fringilla, leo elit rhoncus nunc, ac sagittis leo elit vel lorem.
-            Fusce tempor lacus ut libero posuere viverra. Nunc velit dolor, tincidunt at varius vel, laoreet vel quam.
-            Sed dolor urna, lobortis in arcu auctor, tincidunt mattis ante. Vivamus venenatis ultricies nibh in volutpat.
-            Cras eu metus quis leo vestibulum feugiat nec sagittis lacus.Mauris vulputate arcu sed massa euismod dignissim. `,
+      title: "Can I report anonymously?",
+      content: `Yes. You can choose not to log in by clicking the "Report Anonymously" button on our Home Page, or select "Hide my identity" when reporting on other channels. Either way, your report will still be treated with urgency.`,
     },
     {
       title: "How does the SOS alert work?",
-      content: <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Rem ea possimus maiores ipsum in soluta ullam hic praesentium eos tempora.</p>,
+      content: `The SOS button sends your location and a distress signal directly to the police for immediate response. Use it only in real emergencies when your safety is at risk.`,
     },
     {
-        title: "Will I receive updates on my report?",
-        content: `No. You can report anonymously through the web, app, USSD, SMS, or IVR. Creating an account allows you to track your report, receive updates, and rate your experience.`,
-      },
-      {
-        title: "What happens after I submit a report?",
-        content:
-          "Nunc maximus, magna at ultricies elementum, risus turpis vulputate quam, vitae convallis ex tortor sed dolor.",
-      },
-      {
-        title: "Can I rate the police's response?",
-        content: `Curabitur laoreet, mauris vel blandit fringilla, leo elit rhoncus nunc, ac sagittis leo elit vel lorem.
-              Fusce tempor lacus ut libero posuere viverra. Nunc velit dolor, tincidunt at varius vel, laoreet vel quam.
-              Sed dolor urna, lobortis in arcu auctor, tincidunt mattis ante. Vivamus venenatis ultricies nibh in volutpat.
-              Cras eu metus quis leo vestibulum feugiat nec sagittis lacus.Mauris vulputate arcu sed massa euismod dignissim. `,
-      },
-      {
-        title: "What devices can I use to report?",
-        content: `Curabitur laoreet, mauris vel blandit fringilla, leo elit rhoncus nunc, ac sagittis leo elit vel lorem.
-              Fusce tempor lacus ut libero posuere viverra. Nunc velit dolor, tincidunt at varius vel, laoreet vel quam.
-              Sed dolor urna, lobortis in arcu auctor, tincidunt mattis ante. Vivamus venenatis ultricies nibh in volutpat.
-              Cras eu metus quis leo vestibulum feugiat nec sagittis lacus.Mauris vulputate arcu sed massa euismod dignissim. `,
-      },
-      {
-        title: "Is the platform free to use?",
-        content: <p>Lorem, ipsum dolor sit amet consectetur adipisicing elit. Rem ea possimus maiores ipsum in soluta ullam hic praesentium eos tempora.</p>,
-      },
-      {
-          title: "Can I report for someone else?",
-          content: `No. You can report anonymously through the web, app, USSD, SMS, or IVR. Creating an account allows you to track your report, receive updates, and rate your experience.`,
-        },
-        {
-          title: "Is the platform available in multiple languages?",
-          content:
-            "Nunc maximus, magna at ultricies elementum, risus turpis vulputate quam, vitae convallis ex tortor sed dolor.",
-        }
+      title: "Will I receive updates on my report?",
+      content: `Yes. You'll be notified at each stage, from receipt to resolution. If you reported anonymously, you'll receive a unique tracking ID to follow up on your report.`,
+    },
+    {
+      title: "What happens after I submit a report?",
+      content: `Your report is automatically sent to the State CP, routed to the Area Command and then escalated to your nearest Local Police Station. Police officers have timelines (SLAs) to treat your report.`,
+    },
+    {
+      title: "Can I rate the police's response?",
+      content: `Absolutely. After your report is resolved, you'll be asked to rate your experience with the officer or station. Your feedback helps improve accountability.`,
+    },
+    {
+      title: "What devices can I use to report?",
+      content: `You can report using:
+• Web
+• Mobile App
+• SMS
+• IVR Call (coming soon)
+No smartphone? No problem.`,
+    },
+    {
+      title: "Is the platform free to use?",
+      content: `Yes. Naija Shield is completely free to use across all channels including toll-free calls and SMS. No hidden charges.`,
+    },
+    {
+      title: "Can I report for someone else?",
+      content: `Yes. If someone you know is unsafe or unable to report themselves, you can submit a report on their behalf. Just provide as much detail as possible.`,
+    },
+    {
+      title: "Is the platform available in multiple languages?",
+      content: `Not yet. It's just English for now, but we are expanding this to include more languages soon.`,
+    }
   ],
 };
 
