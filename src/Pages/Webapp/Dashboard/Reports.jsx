@@ -1,30 +1,20 @@
-import React, { useState } from "react";
-import {
-  Shield,
-  Upload,
-  X,
-  Check,
-  Menu,
-  Bell,
-  Settings,
-  User,
-  ChevronDown,
-  MapPin,
-  Trash2,
-  Edit,
-  AlertTriangle,
-} from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { X, Check, Trash2, Edit, AlertTriangle } from "lucide-react";
 import Navbar from "../../../Components/Website/Navbar";
 import DraftSavedModal from "./Modals/DraftSavedModal";
 import { useNavigate } from "react-router-dom";
 import ReportSubmittedModal from "./Modals/ReportSubmittedModal";
+import ReportAnIncident from "../../../Components/Website/Report/ReportAnIncident";
+import { userRequest } from "../../../requestMethod";
+import { useSelector } from "react-redux";
 
 const GatewayShieldReports = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("Report Incident");
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
+  const [selectedDraft, setSelectedDraft] = useState(null);
+
   const [formData, setFormData] = useState({
     incidentType: "",
     address: "",
@@ -32,24 +22,72 @@ const GatewayShieldReports = () => {
     description: "",
     hideIdentity: false,
   });
-  const [currentView, setCurrentView] = useState('list');
+  const [currentView, setCurrentView] = useState("list");
   const [uploadedImage, setUploadedImage] = useState(null);
   const [uploadError, setUploadError] = useState(false);
   const [ticketId, setTicketId] = useState("");
-  const [selectedDraft, setSelectedDraft] = useState(null);
-  const [drafts, setDrafts] = useState([
-    { id: 1, type: "Rape Case", date: "Jan 4, 2025" },
-    { id: 2, type: "Kidnapping", date: "Jan 4, 2025" },
-    { id: 3, type: "Killing", date: "Jan 2, 2025" },
-    { id: 4, type: "Killing", date: "Jan 2, 2025" },
-    { id: 5, type: "Killing", date: "Jan 2, 2025" },
-    { id: 6, type: "Killing", date: "Jan 2, 2025" },
-    { id: 7, type: "Killing", date: "Jan 2, 2025" },
-    { id: 8, type: "Killing", date: "Jan 2, 2025" },
-  ]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState();
+  const [drafts, setDrafts] = useState([]);
+  const [incidents, setIncidents] = useState([]);
   const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
   // const [isReportSubmittedModalOpen, setIsReportSubmittedModalOpen] =
   //   useState(false);
+
+  const formatDate = (isoString) => {
+    return new Date(isoString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  const token = useSelector(
+    (state) => state?.user?.currentUser?.data?.tokens?.access?.token
+  );
+
+  const fetchDrafts = async () => {
+    setLoading(true);
+    try {
+      const res = await userRequest(token).get(
+        "/incident/all?page=1&size=10&isDraft=true"
+      );
+      console.log("✅ Incidents fetched:", res.data);
+      setDrafts(res.data?.data?.incidents?.data || []);
+    } catch (err) {
+      console.error("❌ Failed to fetch incidents:", err);
+      setError("Failed to fetch incidents");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchIncidents = async () => {
+    setLoading(true);
+    try {
+      const res = await userRequest(token).get(
+        "/incident/all?page=1&size=10"
+      );
+      console.log("✅ Incidents fetched:", res.data);
+      setIncidents(res.data?.data?.incidents?.data || []);
+    } catch (err) {
+      console.error("❌ Failed to fetch incidents:", err);
+      setError("Failed to fetch incidents");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (token) {
+      fetchDrafts();
+      fetchIncidents();
+    }
+  }, [token]);
+
 
   const handleViewReport = () => {
     console.log("View report clicked");
@@ -84,12 +122,22 @@ const GatewayShieldReports = () => {
     setShowDeleteModal(true);
   };
 
-  const handleConfirmDelete = () => {
-    if (selectedDraft) {
-      setDrafts(drafts.filter((draft) => draft.id !== selectedDraft.id));
+
+  console.log(token)
+  const handleConfirmDelete = async () => {
+    try {
+      await userRequest(token).delete(`/incident/${selectedDraft.id}`);
+      setShowDeleteModal(false);
+      setSelectedDraft(null);
+      fetchDrafts();
+      fetchIncidents();
+    } catch (error) {
+      console.error("❌ Error deleting draft:", error);
+      if (error.response) {
+        console.error("💥 Response:", error.response.data);
+      }
+      alert("Failed to delete the draft. Please try again.");
     }
-    setShowDeleteModal(false);
-    setSelectedDraft(null);
   };
 
   const handleCancelDelete = () => {
@@ -187,128 +235,7 @@ const GatewayShieldReports = () => {
     }
   };
 
-  const getStatusIcon = (status) => {
-    switch (status) {
-      case "In Progress":
-        return <Clock className="w-4 h-4" />;
-      case "Closed":
-      case "Resolved":
-        return <Check className="w-4 h-4" />;
-      default:
-        return <AlertCircle className="w-4 h-4" />;
-    }
-  };
-
-  const incidentTypes = [
-    "Robbery/Theft",
-    "Assault",
-    "Vandalism",
-    "Suspicious Activity",
-    "Drug Activity",
-    "Domestic Violence",
-    "Traffic Accident",
-    "Noise Complaint",
-    "Other",
-  ];
-
-  const handleInputChange = (field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
-  };
-
-  const handleImageUpload = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        // 10MB limit
-        setUploadError(true);
-        return;
-      }
-      setUploadedImage(file.name);
-      setUploadError(false);
-    }
-  };
-
-  const handleViewDetails = (report) => {
-    setSelectedReport(report);
-    setCurrentView('details');
-  };
-
-  const handleBackToList = () => {
-    setCurrentView('list');
-    setSelectedReport(null);
-  };
-
-  const handleEdit = () => {
-    setCurrentView('edit');
-  };
-
-  const handleLeaveReview = () => {
-    // Handle leave review logic
-    console.log('Leave review clicked');
-  };
-
-  const handleSubmit = () => {
-    // Generate random ticket ID
-    const randomId = Math.random().toString(36).substr(2, 5).toUpperCase();
-    setTicketId(randomId);
-    setShowSuccess(true);
-  };
-
-  const SuccessModal = () => (
-    <div
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={() => setShowSuccess(false)} // close on backdrop click
-    >
-      <div
-        className="relative bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center shadow-2xl"
-        onClick={(e) => e.stopPropagation()} // prevent modal click from closing
-      >
-        {/* Close button */}
-        <button
-          onClick={() => setShowSuccess(false)}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Icon */}
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Check className="w-8 h-8 text-green-600" />
-        </div>
-
-        {/* Title */}
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Report submitted successfully
-        </h2>
-
-        {/* Description */}
-        <p className="text-gray-600 mb-6">
-          Your Ticket ID is <span className="font-medium">{ticketId}</span>
-        </p>
-
-        {/* Buttons */}
-        <div className="space-y-3">
-          <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-            View Report
-          </button>
-
-          <button
-            onClick={() => setShowSuccess(false)}
-            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-          >
-            Stay on Page
-          </button>
-
-          <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            Redirect to Dashboard
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+ 
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -333,180 +260,7 @@ const GatewayShieldReports = () => {
         </div>
 
         {/* Report Form */}
-        {activeTab === "Report Incident" && (
-          <div className="bg-white rounded-lg shadow-sm p-8">
-            <div className="space-y-6">
-              {/* Incident Type */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Incident Type
-                </label>
-                <div className="relative">
-                  <select
-                    value={formData.incidentType}
-                    onChange={(e) =>
-                      handleInputChange("incidentType", e.target.value)
-                    }
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white appearance-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select incident type</option>
-                    {incidentTypes.map((type) => (
-                      <option key={type} value={type}>
-                        {type}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-3 w-5 h-5 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Address */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address
-                </label>
-                <input
-                  type="text"
-                  value={formData.address}
-                  onChange={(e) => handleInputChange("address", e.target.value)}
-                  placeholder="Your Address"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-                <div className="flex items-center mt-3">
-                  <input
-                    type="checkbox"
-                    id="geolocation"
-                    checked={formData.useGeolocation}
-                    onChange={(e) =>
-                      handleInputChange("useGeolocation", e.target.checked)
-                    }
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <label
-                    htmlFor="geolocation"
-                    className="ml-2 text-sm text-gray-700 flex items-center"
-                  >
-                    <MapPin className="w-4 h-4 mr-1" />
-                    Use my Geolocation
-                  </label>
-                </div>
-              </div>
-
-              {/* Incident Description */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Incident Description
-                </label>
-                <textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    handleInputChange("description", e.target.value)
-                  }
-                  placeholder="Tell us about what happened"
-                  rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-                />
-              </div>
-
-              {/* Image Upload */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Incident Image
-                </label>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Upload className="w-6 h-6 text-gray-400" />
-                  </div>
-                  <div className="mb-4">
-                    <button
-                      onClick={() =>
-                        document.getElementById("file-upload").click()
-                      }
-                      className="text-blue-600 hover:text-blue-700 font-medium"
-                    >
-                      Click to upload
-                    </button>
-                    <span className="text-gray-500"> or drag and drop</span>
-                  </div>
-                  <p className="text-sm text-gray-500">
-                    SVG, PNG, JPG or GIF (max size per file: 10MB)
-                  </p>
-                  <input
-                    id="file-upload"
-                    type="file"
-                    className="hidden"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                  />
-                </div>
-
-                {/* Uploaded Files */}
-                {uploadedImage && (
-                  <div className="mt-4 space-y-2">
-                    <div className="flex items-center justify-between bg-gray-50 p-3 rounded-lg">
-                      <span className="text-sm text-gray-700">
-                        {uploadedImage}
-                      </span>
-                      <button
-                        onClick={() => setUploadedImage(null)}
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {uploadError && (
-                  <div className="mt-2 flex items-center text-red-600 text-sm">
-                    <span>Img20230425.img failed to upload</span>
-                    <button
-                      onClick={() => setUploadError(false)}
-                      className="ml-2 text-red-400 hover:text-red-600"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Hide Identity Checkbox */}
-              <div className="flex items-center">
-                <input
-                  type="checkbox"
-                  id="hideIdentity"
-                  checked={formData.hideIdentity}
-                  onChange={(e) =>
-                    handleInputChange("hideIdentity", e.target.checked)
-                  }
-                  className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <label
-                  htmlFor="hideIdentity"
-                  className="ml-2 text-sm text-gray-700"
-                >
-                  Hide my identity from police officers
-                </label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col space-y-3 pt-6">
-                <button
-                  onClick={handleSubmit}
-                  className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                >
-                  Submit
-                </button>
-                <button
-                  className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                  onClick={() => setIsDraftModalOpen(true)}
-                >
-                  Save as draft
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+        {activeTab === "Report Incident" && <ReportAnIncident />}
 
         <DraftSavedModal
           isOpen={isDraftModalOpen}
@@ -565,21 +319,21 @@ const GatewayShieldReports = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {allReports.map((report) => (
+                  {incidents.map((report) => (
                     <tr key={report.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {report.type}
+                        {report.incidentType}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {report.dateReported}
+                        {formatDate(report.datePublished)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-                            report.status
+                            report.incidentStatus
                           )}`}
                         >
-                          {report.status}
+                          {report.incidentStatus}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -621,29 +375,40 @@ const GatewayShieldReports = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {drafts.map((draft) => (
-                    <tr key={draft.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {draft.type}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
-                        {draft.date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
-                          <button
-                            onClick={() => handleDeleteClick(draft)}
-                            className="text-gray-400 hover:text-red-600 transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                          <button className="text-gray-400 hover:text-blue-600 transition-colors">
-                            <Edit className="w-4 h-4" />
-                          </button>
-                        </div>
+                  {drafts.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={3}
+                        className="px-6 py-4 text-center text-gray-500"
+                      >
+                        No drafts available.
                       </td>
                     </tr>
-                  ))}
+                  ) : (
+                    drafts.map((draft) => (
+                      <tr key={draft.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {draft.incidentType}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right">
+                          {formatDate(draft.datePublished)}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex items-center justify-end space-x-2">
+                            <button
+                              onClick={() => handleDeleteClick(draft)}
+                              className="text-gray-400 hover:text-red-600 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                            <button className="text-gray-400 hover:text-blue-600 transition-colors">
+                              <Edit className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </table>
             </div>
@@ -651,7 +416,7 @@ const GatewayShieldReports = () => {
         )}
 
         {showDeleteModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="fixed inset-0 bg-[rgba(16,24,40,0.7)] bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-white rounded-lg p-6 w-80 mx-4">
               <div className="flex justify-center mb-4">
                 <div className="bg-yellow-100 rounded-full p-3">
@@ -689,8 +454,6 @@ const GatewayShieldReports = () => {
         </button>
       </div>
 
-      {/* Success Modal */}
-      {showSuccess && <SuccessModal />}
     </div>
   );
 };

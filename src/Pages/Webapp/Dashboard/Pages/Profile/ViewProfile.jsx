@@ -1,7 +1,10 @@
 import React from "react";
 import { Mail, MoreHorizontal } from "lucide-react";
+import {useSelector} from 'react-redux'
 
 const ViewProfile = ({ formData, onEdit }) => {
+  const userData = useSelector((state) => state.user?.currentUser?.data?.user);
+  console.log(userData)
   return (
     <>
       {/* Header Section */}
@@ -53,7 +56,7 @@ const ViewProfile = ({ formData, onEdit }) => {
             <label className="text-sm font-medium text-gray-700">Username</label>
             <input
               type="text"
-              value={`gatewayshield.ng/${formData.username}`}
+              value={`gatewayshield.ng/${userData.userName}`}
               readOnly
               className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5"
             />
@@ -62,7 +65,7 @@ const ViewProfile = ({ formData, onEdit }) => {
             <label className="text-sm font-medium text-gray-700">Email</label>
             <input
               type="email"
-              value={formData.email}
+              value={userData.email}
               readOnly
               className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5 pl-10"
             />
@@ -74,7 +77,7 @@ const ViewProfile = ({ formData, onEdit }) => {
             <label className="text-sm font-medium text-gray-700">Full Name</label>
             <input
               type="text"
-              value={formData.fullName}
+              value={userData.fullName}
               readOnly
               className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5"
             />
@@ -83,7 +86,7 @@ const ViewProfile = ({ formData, onEdit }) => {
             <label className="text-sm font-medium text-gray-700">Address</label>
             <input
               type="text"
-              value={formData.address}
+              value={userData.address}
               readOnly
               className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5"
             />
@@ -94,7 +97,7 @@ const ViewProfile = ({ formData, onEdit }) => {
           <label className="text-sm font-medium text-gray-700">Gender</label>
           <input
             type="text"
-            value={formData.gender}
+            value={userData.gender}
             readOnly
             className="w-full rounded-lg border bg-gray-50 text-gray-600 px-3 py-2.5"
           />

@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import Navbar from "../../Components/Website/Navbar";
 import SignUpFirstPage from "../../Components/Webapp/Auth/SignUpFirst";
 import SignUpSecondPage from "../../Components/Webapp/Auth/SignUpSecondPage";
+import { SignUpOtp } from "../../Components/Webapp/Auth/SignUpOtp";
+import { useNavigate } from "react-router-dom";
 
 const NotificationPermission = ({ onAllow, onDontAllow }) => {
   return (
@@ -69,11 +71,13 @@ const BackgroundLocationPermission = ({
 };
 
 // Location Permission Component
-const LocationPermission = ({
-  onAllowWhileUsing,
-  onAllowOnce,
-  onDontAllow,
-}) => {
+const LocationPermission = () => {
+  const navigate = useNavigate(); // ✅ Move this INSIDE the component
+
+  const handleChoice = () => {
+    navigate("/login");
+  };
+
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
       <div className="bg-white rounded-lg p-6 max-w-sm mx-4 text-center">
@@ -81,24 +85,23 @@ const LocationPermission = ({
           Allow "GATEWAY SHIELD" to use your location?
         </h2>
         <p className="text-gray-600 text-sm mb-6">
-          Gateway Shield uses your location to display nearby safety
-          information.
+          Gateway Shield uses your location to display nearby safety information.
         </p>
         <div className="flex flex-col gap-3">
           <button
-            onClick={onAllowWhileUsing}
+            onClick={handleChoice}
             className="py-3 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             Allow While Using App
           </button>
           <button
-            onClick={onAllowOnce}
+            onClick={handleChoice}
             className="py-3 px-4 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50"
           >
             Allow Once
           </button>
           <button
-            onClick={onDontAllow}
+            onClick={handleChoice}
             className="py-3 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
           >
             Don't Allow
@@ -112,6 +115,20 @@ const LocationPermission = ({
 function SignUp() {
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPermission, setCurrentPermission] = useState(0);
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    state: "",
+    address: "",
+    useGeolocation: true,
+    gender: "",
+    username: "",
+    password: "",
+    confirmPassword: "",
+    otp: "",
+    acceptTerms: true,
+  });
 
   const goToNextPage = () => {
     setCurrentPage(2);
@@ -125,7 +142,7 @@ function SignUp() {
     // Start the permission flow
     setCurrentPermission(1);
   };
-  
+
   const handleNotificationPermission = (allowed) => {
     console.log("Notification permission:", allowed ? "allowed" : "denied");
     setCurrentPermission(2); // Move to background location permission
@@ -148,9 +165,30 @@ function SignUp() {
 
   return (
     <div>
-      <Navbar isAuthenticated={false}/>
-      {currentPage === 1 && <SignUpFirstPage onNext={goToNextPage} />}
-      {currentPage === 2 && <SignUpSecondPage onPrevious={goToPreviousPage} onSubmit={handleSecondPageSubmit}/>}
+      <Navbar isAuthenticated={false} />
+      {currentPage === 1 && (
+        <SignUpFirstPage
+          onNext={goToNextPage}
+          formData={formData}
+          setFormData={setFormData}
+        />
+      )}
+      {currentPage === 2 && (
+        <SignUpSecondPage
+          formData={formData}
+          setFormData={setFormData}
+          onNext={() => setCurrentPage(3)}
+          onPrevious={goToPreviousPage}
+        />
+      )}
+      {currentPage === 3 && (
+        <SignUpOtp
+          formData={formData}
+          setFormData={setFormData}
+          onPrevious={() => setCurrentPage(2)}
+          onSubmit={handleSecondPageSubmit}
+        />
+      )}
       {currentPermission === 1 && (
         <NotificationPermission
           onAllow={() => handleNotificationPermission(true)}

@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
-import { Mail, Eye, EyeOff } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { Mail, Eye, EyeOff } from "lucide-react";
+import { Link } from "react-router-dom";
+import { publicRequest } from "../../../requestMethod";
 
-const SignUpFirstPage = ({onNext}) => {
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState('');
-  const [emailError, setEmailError] = useState('');
+const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
+  const [email, setEmail] = useState("");
+  const [loadingProvider, setLoadingProvider] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [localLoading, setLocalLoading] = useState(false);
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -16,35 +17,56 @@ const SignUpFirstPage = ({onNext}) => {
   const handleEmailChange = (e) => {
     const value = e.target.value;
     setEmail(value);
-    
+
     if (value && !validateEmail(value)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError("Please enter a valid email address");
     } else {
-      setEmailError('');
+      setEmailError("");
     }
   };
 
   const handleEmailSubmit = async (e) => {
     e.preventDefault();
+  
     if (!validateEmail(email)) {
-      setEmailError('Please enter a valid email address');
+      setEmailError("Please enter a valid email address");
       return;
     }
-    
-    setIsLoading(true);
-    onNext()
+  
+    setLocalLoading(true);
+    try {
+      await publicRequest.post("/auth/signup/email", { email });
+      
+      // ✅ Store the email in the shared formData
+      setFormData((prev) => ({ ...prev, email }));
+  
+      // Move to next step
+      onNext();
+    } catch (err) {
+      console.error("Email sign-up failed:", err);
+      const msg =
+        err.response?.data?.message || "Something went wrong. Please try again.";
+      setEmailError(msg);
+    } finally {
+      setLocalLoading(false);
+    }
   };
+  
 
   const handleSocialLogin = async (provider) => {
     setLoadingProvider(provider);
     // Simulate OAuth flow
     setTimeout(() => {
-      alert(`${provider.charAt(0).toUpperCase() + provider.slice(1)} sign-up initiated!\n\nIn a real app, this would redirect to ${provider}'s OAuth flow.`);
-      setLoadingProvider('');
+      alert(
+        `${
+          provider.charAt(0).toUpperCase() + provider.slice(1)
+        } sign-up initiated!\n\nIn a real app, this would redirect to ${provider}'s OAuth flow.`
+      );
+      setLoadingProvider("");
     }, 1500);
   };
 
-  const SocialButton = ({ provider, icon, children, variant = 'default' }) => (
+  const SocialButton = ({ provider, icon, children, variant = "default" }) => (
     <button
       onClick={() => handleSocialLogin(provider)}
       disabled={loadingProvider === provider}
@@ -53,7 +75,7 @@ const SignUpFirstPage = ({onNext}) => {
         rounded-xl font-medium text-sm transition-all duration-200 hover:scale-[1.02] 
         hover:shadow-md hover:border-gray-300 active:scale-[0.98] disabled:opacity-70 
         disabled:cursor-not-allowed bg-white hover:bg-gray-50
-        ${variant === 'twitter' ? 'text-blue-500' : 'text-gray-700'}
+        ${variant === "twitter" ? "text-blue-500" : "text-gray-700"}
       `}
     >
       {loadingProvider === provider ? (
@@ -61,7 +83,7 @@ const SignUpFirstPage = ({onNext}) => {
       ) : (
         <img src={icon} alt={`${provider} icon`} className="w-5 h-5" />
       )}
-      {loadingProvider === provider ? 'Connecting...' : children}
+      {loadingProvider === provider ? "Connecting..." : children}
     </button>
   );
 
@@ -80,15 +102,20 @@ const SignUpFirstPage = ({onNext}) => {
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
               Create an account
             </h1>
-            <p className="text-gray-600">
-              Start your 30-day free trial.
-            </p>
           </div>
 
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
           {/* Email Section */}
           <div className="space-y-6 mb-6">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700 mb-2"
+              >
                 Email
               </label>
               <div className="relative">
@@ -106,23 +133,29 @@ const SignUpFirstPage = ({onNext}) => {
                     placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 
                     focus:border-transparent transition-all duration-200 bg-gray-50 
                     focus:bg-white hover:bg-white
-                    ${emailError ? 'border-red-300 focus:ring-red-500' : 'border-gray-200'}
+                    ${
+                      emailError
+                        ? "border-red-300 focus:ring-red-500"
+                        : "border-gray-200"
+                    }
                   `}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       handleEmailSubmit(e);
                     }
                   }}
                 />
               </div>
               {emailError && (
-                <p className="mt-1 text-sm text-red-600 animate-pulse">{emailError}</p>
+                <p className="mt-1 text-sm text-red-600 animate-pulse">
+                  {emailError}
+                </p>
               )}
             </div>
 
             <button
               onClick={handleEmailSubmit}
-              disabled={isLoading || emailError}
+              disabled={localLoading || emailError}
               className="
                 w-full bg-[#444CE7] text-white py-3 px-4 
                 rounded-xl font-medium hover:from-blue-600 hover:to-purple-700 
@@ -132,13 +165,13 @@ const SignUpFirstPage = ({onNext}) => {
                 shadow-lg hover:shadow-xl
               "
             >
-              {isLoading ? (
+              {localLoading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Creating account...
                 </div>
               ) : (
-                'Continue with email'
+                "Continue with email"
               )}
             </button>
           </div>
@@ -149,7 +182,9 @@ const SignUpFirstPage = ({onNext}) => {
               <div className="w-full border-t border-gray-200"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500 font-medium">OR</span>
+              <span className="px-4 bg-white text-gray-500 font-medium">
+                OR
+              </span>
             </div>
           </div>
 
@@ -158,28 +193,22 @@ const SignUpFirstPage = ({onNext}) => {
             <SocialButton provider="google" icon="/assets/google.png">
               Sign up with Google
             </SocialButton>
-            
+
             <SocialButton provider="facebook" icon="/assets/facebook.png">
               Sign up with Facebook
             </SocialButton>
-            
+
             <SocialButton provider="apple" icon="/assets/apple.png">
               Sign up with Apple
-            </SocialButton>
-            
-            <SocialButton provider="twitter" icon="/assets/x.png" variant="twitter">
-              Sign in with Twitter
             </SocialButton>
           </div>
 
           {/* Login Link */}
           <div className="text-center">
             <p className="text-sm text-gray-600">
-              Already have an account?{' '}
-              <button
-                className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-200"
-              >
-                <Link to='/login'> Log in</Link>
+              Already have an account?{" "}
+              <button className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-200">
+                <Link to="/login"> Log in</Link>
               </button>
             </p>
           </div>
@@ -188,10 +217,14 @@ const SignUpFirstPage = ({onNext}) => {
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-xs text-gray-500">
-            By creating an account, you agree to our{' '}
-            <a href="#" className="text-blue-600 hover:underline">Terms of Service</a>{' '}
-            and{' '}
-            <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+            By creating an account, you agree to our{" "}
+            <a href="#" className="text-blue-600 hover:underline">
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a href="#" className="text-blue-600 hover:underline">
+              Privacy Policy
+            </a>
           </p>
         </div>
       </div>

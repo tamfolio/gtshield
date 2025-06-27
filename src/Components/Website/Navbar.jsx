@@ -5,7 +5,6 @@ import { Link, useNavigate } from "react-router-dom";
 const Navbar = ({ isAuthenticated, user = null }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  console.log(isAuthenticated);
   
   const handleCrimeMapClick = (e) => {
     e.preventDefault();
@@ -166,7 +165,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                 // Non-authenticated user items
                 <>
                   <a
-                    href="/report-anonymously"
+                    href="/report-incident"
                     className="text-gray-700 font-semibold text-sm hover:text-blue-600 transition-colors"
                   >
                     Report Anonymously

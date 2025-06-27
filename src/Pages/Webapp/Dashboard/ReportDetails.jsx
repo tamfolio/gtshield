@@ -3,18 +3,58 @@ import { ArrowLeft, Edit, Check, Clock, AlertCircle, Home } from 'lucide-react';
 import Navbar from '../../../Components/Website/Navbar';
 import FeedbackModal from './Modals/FeedbackModal';
 import { useNavigate } from 'react-router-dom';
+import { useParams } from "react-router-dom";
+import { userRequest } from "../../../requestMethod";
+import { useSelector } from "react-redux";
 
 const ReportDetails = () => {
-  // In a real app, you'd use: const { id } = useParams();
-  // For demo purposes, we'll simulate getting the ID from URL
-  const [reportId] = useState('1'); // Simulating URL parameter
+  const [reportId] = useState('1');
   const [report, setReport] = useState(null);
-  const [currentView, setCurrentView] = useState('details'); // 'details', 'edit'
+  const [currentView, setCurrentView] = useState('details');
   const [loading, setLoading] = useState(true);
+  const { id } = useParams();
+  const token = useSelector(
+    (state) => state?.user?.currentUser?.data?.tokens?.access?.token
+  );
+
+  const [incident, setIncident] = useState(null);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   const navigate = useNavigate();
 
-  // Sample report data - in a real app, this would come from an API
+  const formatDate = (isoString) => {
+    return new Date(isoString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+    });
+  };
+
+  const formatTime = (isoString) => {
+    return new Date(isoString).toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+  useEffect(() => {
+    const fetchIncident = async () => {
+      try {
+        const res = await userRequest(token).get(`/incident/${id}`);
+        setIncident(res.data.data.incident);
+      } catch (error) {
+        console.error("❌ Failed to fetch incident:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (id && token) {
+      fetchIncident();
+    }
+  }, [id, token]);
+
+  
   const reportsData = {
     '1': {
       id: 1,
@@ -212,11 +252,11 @@ const ReportDetails = () => {
                 <div>
                   <div className="flex items-center space-x-3">
                     <h1 className="text-2xl font-bold text-gray-900">
-                      {report.type}
+                      {incident?.incidentType}
                     </h1>
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(report.status)}`}>
-                      {getStatusIcon(report.status)}
-                      <span className="ml-1">{report.status}</span>
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(incident?.incidentStatus)}`}>
+                      {getStatusIcon(incident?.incidentStatus)}
+                      <span className="ml-1">{incident?.incidentStatus}</span>
                     </span>
                   </div>
                   <nav className="flex mt-2 text-sm text-gray-500">
@@ -227,7 +267,7 @@ const ReportDetails = () => {
                     <span className="mx-2">/</span>
                     <span>All Reports</span>
                     <span className="mx-2">/</span>
-                    <span className="text-gray-900 font-medium">{report.type}</span>
+                    <span className="text-gray-900 font-medium">{incident?.incidentType}</span>
                   </nav>
                 </div>
               </div>
@@ -272,7 +312,7 @@ const ReportDetails = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               <div className="bg-gray-50 p-4 rounded-lg">
                 <span className="text-sm font-medium text-gray-500 block mb-1">Date Created</span>
-                <p className="text-base font-semibold text-gray-900">{report.dateCreated}</p>
+                <p className="text-base font-semibold text-gray-900">{formatDate(incident?.datePublished)}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <span className="text-sm font-medium text-gray-500 block mb-1">Status</span>
@@ -280,11 +320,11 @@ const ReportDetails = () => {
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <span className="text-sm font-medium text-gray-500 block mb-1">Submission Time</span>
-                <p className="text-base font-semibold text-gray-900">{report.submissionTime}</p>
+                <p className="text-base font-semibold text-gray-900">{formatTime(incident?.datePublished)}</p>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <span className="text-sm font-medium text-gray-500 block mb-1">Location</span>
-                <p className="text-base font-semibold text-gray-900">{report.location}</p>
+                <p className="text-base font-semibold text-gray-900">{incident?.address}</p>
               </div>
             </div>
 
@@ -298,36 +338,21 @@ const ReportDetails = () => {
                 <textarea
                   className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
                   rows="4"
-                  defaultValue={report.description}
+                  defaultValue={incident?.description}
                 />
               ) : (
-                <p className="text-gray-700 leading-relaxed mb-6">{report.description}</p>
+                <p className="text-gray-700 leading-relaxed mb-6">{incident?.description}</p>
               )}
 
               {/* Details List */}
-              <div className="space-y-3">
-                {report.details.map((detail, index) => (
-                  <div key={index} className="flex items-start space-x-3">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full mt-2 flex-shrink-0"></div>
-                    {currentView === 'edit' ? (
-                      <input
-                        type="text"
-                        className="flex-1 p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        defaultValue={detail}
-                      />
-                    ) : (
-                      <p className="text-gray-700 leading-relaxed">{detail}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
+              
             </div>
 
             {/* Images Section */}
             <div className="space-y-4">
               <h2 className="text-xl font-bold text-gray-900">Evidence & Documentation</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {report.images.map((image, index) => (
+                {incident?.incidentImages.map((image, index) => (
                   <div key={index} className="relative group">
                     <img 
                       src={image} 

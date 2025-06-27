@@ -1,7 +1,9 @@
 import React from "react";
 import { Mail, Upload } from "lucide-react";
+import {useSelector} from 'react-redux'
 
 const EditProfile = ({ formData, onChange, onSave, onCancel }) => {
+  const userData = useSelector((state) => state.user?.currentUser?.data?.user);
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">
@@ -18,7 +20,7 @@ const EditProfile = ({ formData, onChange, onSave, onCancel }) => {
           <label className="text-sm font-medium text-gray-700">Full Name</label>
           <input
             type="text"
-            value={formData.fullName}
+            value={userData.fullName}
             onChange={(e) => onChange("fullName", e.target.value)}
             className="w-full border rounded-lg px-3 py-2.5"
           />
@@ -28,7 +30,7 @@ const EditProfile = ({ formData, onChange, onSave, onCancel }) => {
           <label className="text-sm font-medium text-gray-700">Email</label>
           <input
             type="email"
-            value={formData.email}
+            value={userData.email}
             onChange={(e) => onChange("email", e.target.value)}
             className="w-full border rounded-lg px-3 py-2.5"
           />
@@ -38,7 +40,7 @@ const EditProfile = ({ formData, onChange, onSave, onCancel }) => {
           <label className="text-sm font-medium text-gray-700">Username</label>
           <input
             type="text"
-            value={formData.username}
+            value={userData.userName}
             onChange={(e) => onChange("username", e.target.value)}
             className="w-full border rounded-lg px-3 py-2.5"
           />
@@ -48,7 +50,7 @@ const EditProfile = ({ formData, onChange, onSave, onCancel }) => {
           <label className="text-sm font-medium text-gray-700">Address</label>
           <input
             type="text"
-            value={formData.address}
+            value={userData.address}
             onChange={(e) => onChange("address", e.target.value)}
             className="w-full border rounded-lg px-3 py-2.5"
           />
@@ -58,7 +60,7 @@ const EditProfile = ({ formData, onChange, onSave, onCancel }) => {
           <label className="text-sm font-medium text-gray-700">Phone Number</label>
           <input
             type="tel"
-            value={formData.phoneNumber}
+            value={userData.phoneNumber}
             onChange={(e) => onChange("phoneNumber", e.target.value)}
             className="w-full border rounded-lg px-3 py-2.5"
           />
@@ -67,7 +69,7 @@ const EditProfile = ({ formData, onChange, onSave, onCancel }) => {
         <div>
           <label className="text-sm font-medium text-gray-700">Gender</label>
           <select
-            value={formData.gender}
+            value={userData.gender}
             onChange={(e) => onChange("gender", e.target.value)}
             className="w-full border rounded-lg px-3 py-2.5"
           >

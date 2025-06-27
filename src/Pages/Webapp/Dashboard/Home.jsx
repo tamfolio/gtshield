@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Bell,
   Settings,
@@ -9,14 +9,59 @@ import {
   X,
 } from "lucide-react";
 import Navbar from "../../../Components/Website/Navbar";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { userRequest } from "../../../requestMethod";
 
 const Dashboard = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  const token = useSelector(
+    (state) => state?.user?.currentUser?.data?.tokens?.access?.token
+  );
+  const userData = useSelector((state) => state.user?.currentUser?.data?.user);
   const [hasReports, setHasReports] = useState(true);
+  const [incidents, setIncidents] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   localStorage.setItem("isAuthenticated", "true");
 
-  console.log(setHasReports)
+  console.log(incidents);
+
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      setLoading(true);
+      try {
+        const res = await userRequest(token).get(
+          "/incident/all?page=1&size=10"
+        );
+        console.log("✅ Incidents fetched:", res.data);
+        setIncidents(res.data?.data?.incidents?.data || []);
+      } catch (err) {
+        console.error("❌ Failed to fetch incidents:", err);
+        setError("Failed to fetch incidents");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchIncidents();
+    }
+  }, [token]);
+
+  const formatDate = (isoString) => {
+    return new Date(isoString).toLocaleString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  };
+
+
+  console.log(setHasReports);
 
   const reports = [
     {
@@ -45,7 +90,7 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation Header */}
-      <Navbar isAuthenticated={true}/>
+      <Navbar isAuthenticated={true} />
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-1 lg:px-8 py-6 sm:py-8">
@@ -53,7 +98,7 @@ const Dashboard = () => {
         <div className="mb-8 flex flex-col md:flex-row items-center justify-between">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Welcome Anita,
+              Welcome {userData?.userName},
             </h1>
             <p className="text-gray-600">
               Ready to make your community safer? Let's get started.
@@ -66,7 +111,7 @@ const Dashboard = () => {
               Emergency Contact
             </button>
             <button className="text-[14px] bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium w-full sm:w-auto">
-              Report an Incident
+              <Link to="/report-incident">Report an Incident</Link>
             </button>
           </div>
         </div>
@@ -101,23 +146,26 @@ const Dashboard = () => {
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
-                    {reports.map((report) => (
+                    {incidents?.map((report) => (
                       <tr key={report.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {report.type}
+                          {report.incidentType}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {report.dateReported}
+                          {formatDate(report.datePublished)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${report.statusColor}`}
                           >
-                            {report.status}
+                            {report.incidentStatus}
                           </span>
                         </td>
                         <td className="hidden md:block px-6 py-4 whitespace-nowrap text-sm">
-                          <button className="text-blue-600 hover:text-blue-800 font-medium" onClick={() => navigate(`/reports/${report.id}`)}>
+                          <button
+                            className="text-blue-600 hover:text-blue-800 font-medium"
+                            onClick={() => navigate(`/reports/${report.id}`)}
+                          >
                             View Details
                           </button>
                         </td>

@@ -1,7 +1,10 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Monitor, Smartphone, MoreHorizontal } from "lucide-react";
+import { userRequest } from "../../../../../requestMethod";
+import {useSelector} from 'react-redux'
 
 function Password() {
+  const token = useSelector((state) => state?.user?.currentUser?.data?.tokens?.access?.token);
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -105,14 +108,45 @@ function Password() {
     setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
   };
 
-  const handleUpdatePassword = () => {
-    console.log("Updating password:", formData);
-    // Reset form after update
-    setFormData({
-      currentPassword: "",
-      newPassword: "",
-      confirmPassword: "",
-    });
+  const handleUpdatePassword = async () => {
+    if (
+      !formData.currentPassword ||
+      !formData.newPassword ||
+      !formData.confirmPassword
+    ) {
+      alert("All fields are required.");
+      return;
+    }
+  
+    if (formData.newPassword !== formData.confirmPassword) {
+      alert("New password and confirm password do not match.");
+      return;
+    }
+  
+    try {  
+      const payload = {
+        oldPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
+      };
+  
+      const res = await userRequest(token).patch("user/update/password", payload);
+  
+      console.log("✅ Password updated successfully", res.data);
+      alert("Password updated successfully!");
+  
+      // Reset form
+      setFormData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (err) {
+      console.error("❌ Error updating password", err.response?.data || err.message);
+      alert(
+        err.response?.data?.message ||
+          "Failed to update password. Please try again."
+      );
+    }
   };
 
   const handleCancel = () => {
@@ -126,37 +160,6 @@ function Password() {
 
  
 
-  // Desktop Sidebar
-  //   const DesktopSidebar = () => (
-  //     <div className="hidden lg:block w-64 bg-white border-r border-gray-200 min-h-screen">
-  //       <div className="p-6">
-  //         <h2 className="text-xl font-semibold text-gray-900 mb-8">Settings</h2>
-  //         <nav className="space-y-1">
-  //           <a href="#" className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">Profile</a>
-  //           <a href="#" className="block px-3 py-2 text-blue-600 bg-blue-50 rounded-md font-medium">Password</a>
-  //           <a href="#" className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">Emergency Contacts</a>
-  //           <a href="#" className="px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md flex items-center justify-between">
-  //             Notifications
-  //             <span className="bg-gray-200 text-gray-600 text-xs px-2 py-1 rounded-full">2</span>
-  //           </a>
-  //           <a href="#" className="block px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-md">Logout</a>
-  //         </nav>
-  //       </div>
-  //     </div>
-  //   );
-
-  //   // Mobile Sidebar (dropdown)
-  //   const MobileSidebar = () => (
-  //     <div className="lg:hidden bg-white border-b border-gray-200 px-4 py-3">
-  //       <select className="w-full p-3 border border-gray-300 rounded-lg bg-white text-gray-900">
-  //         <option>Password</option>
-  //         <option>Profile</option>
-  //         <option>Emergency Contacts</option>
-  //         <option>Notifications</option>
-  //         <option>Logout</option>
-  //       </select>
-  //     </div>
-  //   );
 
   return (
     <div className="min-h-screen bg-gray-50">

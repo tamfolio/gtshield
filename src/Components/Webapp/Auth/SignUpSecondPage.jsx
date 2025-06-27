@@ -1,55 +1,78 @@
-import React, { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import React, { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
+import { toast } from "react-toastify";
 
-const SignUpSecondPage = ({onSubmit}) => {
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phoneNumber: '',
-    state: '',
-    address: '',
-    useGeolocation: true,
-    gender: '',
-    username: '',
-    password: '',
-    confirmPassword: '',
-    acceptTerms: true
-  });
+const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
+  const handleContinue = () => {
+    if (!formData.fullName || !formData.phoneNumber || !formData.password) {
+      toast.error("Please fill all required fields.");
+      return;
+    }
+  
+    // If validation passes
+    onNext(); // Go to OTP page
+  };
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
-  const handleSubmit = () => {
-    console.log('Form submitted:', formData);
-    onSubmit()
-  };
 
   const states = [
-    'Abia', 'Adamawa', 'Akwa Ibom', 'Anambra', 'Bauchi', 'Bayelsa', 'Benue', 'Borno',
-    'Cross River', 'Delta', 'Ebonyi', 'Edo', 'Ekiti', 'Enugu', 'Gombe', 'Imo', 'Jigawa',
-    'Kaduna', 'Kano', 'Katsina', 'Kebbi', 'Kogi', 'Kwara', 'Lagos', 'Nasarawa',
-    'Niger', 'Ogun', 'Ondo', 'Osun', 'Oyo', 'Plateau', 'Rivers', 'Sokoto',
-    'Taraba', 'Yobe', 'Zamfara', 'FCT (Abuja)'
+    "Abia",
+    "Adamawa",
+    "Akwa Ibom",
+    "Anambra",
+    "Bauchi",
+    "Bayelsa",
+    "Benue",
+    "Borno",
+    "Cross River",
+    "Delta",
+    "Ebonyi",
+    "Edo",
+    "Ekiti",
+    "Enugu",
+    "Gombe",
+    "Imo",
+    "Jigawa",
+    "Kaduna",
+    "Kano",
+    "Katsina",
+    "Kebbi",
+    "Kogi",
+    "Kwara",
+    "Lagos",
+    "Nasarawa",
+    "Niger",
+    "Ogun",
+    "Ondo",
+    "Osun",
+    "Oyo",
+    "Plateau",
+    "Rivers",
+    "Sokoto",
+    "Taraba",
+    "Yobe",
+    "Zamfara",
+    "FCT (Abuja)",
   ];
-  
 
-  const genders = ['Male', 'Female', 'Non-binary', 'Prefer not to say'];
+  const genders = ["Male", "Female", "Non-binary", "Prefer not to say"];
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
-            <svg className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-            </svg>
+            <img src="/assets/logo2.png" alt="" />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Create an account
@@ -60,7 +83,10 @@ const SignUpSecondPage = ({onSubmit}) => {
           <div className="space-y-4">
             {/* Full Name */}
             <div>
-              <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="fullName"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Full Name
               </label>
               <input
@@ -76,7 +102,10 @@ const SignUpSecondPage = ({onSubmit}) => {
 
             {/* Phone Number */}
             <div>
-              <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="phoneNumber"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Phone Number
               </label>
               <div className="flex">
@@ -99,7 +128,10 @@ const SignUpSecondPage = ({onSubmit}) => {
 
             {/* State */}
             <div>
-              <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="state"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 State
               </label>
               <select
@@ -120,7 +152,10 @@ const SignUpSecondPage = ({onSubmit}) => {
 
             {/* Address */}
             <div>
-              <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="address"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Address
               </label>
               <input
@@ -141,7 +176,10 @@ const SignUpSecondPage = ({onSubmit}) => {
                   onChange={handleInputChange}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
-                <label htmlFor="useGeolocation" className="ml-2 block text-sm text-gray-700">
+                <label
+                  htmlFor="useGeolocation"
+                  className="ml-2 block text-sm text-gray-700"
+                >
                   Use my Geolocation
                 </label>
               </div>
@@ -149,7 +187,10 @@ const SignUpSecondPage = ({onSubmit}) => {
 
             {/* Gender */}
             <div>
-              <label htmlFor="gender" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="gender"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Gender
               </label>
               <select
@@ -170,7 +211,10 @@ const SignUpSecondPage = ({onSubmit}) => {
 
             {/* Username */}
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="username"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Username
               </label>
               <input
@@ -186,7 +230,10 @@ const SignUpSecondPage = ({onSubmit}) => {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Password
               </label>
               <div className="relative">
@@ -212,13 +259,17 @@ const SignUpSecondPage = ({onSubmit}) => {
                 </button>
               </div>
               <p className="mt-1 text-xs text-gray-500">
-                Password must be at least 8 characters and include a number or symbol
+                Password must be at least 8 characters and include a number or
+                symbol
               </p>
             </div>
 
             {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700 mb-1"
+              >
                 Confirm Password
               </label>
               <div className="relative">
@@ -244,7 +295,6 @@ const SignUpSecondPage = ({onSubmit}) => {
                 </button>
               </div>
             </div>
-
             {/* Terms and Privacy Policy */}
             <div className="flex items-center">
               <input
@@ -255,13 +305,22 @@ const SignUpSecondPage = ({onSubmit}) => {
                 onChange={handleInputChange}
                 className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="acceptTerms" className="ml-2 block text-sm text-gray-700">
-                I accept the{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-500 underline">
+              <label
+                htmlFor="acceptTerms"
+                className="ml-2 block text-sm text-gray-700"
+              >
+                I accept the{" "}
+                <a
+                  href="#"
+                  className="text-blue-600 hover:text-blue-500 underline"
+                >
                   Terms
-                </a>{' '}
-                and{' '}
-                <a href="#" className="text-blue-600 hover:text-blue-500 underline">
+                </a>{" "}
+                and{" "}
+                <a
+                  href="#"
+                  className="text-blue-600 hover:text-blue-500 underline"
+                >
                   Privacy Policy
                 </a>
               </label>
@@ -271,10 +330,10 @@ const SignUpSecondPage = ({onSubmit}) => {
           <div>
             <button
               type="button"
-              onClick={handleSubmit}
+              onClick={handleContinue}
               className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
-              Sign up
+              Continue
             </button>
           </div>
         </div>

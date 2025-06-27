@@ -7,8 +7,14 @@ import Password from "./Password";
 import EmergencyContact from "./EmergencyContact";
 import Notifications from "../Notifications";
 import ProfileNotifications from "./Notifications";
+import { useNavigate } from "react-router-dom";
+import { userRequest } from "../../../../../requestMethod";
+import {useDispatch, useSelector} from 'react-redux'
+import { toast } from "react-toastify";
+import { LogOut } from "../../../../../Redux/LoginSlice";
 
 function Profile() {
+  const dispatch = useDispatch();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedScreen, setSelectedScreen] = useState("Profile");
   const [formData, setFormData] = useState({
@@ -19,6 +25,24 @@ function Profile() {
     phoneNumber: "+1 (555) 000-0000",
     gender: "Male",
   });
+
+  const token = useSelector((state) => state.user?.currentUser?.data?.tokens?.access?.token);
+  const userData = useSelector((state) => state.user?.currentUser?.data?.user);
+  console.log(userData)
+
+  const handleLogout = async () => {
+    try {
+      await userRequest(token).get("/auth/logout"); // ✅ correctly uses token
+  
+      dispatch(LogOut());
+      toast.success("Logged out successfully");
+      navigate("/");
+    } catch (err) {
+      toast.error("Logout failed. Please try again.");
+      console.error("Logout error:", err?.response?.data || err);
+    }
+  };
+  
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -32,6 +56,10 @@ function Profile() {
   const handleCancel = () => {
     setIsEditing(false);
   };
+
+  const navigate = useNavigate();
+
+
 
   const DesktopSidebar = () => (
     <div className="hidden lg:block w-64 bg-white border-r border-gray-200 min-h-screen">
@@ -85,7 +113,7 @@ function Profile() {
             </div>
           </button>
 
-          <button className="block w-full text-left px-3 py-2 rounded-md font-medium">
+          <button className="block w-full text-left px-3 py-2 rounded-md font-medium" onClick={handleLogout}>
             Logout
           </button>
         </nav>
