@@ -183,7 +183,7 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
   }
 
   // Report page (default)
-  return <ReportAnIncident incidentTypes={incidentTypes} StationsAvailable={StationsAvailable} />;
+  return <ReportAnIncident incidentTypes={incidentTypes} StationsAvailable={StationsAvailable} setCurrentPage={setCurrentPage} currentPage={currentPage} />;
 };
 
 export default IncidentReportingSystem;

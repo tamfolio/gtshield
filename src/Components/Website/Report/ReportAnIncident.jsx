@@ -5,6 +5,7 @@ import Select from "react-select";
 import { fetchIncidentTypes, fetchStations } from "../../../Api/incidentApi";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
 
 function ReportAnIncident({ setCurrentPage }) {
   const token = useSelector(
@@ -18,7 +19,8 @@ function ReportAnIncident({ setCurrentPage }) {
     address: "",
     useMyLocation: false,
     nearestPoliceStation: "",
-    image: null,
+    images: [],
+    video: null,
     hideIdentity: false,
   });
 
@@ -105,11 +107,33 @@ function ReportAnIncident({ setCurrentPage }) {
     setFormData((prev) => ({ ...prev, address: e.target.value }));
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setFormData((prev) => ({ ...prev, image: file }));
+  const handleMediaUpload = (e) => {
+    const files = Array.from(e.target.files);
+
+    const newImages = files.filter((file) => file.type.startsWith("image/"));
+    const newVideos = files.filter((file) => file.type.startsWith("video/"));
+
+    const oversized = files.find((file) => file.size > 10 * 1024 * 1024);
+    if (oversized) {
+      alert("Each file must be less than 10MB.");
+      return;
     }
+
+    if (newImages.length + formData.images.length > 3) {
+      alert("You can upload up to 3 images only.");
+      return;
+    }
+
+    if (newVideos.length > 1 || (formData.video && newVideos.length > 0)) {
+      alert("Only one video can be uploaded.");
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      images: [...prev.images, ...newImages],
+      video: newVideos[0] || prev.video,
+    }));
   };
 
   const handleIncidentTypeChange = useCallback((selectedOption) => {
@@ -166,7 +190,9 @@ function ReportAnIncident({ setCurrentPage }) {
           </button>
 
           <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            <Link to="/home">Redirect to Dashboard</Link>
+            <Link to={isAuthenticated === "true" ? "/home" : "/"}>
+              Redirect to Dashboard
+            </Link>
           </button>
         </div>
       </div>
@@ -201,9 +227,7 @@ function ReportAnIncident({ setCurrentPage }) {
         </h2>
 
         {/* Description */}
-        <p className="text-gray-600 mb-6">
-          Report Saved as Draft
-        </p>
+        <p className="text-gray-600 mb-6">Report Saved as Draft</p>
 
         {/* Buttons */}
         <div className="space-y-3">
@@ -298,7 +322,59 @@ function ReportAnIncident({ setCurrentPage }) {
       }
     } catch (err) {
       console.error("❌ Failed to submit incident:", err);
-      alert("Failed to submit incident. Please try again.");
+      toast(err.response.data.message);
+    }
+  };
+
+  const handleAnonSubmit = async () => {
+    // Validate required fields
+    if (!formData.incidentType || !formData.description) {
+      alert(
+        "Please fill in all required fields (Incident Type, Description, and Address)"
+      );
+      return;
+    }
+
+    try {
+      const bodyData = {
+        incidentTypeId: formData.incidentType?.value,
+        isDraft: null, // Set to false for actual submission
+        address: null,
+        description: formData.description,
+        isIdentityHidden: null,
+        isLocationHidden: false, // You can add another checkbox for this if needed
+        isAnonymous: false,
+        channel: "web",
+        stationId: null,
+        userId: null,
+      };
+
+      console.log("🚀 Submitting form with data:", formData);
+      console.log("🚀 Body data:", bodyData);
+
+      const formPayload = new FormData();
+      formPayload.append("data", JSON.stringify(bodyData));
+      if (formData.image) {
+        formPayload.append("image", formData.image);
+      }
+
+      const res = await userRequest(token).post("/incident/new", formPayload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      console.log("✅ Incident reported:", res.data);
+      setShowSuccess(true);
+      setTicketId(res.data.data.ticketId);
+
+      // Navigate to confirmation page or show success message
+      if (setCurrentPage) {
+        setCurrentPage("confirmation");
+      }
+    } catch (err) {
+      console.error("❌ Failed to submit incident:", err);
+      toast(err.response.data.message);
     }
   };
 
@@ -344,7 +420,7 @@ function ReportAnIncident({ setCurrentPage }) {
         },
       });
 
-      setShowDraftSuccess(true)
+      setShowDraftSuccess(true);
 
       console.log("✅ Incident reported:", res.data);
 
@@ -354,7 +430,7 @@ function ReportAnIncident({ setCurrentPage }) {
       }
     } catch (err) {
       console.error("❌ Failed to submit incident:", err);
-      alert("Failed to submit incident. Please try again.");
+      toast(err.response.data.message);
     }
   };
 
@@ -489,21 +565,23 @@ function ReportAnIncident({ setCurrentPage }) {
                 )}
 
                 {/* Nearest Police Station */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nearest Police Station
-                  </label>
-                  <Select
-                    options={stations}
-                    value={formData.nearestPoliceStation}
-                    onChange={handleStationChange}
-                    placeholder="Search for nearest police station"
-                    isSearchable
-                    isClearable
-                    className="react-select-container"
-                    classNamePrefix="react-select"
-                  />
-                </div>
+                {isAuthenticated && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Nearest Police Station
+                    </label>
+                    <Select
+                      options={stations}
+                      value={formData.nearestPoliceStation}
+                      onChange={handleStationChange}
+                      placeholder="Search for nearest police station"
+                      isSearchable
+                      isClearable
+                      className="react-select-container"
+                      classNamePrefix="react-select"
+                    />
+                  </div>
+                )}
 
                 {/* Incident Description */}
                 <div>
@@ -544,26 +622,65 @@ function ReportAnIncident({ setCurrentPage }) {
                     <input
                       id="file-upload"
                       type="file"
-                      className="hidden"
+                      multiple
                       accept=".png,.jpg,.jpeg,.gif,.mp4"
-                      onChange={handleImageUpload}
+                      className="hidden"
+                      onChange={handleMediaUpload}
                     />
                   </div>
 
-                  {formData.image && (
-                    <div className="mt-2 flex items-center gap-2 text-sm">
-                      <span className="text-gray-600">
-                        {formData.image.name}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setFormData((prev) => ({ ...prev, image: null }))
-                        }
-                        className="text-gray-400 hover:text-gray-600"
-                      >
-                        ×
-                      </button>
+                  {formData.images.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">
+                        Images:
+                      </h4>
+                      <ul className="text-sm text-gray-600 space-y-1">
+                        {formData.images.map((img, index) => (
+                          <li
+                            key={index}
+                            className="flex items-center justify-between"
+                          >
+                            {img.name}
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  images: prev.images.filter(
+                                    (_, i) => i !== index
+                                  ),
+                                }))
+                              }
+                              className="text-red-500 text-xs"
+                            >
+                              Remove
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {formData.video && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-gray-700 mb-2">
+                        Video:
+                      </h4>
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        {formData.video.name}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setFormData((prev) => ({
+                              ...prev,
+                              video: null,
+                            }))
+                          }
+                          className="text-red-500 text-xs"
+                        >
+                          Remove
+                        </button>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -591,7 +708,7 @@ function ReportAnIncident({ setCurrentPage }) {
                 <div className="flex flex-col gap-3">
                   <button
                     type="button"
-                    onClick={handleSubmit}
+                    onClick={isAuthenticated ? handleSubmit : handleAnonSubmit}
                     className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium"
                   >
                     Submit

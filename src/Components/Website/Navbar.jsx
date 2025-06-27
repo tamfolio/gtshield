@@ -34,7 +34,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
     { name: "Home", href: "/home" },
     { name: "Dashboard", href: "/dashboard" },
     { name: "Reports", href: "/reports" },
-    { name: "SOS", href: "#" },
+    { name: "SOS", href: "/sos" },
     { name: "News", href: "/news" },
     {
       name: "Crime Map",
