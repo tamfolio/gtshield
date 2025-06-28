@@ -3,7 +3,9 @@ import { Mail, Upload } from "lucide-react";
 import {useSelector} from 'react-redux'
 
 const EditProfile = ({ formData, onChange, onSave, onCancel }) => {
-  const userData = useSelector((state) => state.user?.currentUser?.data?.user);
+  // Update your selectors to match the normalized structure
+const userData = useSelector((state) => state.user?.currentUser?.user);
+
   return (
     <div className="max-w-2xl mx-auto">
       <div className="mb-6">

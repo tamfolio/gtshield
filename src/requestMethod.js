@@ -18,8 +18,7 @@ export const publicRequest = axios.create({
 publicRequest.interceptors.response.use(
   (response) => response, // Pass successful response as is
   (error) => {
-    const token = store.getState().user?.currentUser?.data?.token;
-
+    const token = store.getState().user?.currentUser?.tokens?.access?.token
     // ✅ If API responds with "Access Denied" and token exists, force logout
     if (
       error.response?.status === 400 &&

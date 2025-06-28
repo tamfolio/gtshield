@@ -15,10 +15,9 @@ import { userRequest } from "../../../requestMethod";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const token = useSelector(
-    (state) => state?.user?.currentUser?.data?.tokens?.access?.token
-  );
-  const userData = useSelector((state) => state.user?.currentUser?.data?.user);
+ // Update your selectors to match the normalized structure
+const userData = useSelector((state) => state.user?.currentUser?.user);
+const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
   const [hasReports, setHasReports] = useState(true);
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);

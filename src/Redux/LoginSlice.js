@@ -18,7 +18,29 @@ const loginSlice = createSlice({
     },
     loginSuccess: (state, action) => {
       state.isFetching = false;
-      state.currentUser = action.payload;
+      
+      // Debug logging
+      console.log('Login payload:', action.payload);
+      
+      // Normalize the payload structure
+      if (action.payload.data) {
+        // Google login format
+        console.log('Using Google login format');
+        state.currentUser = action.payload.data;
+      } else {
+        // Normal login format - wrap in data object
+        console.log('Using normal login format');
+        state.currentUser = {
+          user: action.payload.user,
+          tokens: {
+            access: {
+              token: action.payload.token
+            }
+          }
+        };
+      }
+      
+      console.log('Final currentUser:', state.currentUser);
       state.success = true;
       state.error = false;
     },

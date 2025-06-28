@@ -8,11 +8,10 @@ import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
 function ReportAnIncident({ setCurrentPage }) {
-  const token = useSelector(
-    (state) => state?.user?.currentUser?.data?.tokens?.access?.token
-  );
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
-  const userData = useSelector((state) => state.user?.currentUser?.data?.user);
+ // Update your selectors to match the normalized structure
+const userData = useSelector((state) => state.user?.currentUser?.user);
+const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
   const [formData, setFormData] = useState({
     incidentType: "",
     description: "",

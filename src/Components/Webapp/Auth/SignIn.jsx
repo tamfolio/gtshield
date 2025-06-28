@@ -7,7 +7,11 @@ import { toast } from "react-toastify";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { publicRequest } from "../../../requestMethod";
-import { loginSuccess } from "../../../Redux/LoginSlice";
+import {
+  LoginFailure,
+  loginStart,
+  loginSuccess,
+} from "../../../Redux/LoginSlice";
 import { GoogleLogin } from "@react-oauth/google";
 
 export default function SignIn() {
@@ -46,20 +50,26 @@ export default function SignIn() {
 
   const handleGoogleLogin = async (googleToken) => {
     try {
+      dispatch(loginStart());
+
       const res = await publicRequest.post("/auth/login/google", {
         token: googleToken,
       });
 
-      const { token, user } = res.data;
+      const user = res.data.data.user;
+      const token = res.data.data.tokens.access.token;
 
-      // Save to Redux/store or localStorage
       dispatch(loginSuccess({ user, token }));
+
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", token);
 
       toast.success("Logged in with Google!");
       navigate("/home");
     } catch (err) {
-      console.error("Google login failed:", err);
+      dispatch(LoginFailure());
       toast.error("Google login failed");
+      console.error("Google login error", err);
     }
   };
 
@@ -147,7 +157,7 @@ export default function SignIn() {
                 onClick={() => console.log("Forgot password clicked")}
                 className="text-sm text-blue-600 hover:text-blue-800 transition-colors"
               >
-                Forgot password
+                <Link to="/forgot-password">Forgot password</Link>
               </button>
             </div>
 

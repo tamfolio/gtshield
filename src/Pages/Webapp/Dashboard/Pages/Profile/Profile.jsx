@@ -26,8 +26,9 @@ function Profile() {
     gender: "Male",
   });
 
-  const token = useSelector((state) => state.user?.currentUser?.data?.tokens?.access?.token);
-  const userData = useSelector((state) => state.user?.currentUser?.data?.user);
+// Update your selectors to match the normalized structure
+const userData = useSelector((state) => state.user?.currentUser?.user);
+const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
   console.log(userData)
 
   const handleLogout = async () => {
