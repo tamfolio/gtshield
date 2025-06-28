@@ -170,6 +170,10 @@ export default function SignIn() {
           <div className="mt-8 space-y-3">
             <GoogleLogin
               onSuccess={(credentialResponse) => {
+                if (!credentialResponse.credential) {
+                  toast.error("No credential returned from Google");
+                  return;
+                }
                 handleGoogleLogin(credentialResponse.credential);
               }}
               onError={() => {

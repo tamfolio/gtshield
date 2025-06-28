@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { Mail, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { publicRequest } from "../../../requestMethod";
+import { useGoogleLogin } from "@react-oauth/google";
+
+
 
 const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
   const [email, setEmail] = useState("");
@@ -53,18 +56,67 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
   };
   
 
-  const handleSocialLogin = async (provider) => {
-    setLoadingProvider(provider);
-    // Simulate OAuth flow
-    setTimeout(() => {
-      alert(
-        `${
-          provider.charAt(0).toUpperCase() + provider.slice(1)
-        } sign-up initiated!\n\nIn a real app, this would redirect to ${provider}'s OAuth flow.`
-      );
-      setLoadingProvider("");
-    }, 1500);
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoadingProvider("google");
+      setLocalLoading(true);
+      try {
+        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+        });
+  
+        const profile = await res.json();
+  
+        const userEmail = profile.email;
+        if (!userEmail) {
+          throw new Error("No email returned from Google");
+        }
+  
+        // Store info in formData
+        setFormData((prev) => ({
+          ...prev,
+          email: userEmail,
+          firstName: profile.given_name || "",
+          lastName: profile.family_name || "",
+          avatar: profile.picture || "",
+        }));
+  
+        await publicRequest.post("/auth/signup/email", { email: userEmail });
+        onNext();
+      } catch (err) {
+        console.error("Google signup error:", err);
+        const msg =
+          err.response?.data?.message ||
+          err.message ||
+          "Something went wrong with Google sign-up.";
+        setEmailError(msg);
+      } finally {
+        setLoadingProvider("");
+        setLocalLoading(false);
+      }
+    },
+    onError: () => {
+      setEmailError("Google sign-in failed. Please try again.");
+    },
+  });
+  
+
+  const handleSocialLogin = (provider) => {
+    if (provider === "google") {
+      googleLogin();
+    } else {
+      setLoadingProvider(provider);
+      setTimeout(() => {
+        alert(
+          `${provider.charAt(0).toUpperCase() + provider.slice(1)} sign-up initiated!`
+        );
+        setLoadingProvider("");
+      }, 1500);
+    }
   };
+
 
   const SocialButton = ({ provider, icon, children, variant = "default" }) => (
     <button
@@ -190,7 +242,7 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
 
           {/* Social Login Buttons */}
           <div className="space-y-3 mb-6">
-            <SocialButton provider="google" icon="/assets/google.png">
+          <SocialButton provider="google" icon="/assets/google.png">
               Sign up with Google
             </SocialButton>
 
