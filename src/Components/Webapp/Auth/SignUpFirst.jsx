@@ -146,7 +146,7 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
         <div className="bg-white transform hover:scale-[1.01] transition-transform duration-300">
           {/* Logo */}
           <div className="flex justify-center mb-8">
-            <img src="/assets/logo2.png" alt="" />
+            <img src="/assets/Logomark.svg" alt="" />
           </div>
 
           {/* Header */}

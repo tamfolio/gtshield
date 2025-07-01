@@ -29,7 +29,7 @@ const DashboardNavbar = () => {
             <div className="flex items-center space-x-8">
               {/* Logo */}
               <div className="flex items-center">
-                <img src="/assets/logo2.png" alt="" />
+                <img src="/assets/Logomark.svg" alt="" />
               </div>
 
               {/* Desktop Navigation Items */}

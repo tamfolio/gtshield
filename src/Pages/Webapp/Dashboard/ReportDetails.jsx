@@ -283,16 +283,6 @@ const ReportDetails = () => {
                   </button>
                 )}
                 
-                {currentView === 'details' && (
-                  <button 
-                    onClick={handleEdit}
-                    className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                  >
-                    <Edit className="w-4 h-4" />
-                    <span>Edit</span>
-                  </button>
-                )}
-                
                 {currentView === 'edit' && (
                   <button 
                     onClick={handleSaveChanges}

@@ -80,7 +80,7 @@ export default function SignIn() {
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center">
-              <img src="/assets/logo2.png" alt="" />
+              <img src="/assets/Logomark.svg" alt="" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
               Log in to your account

@@ -72,7 +72,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 bg-blue-600 rounded-lg flex items-center justify-center">
-            <img src="/assets/logo2.png" alt="" />
+            <img src="/assets/Logomark.svg" alt="" />
           </div>
           <h2 className="mt-6 text-3xl font-bold text-gray-900">
             Create an account

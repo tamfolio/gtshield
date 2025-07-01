@@ -100,7 +100,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
             <div className="flex items-center space-x-8">
               {/* Logo */}
               <div className="flex items-center">
-                <img src="/assets/logo2.png" alt="Gateway Shield Logo" />
+                <img src="/assets/Logomark.svg" alt="Gateway Shield Logo" />
                 <span className="ml-2 text-xl font-bold text-gray-900">
                   Gateway Shield
                 </span>
@@ -197,7 +197,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <img src="/assets/logo2.png" alt="Gateway Shield Logo" />
+              <img src="/assets/Logomark.svg" alt="Gateway Shield Logo" />
               <span className="ml-2 text-lg font-bold text-gray-900">
                 Gateway Shield
               </span>
@@ -295,7 +295,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <img src="/assets/logo2.png" alt="Gateway Shield Logo" />
+              <img src="/assets/Logomark.svg" alt="Gateway Shield Logo" />
               <span className="ml-2 text-xl font-bold text-gray-900">
                 Gateway Shield
               </span>
@@ -325,14 +325,14 @@ const Navbar = ({ isAuthenticated, user = null }) => {
               : "translate-x-full"
           } fixed inset-y-0 ${
             isAuthenticated ? "left-0" : "right-0"
-          } z-50 w-80 bg-white shadow-xl transform transition-transform duration-300 ease-in-out`}
+          } z-50 w-full bg-white shadow-xl transform transition-transform duration-300 ease-in-out`}
         >
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full w-[100%]">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200">
               <div className="flex items-center">
                 <img
-                  src="/assets/logo2.png"
+                  src="/assets/Logomark.svg"
                   alt="Gateway Shield Logo"
                   className="w-8 h-8"
                 />
@@ -487,7 +487,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
         {/* Overlay */}
         {isMobileMenuOpen && (
           <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-40"
+            className="fixed inset-0 bg-[rgba(16, 24, 40, 0.7)] bg-opacity-20 z-40 w-full"
             onClick={toggleMobileMenu}
           ></div>
         )}

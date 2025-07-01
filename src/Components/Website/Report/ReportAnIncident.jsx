@@ -16,7 +16,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
     incidentType: "",
     description: "",
     address: "",
-    useMyLocation: false,
+    useMyLocation: true,
     nearestPoliceStation: "",
     images: [],
     video: null,
@@ -433,6 +433,12 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
     }
   };
 
+  useEffect(() => {
+    if (isAuthenticated && formData.useMyLocation) {
+      handleLocationCheckboxChange(true); // or directly call the function that gets location
+    }
+  }, [isAuthenticated]);
+
   //   try {
   //     const bodyData = {
   //       incidentTypeId: formData.incidentType,
@@ -549,7 +555,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
                       />
                       <label
                         htmlFor="useMyLocation"
-                        className="ml-2 block text-sm text-gray-700 flex items-center"
+                        className="ml-2 text-sm text-gray-700 flex items-center"
                       >
                         <MapPin className="w-4 h-4 mr-1" />
                         Use my Location

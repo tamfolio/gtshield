@@ -73,7 +73,7 @@ export const SignUpOtp = ({ formData, setFormData, onPrevious, onSubmit }) => {
           </div>
           <div className="text-center">
             <div className="mx-auto w-16 h-16 bg-white rounded-2xl flex items-center justify-center shadow-sm border border-gray-200 mb-8">
-              <img src="/assets/logo2.png" alt="Logo" />
+              <img src="/assets/Logomark.svg" alt="Logo" />
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
               Check your email

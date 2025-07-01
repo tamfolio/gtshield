@@ -7,7 +7,7 @@ function Footer() {
       <div className="flex flex-col md:flex-row items-start justify-between gap-5">
         <div className="flex flex-col items-start">
           <div className="flex items-center justify-center gap-2 mb-8">
-            <img src="/assets/logo2.png" alt="" />
+            <img src="/assets/Logomark.svg" alt="" />
             <h3 className="font-bold text-xl">Gateway Shield</h3>
           </div>
           <div className="w-[320px] text-[#535862]">
