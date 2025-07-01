@@ -136,8 +136,14 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
   };
 
   const handleIncidentTypeChange = useCallback((selectedOption) => {
+    if (!selectedOption || typeof selectedOption !== 'object') {
+      setFormData((prev) => ({ ...prev, incidentType: null }));
+      return;
+    }
+  
     setFormData((prev) => ({ ...prev, incidentType: selectedOption }));
   }, []);
+  
 
   const handleStationChange = useCallback((selected) => {
     setFormData((prev) => ({ ...prev, nearestPoliceStation: selected }));
