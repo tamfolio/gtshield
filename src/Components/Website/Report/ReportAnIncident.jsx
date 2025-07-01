@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
-function ReportAnIncident({ setCurrentPage }) {
+function ReportAnIncident({ setCurrentPage,setTrackingId }) {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
  // Update your selectors to match the normalized structure
 const userData = useSelector((state) => state.user?.currentUser?.user);
@@ -344,11 +344,11 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
         isDraft: null, // Set to false for actual submission
-        address: null,
+        address: "",
         description: formData.description,
         isIdentityHidden: null,
         isLocationHidden: false, // You can add another checkbox for this if needed
-        isAnonymous: false,
+        isAnonymous: true,
         channel: "web",
         stationId: null,
         userId: null,
@@ -356,6 +356,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
 
       console.log("🚀 Submitting form with data:", formData);
       console.log("🚀 Body data:", bodyData);
+      
 
       const formPayload = new FormData();
       formPayload.append("data", JSON.stringify(bodyData));
@@ -371,6 +372,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
 
       console.log("✅ Incident reported:", res.data);
       setShowSuccess(true);
+      setTrackingId(res.data.data.ticketId)
       setTicketId(res.data.data.ticketId);
 
       // Navigate to confirmation page or show success message
