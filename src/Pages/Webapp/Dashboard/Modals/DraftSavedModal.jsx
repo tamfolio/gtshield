@@ -2,13 +2,12 @@ import React from 'react';
 import { CheckCircle, X } from 'lucide-react';
 
 const DraftSavedModal = ({ isOpen, onClose, onViewReport, onStayOnPage, onRedirectToDashboard }) => {
-  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+        className="fixed inset-0 bg-[#101828B2] bg-opacity-70 transition-opacity"
         onClick={onClose}
       />
       
@@ -26,7 +25,7 @@ const DraftSavedModal = ({ isOpen, onClose, onViewReport, onStayOnPage, onRedire
           {/* Modal content */}
           <div className="px-6 pt-8 pb-6 sm:px-8">
             {/* Icon */}
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-green-100 mb-6">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#D1FADF] mb-6">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
 

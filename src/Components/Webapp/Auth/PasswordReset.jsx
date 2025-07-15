@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, Check } from "lucide-react";
-import Navbar from "../../Website/Navbar";
 import { publicRequest } from "../../../requestMethod";
 import { toast } from "react-toastify";
 
@@ -63,7 +62,6 @@ const resetPassword = async (otp,password) => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar isAuthenticated={false} />
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">

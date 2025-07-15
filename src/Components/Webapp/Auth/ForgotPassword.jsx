@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { ChevronLeft, Mail, Lock, Key, Check, Eye, EyeOff } from "lucide-react";
-import Navbar from "../../Website/Navbar";
 import { publicRequest } from "../../../requestMethod";
 import { toast } from "react-toastify";
 import { ForgotPasswordStep } from "./InitializePasswordReset";

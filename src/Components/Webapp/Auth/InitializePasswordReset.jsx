@@ -1,4 +1,4 @@
-import Navbar from "../../Website/Navbar";
+
 
 export const ForgotPasswordStep = ({email,setEmail,forgotPassword}) => (
     <div className="min-h-screen bg-gray-50 flex flex-col">

@@ -1,4 +1,3 @@
-import Navbar from "../../Website/Navbar";
 
 export const CheckEmailStep = ({email,otp,handleOtpChange,handleOtpKeyDown,setCurrentStep}) => (
     <div className="min-h-screen bg-gray-50 flex flex-col">

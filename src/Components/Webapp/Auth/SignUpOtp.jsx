@@ -1,10 +1,21 @@
 import React, { useState } from "react";
-import Navbar from "../../Website/Navbar";
 import { publicRequest } from "../../../requestMethod";
 import { toast } from "react-toastify";
 
-export const SignUpOtp = ({ formData, setFormData, onPrevious, onSubmit }) => {
+export const SignUpOtp = ({ formData,  onPrevious, onSubmit }) => {
   const [otpDigits, setOtpDigits] = useState(["", "", "", "", "", ""]);
+  const [localLoading, setLocalLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(600);
+
+  React.useEffect(() => {
+    if (resendTimer <= 0) return;
+
+    const interval = setInterval(() => {
+      setResendTimer((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [resendTimer]);
 
   const handleOtpChange = (index, value) => {
     if (!/^\d?$/.test(value)) return; // Only allow digits
@@ -21,6 +32,26 @@ export const SignUpOtp = ({ formData, setFormData, onPrevious, onSubmit }) => {
     if (/^\d$/.test(e.key) && index < 5) {
       const nextInput = document.getElementById(`otp-${index + 1}`);
       if (nextInput) setTimeout(() => nextInput.focus(), 10);
+    }
+  };
+
+  const handleOtpResend = async (e) => {
+    e.preventDefault();
+    const { email } = formData;
+
+    setLocalLoading(true);
+    try {
+      await publicRequest.post("/auth/signup/email", { email });
+      toast.success("OTP resent successfully.");
+      setResendTimer(600); // Restart the 10-minute timer
+    } catch (err) {
+      console.error("Email sign-up failed:", err);
+      const msg =
+        err.response?.data?.message ||
+        "Something went wrong. Please try again.";
+      toast.error(msg);
+    } finally {
+      setLocalLoading(false);
     }
   };
 
@@ -79,7 +110,7 @@ export const SignUpOtp = ({ formData, setFormData, onPrevious, onSubmit }) => {
               Check your email
             </h2>
             <p className="text-gray-600">
-              We sent an OTP to {formData.email || "your email"}
+              We sent an OTP to {formData?.email || "your email"}
             </p>
           </div>
 
@@ -109,10 +140,48 @@ export const SignUpOtp = ({ formData, setFormData, onPrevious, onSubmit }) => {
             </button>
 
             <div className="text-center">
-              <span className="text-gray-600">Didn't receive the email? </span>
-              <button className="text-blue-600 hover:text-blue-700 font-medium">
-                Click to resend
-              </button>
+              {resendTimer > 0 ? (
+                <span className="text-gray-500">
+                  You can resend OTP in{" "}
+                  <span className="font-semibold text-gray-700">
+                    {Math.floor(resendTimer / 60)}:
+                    {String(resendTimer % 60).padStart(2, "0")}
+                  </span>
+                </span>
+              ) : (
+                <button
+                  onClick={handleOtpResend}
+                  className="text-blue-600 hover:text-blue-700 font-medium flex items-center justify-center gap-2"
+                  disabled={localLoading}
+                >
+                  {localLoading ? (
+                    <>
+                      <svg
+                        className="animate-spin h-4 w-4 text-blue-600"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8H4z"
+                        />
+                      </svg>
+                      Sending...
+                    </>
+                  ) : (
+                    "Click to Resend"
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </div>

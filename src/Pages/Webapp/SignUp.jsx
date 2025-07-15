@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 const NotificationPermission = ({ onAllow, onDontAllow }) => {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-[rgba(16, 24, 40, 0.7)] bg-opacity-50 z-50">
       <div className="bg-white rounded-lg p-6 max-w-sm mx-4 text-center">
         <h2 className="text-lg font-semibold mb-4">
           "GATEWAY SHIELD" Would Like to Send You Notifications
@@ -41,7 +41,7 @@ const BackgroundLocationPermission = ({
   onKeepOnlyWhileUsing,
 }) => {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-[rgba(16, 24, 40, 0.7)] bg-opacity-50 z-50">
       <div className="bg-white rounded-lg p-6 max-w-sm mx-4 text-center">
         <h2 className="text-lg font-semibold mb-4">
           Allow "GATEWAY SHIELD" to also use your location even when you are not
@@ -79,7 +79,7 @@ const LocationPermission = () => {
   };
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-[rgba(16, 24, 40, 0.7)] bg-opacity-50 z-50">
       <div className="bg-white rounded-lg p-6 max-w-sm mx-4 text-center">
         <h2 className="text-lg font-semibold mb-4">
           Allow "GATEWAY SHIELD" to use your location?

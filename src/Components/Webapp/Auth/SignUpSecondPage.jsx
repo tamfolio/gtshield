@@ -8,9 +8,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
       toast.error("Please fill all required fields.");
       return;
     }
-  
-    // If validation passes
-    onNext(); // Go to OTP page
+    onNext(); 
   };
 
   const [showPassword, setShowPassword] = useState(false);
