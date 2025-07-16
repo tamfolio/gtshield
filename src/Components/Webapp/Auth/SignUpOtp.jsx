@@ -91,7 +91,6 @@ export const SignUpOtp = ({ formData,  onPrevious, onSubmit }) => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar isAuthenticated={false} />
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="max-w-md w-full space-y-8">
           <div className="text-left mb-4">
