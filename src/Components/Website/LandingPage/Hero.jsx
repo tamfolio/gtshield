@@ -23,7 +23,7 @@ function Hero() {
                 }
               }}
             >
-              Learn How It Works
+               How It Works
             </p>
           </div>
           <div className="w-full md:w-1/3 lg:w-1/4 text-white border-solid border-[1px] border-[#444CE7] bg-[#444CE7] rounded-md px-4 py-2 flex items-center justify-center">
