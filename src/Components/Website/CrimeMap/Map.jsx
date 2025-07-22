@@ -8,7 +8,7 @@ const Map = () => {
   const [crimeType, setCrimeType] = useState('Rape');
   const [hoveredArea, setHoveredArea] = useState(null);
 
-  // Crime data mapped to match the NAME_2 property from GeoJSON
+  
   const crimeData = {
     'AbeokutaNorth': { level: 'low', reports: 2 },
     'AbeokutaSouth': { level: 'moderate', reports: 4 },
