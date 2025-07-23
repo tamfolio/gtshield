@@ -510,7 +510,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
                     Report An Incident
                   </h1>
                   <p className="text-gray-600">
-                    Explain what happens and elaborate on the incident you would
+                    Explain what happened and elaborate on the incident you would
                     like to report.
                   </p>
                 </div>

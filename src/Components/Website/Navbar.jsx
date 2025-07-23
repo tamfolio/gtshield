@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 const Navbar = ({ isAuthenticated, user = null }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  
+
   const handleCrimeMapClick = (e) => {
     e.preventDefault();
 
@@ -149,7 +149,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
 
                   {/* User Avatar */}
                   <div className="flex items-center">
-                    <Link to='/profile'>
+                    <Link to="/profile">
                       <img
                         className="w-8 h-8 rounded-full"
                         src={
@@ -209,13 +209,22 @@ const Navbar = ({ isAuthenticated, user = null }) => {
               <div className="flex space-x-1">
                 {isAuthenticated ? (
                   <>
-                    <a href="/home" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                    <a
+                      href="/home"
+                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                    >
                       Home
                     </a>
-                    <a href="/dashboard" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                    <a
+                      href="/dashboard"
+                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                    >
                       Dashboard
                     </a>
-                    <a href="/reports" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                    <a
+                      href="/reports"
+                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                    >
                       Reports
                     </a>
                     <button
@@ -227,16 +236,22 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                   </>
                 ) : (
                   <>
-                    <a href="/" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                    <a
+                      href="/"
+                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                    >
                       Home
                     </a>
                     <button
-                      onClick={() => scrollToSection('about-section')}
+                      onClick={() => scrollToSection("about-section")}
                       className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
                     >
                       About
                     </button>
-                    <a href="/news" className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors">
+                    <a
+                      href="/news"
+                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                    >
                       News
                     </a>
                     <button
@@ -257,7 +272,7 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                       <Bell className="w-5 h-5" />
                     </Link>
                   </button>
-                  <Link to='/profile'>
+                  <Link to="/profile">
                     <img
                       className="w-8 h-8 rounded-full"
                       src={
@@ -270,6 +285,12 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                 </div>
               ) : (
                 <div className="flex items-center space-x-2">
+                  <a
+                    href="/report-incident"
+                    className="text-gray-700 font-semibold text-sm hover:text-blue-600 transition-colors"
+                  >
+                    Report Anonymously
+                  </a>
                   <a
                     href="/sign-up"
                     className="border border-gray-300 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"

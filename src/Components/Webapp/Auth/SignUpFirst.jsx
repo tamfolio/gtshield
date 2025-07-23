@@ -48,7 +48,7 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
     } catch (err) {
       console.error("Email sign-up failed:", err);
       const msg =
-        err.response?.data?.message || "Something went wrong. Please try again.";
+        err.response?.data?.error || "Something went wrong. Please try again.";
       setEmailError(msg);
     } finally {
       setLocalLoading(false);
@@ -88,7 +88,7 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
       } catch (err) {
         console.error("Google signup error:", err);
         const msg =
-          err.response?.data?.message ||
+          err.response?.data?.error ||
           err.message ||
           "Something went wrong with Google sign-up.";
         setEmailError(msg);

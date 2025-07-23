@@ -8,6 +8,12 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
       toast.error("Please fill all required fields.");
       return;
     }
+    
+    if (!formData.acceptTerms) {
+      toast.error("Please accept the Terms and Privacy Policy to continue.");
+      return;
+    }
+    
     onNext(); 
   };
 
@@ -21,7 +27,6 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
       [name]: type === "checkbox" ? checked : value,
     }));
   };
-
 
   const states = [
     "Abia",
@@ -108,9 +113,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
               </label>
               <div className="flex">
                 <select className="px-3 py-2 border border-gray-300 border-r-0 rounded-l-md bg-gray-50 text-gray-500 text-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
-                  <option>US</option>
-                  <option>UK</option>
-                  <option>CA</option>
+                  <option>NG</option>
                 </select>
                 <input
                   id="phoneNumber"
@@ -293,6 +296,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
                 </button>
               </div>
             </div>
+            
             {/* Terms and Privacy Policy */}
             <div className="flex items-center">
               <input

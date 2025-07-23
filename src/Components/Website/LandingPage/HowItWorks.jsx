@@ -6,19 +6,13 @@ const sections = [
     title: "Web",
     description:
       "Create an account to report incidents, track updates, and view crime maps",
-    image: "/assets/HIW1.png",
+    image: "/assets/HWIW1.png",
   },
   {
     id: "mobile",
     title: "Mobile App",
     description: "Upload photos/videos and get real-time notifications",
-    image: "/assets/HIW2.png",
-  },
-  {
-    id: "sms",
-    title: "SMS",
-    description: "Text your report by sending HELP to 1234",
-    image: "/assets/HIW3.png",
+    image: "/assets/HWIW2.png",
   },
   {
     id: "ivr",
@@ -61,7 +55,7 @@ function HowItWorks() {
           How it Works
         </h1>
         <p className="text-4xl font-semibold text-white mb-5">
-          5 ways to take action, wherever you are.
+          4 ways to take action, wherever you are.
         </p>
         <span className="text-lg text-white font-normal block">
           Whether you have a smartphone or not, you can report incidents, send

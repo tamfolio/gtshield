@@ -37,7 +37,7 @@ function Hero() {
           className="block md:hidden"
         />
       </div>
-      <div className="w-full flex flex-col md:flex-row items-center justify-between bg-[#FAFAFA] px-4 lg:px-[112px] py-16 lg:py-[96px] gap-8 lg:gap-0">
+      <div className="w-full flex flex-col md:flex-row items-center justify-center bg-[#FAFAFA] px-4 lg:px-[112px] py-16 lg:py-[96px] gap-8 lg:gap-20">
         <div className="flex flex-col items-center w-full lg:w-[384px] text-center gap-3">
           <h1 className="text-[48px] lg:text-6xl text-[#444CE7] font-semibold">
             1,000+

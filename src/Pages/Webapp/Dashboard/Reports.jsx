@@ -46,8 +46,10 @@ const GatewayShieldReports = () => {
   };
 
   const token = useSelector(
-    (state) => state?.user?.currentUser?.data?.tokens?.access?.token
+    (state) => state?.user?.currentUser?.tokens?.access?.token
   );
+
+  console.log(token)
 
   const fetchDrafts = async () => {
     setLoading(true);
@@ -68,9 +70,7 @@ const GatewayShieldReports = () => {
   const fetchIncidents = async () => {
     setLoading(true);
     try {
-      const res = await userRequest(token).get(
-        "/incident/all?page=1&size=10"
-      );
+      const res = await userRequest(token).get("/incident/all?page=1&size=10");
       console.log("✅ Incidents fetched:", res.data);
       setIncidents(res.data?.data?.incidents?.data || []);
     } catch (err) {
@@ -82,12 +82,12 @@ const GatewayShieldReports = () => {
   };
 
   useEffect(() => {
+    console.log("token in useEffect", token);
     if (token) {
       fetchDrafts();
       fetchIncidents();
     }
   }, [token]);
-
 
   const handleViewReport = () => {
     console.log("View report clicked");
@@ -122,8 +122,7 @@ const GatewayShieldReports = () => {
     setShowDeleteModal(true);
   };
 
-
-  console.log(token)
+  console.log(token);
   const handleConfirmDelete = async () => {
     try {
       await userRequest(token).delete(`/incident/${selectedDraft.id}`);
@@ -235,8 +234,6 @@ const GatewayShieldReports = () => {
     }
   };
 
- 
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar isAuthenticated={true} />
@@ -247,7 +244,14 @@ const GatewayShieldReports = () => {
           {["Report Incident", "All Reports", "Drafts"].map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
+              onClick={() => {
+                setActiveTab(tab);
+                if (tab === "Drafts") {
+                  fetchDrafts();
+                } else if (tab === "All Reports") {
+                  fetchIncidents();
+                }
+              }}
               className={`pb-3 px-1 text-sm font-medium border-b-2 transition-colors ${
                 activeTab === tab
                   ? "border-blue-600 text-blue-600"
@@ -262,13 +266,15 @@ const GatewayShieldReports = () => {
         {/* Report Form */}
         {activeTab === "Report Incident" && <ReportAnIncident />}
 
-        <DraftSavedModal
-          isOpen={isDraftModalOpen}
-          onClose={handleDraftClose}
-          onViewReport={handleViewReport}
-          onStayOnPage={handleStayOnPage}
-          onRedirectToDashboard={handleRedirectToDashboard}
-        />
+        {isDraftModalOpen && (
+          <DraftSavedModal
+            isOpen={isDraftModalOpen}
+            onClose={handleDraftClose}
+            onViewReport={handleViewReport}
+            onStayOnPage={handleStayOnPage}
+            onRedirectToDashboard={handleRedirectToDashboard}
+          />
+        )}
 
         {/* {isReportSubmittedModalOpen && !isDraftModalOpen && (
           <ReportSubmittedModal
@@ -453,7 +459,6 @@ const GatewayShieldReports = () => {
           SOS
         </button>
       </div>
-
     </div>
   );
 };
