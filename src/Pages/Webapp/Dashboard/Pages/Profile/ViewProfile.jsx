@@ -13,17 +13,10 @@ const userData = useSelector((state) => state.user?.currentUser?.user);
       <div className="hidden lg:block bg-gradient-to-r from-blue-100 via-purple-100 to-pink-100 rounded-xl p-8 mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center">
-            <div className="w-20 h-20 bg-white rounded-full overflow-hidden border-4 border-white shadow-sm">
-              <img
-                src="/api/placeholder/80/80"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
             <div className="ml-6">
               <h1 className="text-2xl font-semibold text-gray-900">Profile</h1>
               <p className="text-gray-600 mt-1">
-                Update your photo and personal details.
+                Update your personal details.
               </p>
             </div>
           </div>

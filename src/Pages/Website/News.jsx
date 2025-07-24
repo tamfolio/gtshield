@@ -5,10 +5,13 @@ import NewsHero from '../../Components/Website/News/NewsHero'
 import NewsBlog from '../../Components/Website/News/NewsBlog'
 import GetApp from '../../Components/Website/News/GetApp'
 
+
+
 function News() {
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
   return (
     <div>
-      <Navbar isAuthenticated={false}/>
+      <Navbar isAuthenticated={isAuthenticated}/>
       <NewsHero/>
       <NewsBlog/>
       <GetApp/>

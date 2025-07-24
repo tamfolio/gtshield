@@ -1,6 +1,7 @@
 import React from "react";
 
 function CrimeMapHero() {
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
   return (
     <>
       <div className="bg-[#FFFFFF] px-4 py-16 md:px-[112px] md:py-[96px]">
@@ -13,9 +14,14 @@ function CrimeMapHero() {
           </span>
         </div>
       </div>
-      <div className="w-full flex items-center justify-center bg-[#3538CD] text-white py-[20px] px-4">
-        <p><span className="underline">Log in</span> to see detailed reports, filters, and incident history</p>
-      </div>
+      {!isAuthenticated && (
+        <div className="w-full flex items-center justify-center bg-[#3538CD] text-white py-[20px] px-4">
+          <p>
+            <span className="underline">Log in</span> to see detailed reports,
+            filters, and incident history
+          </p>
+        </div>
+      )}
     </>
   );
 }

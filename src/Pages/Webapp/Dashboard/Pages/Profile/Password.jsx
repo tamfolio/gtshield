@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Eye, EyeOff, Monitor, Smartphone, MoreHorizontal } from "lucide-react";
 import { userRequest } from "../../../../../requestMethod";
 import {useSelector} from 'react-redux'
+import { toast } from "react-toastify";
 
 function Password() {
-  const token = useSelector((state) => state?.user?.currentUser?.data?.tokens?.access?.token);
+  const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
@@ -132,7 +133,7 @@ function Password() {
       const res = await userRequest(token).patch("user/update/password", payload);
   
       console.log("✅ Password updated successfully", res.data);
-      alert("Password updated successfully!");
+      toast("Password updated successfully!");
   
       // Reset form
       setFormData({
@@ -142,8 +143,8 @@ function Password() {
       });
     } catch (err) {
       console.error("❌ Error updating password", err.response?.data || err.message);
-      alert(
-        err.response?.data?.message ||
+      toast(
+        err.response?.data?.error ||
           "Failed to update password. Please try again."
       );
     }

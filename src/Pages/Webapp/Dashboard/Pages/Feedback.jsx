@@ -12,6 +12,7 @@ import {
   Settings,
   Trash2,
   Edit3,
+  Star,
 } from "lucide-react";
 import Navbar from "../../../../Components/Website/Navbar";
 import { userRequest } from "../../../../requestMethod";
@@ -19,6 +20,7 @@ import { useSelector } from "react-redux";
 import { fetchStations } from "../../../../Api/incidentApi";
 import Select from "react-select";
 import { toast } from "react-toastify";
+import { Link } from "react-router-dom";
 
 const SuccessModal = ({ isOpen, onClose, type }) => {
   if (!isOpen) return null;
@@ -44,15 +46,60 @@ const SuccessModal = ({ isOpen, onClose, type }) => {
             >
               Ok
             </button>
-            <button
-              onClick={onClose}
-              className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-            >
-              Go to Dashboard
-            </button>
+            <Link to="/home">
+              <button
+                className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+              >
+                Go to Dashboard
+              </button>
+            </Link>
           </div>
         </div>
       </div>
+    </div>
+  );
+};
+
+const StarRating = ({ rating, onRatingChange }) => {
+  const [hoveredRating, setHoveredRating] = useState(0);
+
+  const handleStarClick = (starValue) => {
+    onRatingChange(starValue);
+  };
+
+  const handleStarHover = (starValue) => {
+    setHoveredRating(starValue);
+  };
+
+  const handleStarLeave = () => {
+    setHoveredRating(0);
+  };
+
+  return (
+    <div className="flex items-center space-x-1">
+      {[1, 2, 3, 4, 5].map((starValue) => (
+        <button
+          key={starValue}
+          type="button"
+          onClick={() => handleStarClick(starValue)}
+          onMouseEnter={() => handleStarHover(starValue)}
+          onMouseLeave={handleStarLeave}
+          className="p-1 transition-colors focus:outline-none"
+        >
+          <Star
+            className={`w-8 h-8 transition-colors ${
+              starValue <= (hoveredRating || rating)
+                ? "text-yellow-400 fill-yellow-400"
+                : "text-gray-300"
+            }`}
+          />
+        </button>
+      ))}
+      {rating > 0 && (
+        <span className="ml-2 text-sm text-gray-600">
+          {rating} star{rating !== 1 ? "s" : ""}
+        </span>
+      )}
     </div>
   );
 };
@@ -61,6 +108,7 @@ const FeedbackPage = () => {
   const [feedbackType, setFeedbackType] = useState("Compliment");
   const [officerName, setOfficerName] = useState("");
   const [comment, setComment] = useState("");
+  const [rating, setRating] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [feedbackTypes, setFeedbackTypes] = useState([]);
   const [feedbackHistory, setFeedbackHistory] = useState([]);
@@ -68,17 +116,17 @@ const FeedbackPage = () => {
   const [activeTab, setActiveTab] = useState("Give Feedback");
 
   const token = useSelector(
-    (state) => state?.user?.currentUser?.data?.tokens?.access?.token
+    (state) => state?.user?.currentUser?.tokens?.access?.token
   );
 
   const formatDateTime = (isoString) => {
-    return new Date(isoString).toLocaleString('en-US', {
-      month: 'short',  // Jun
-      day: 'numeric',  // 25
-      year: 'numeric', // 2025
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+    return new Date(isoString).toLocaleString("en-US", {
+      month: "short", // Jun
+      day: "numeric", // 25
+      year: "numeric", // 2025
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
   const [formData, setFormData] = useState({
@@ -89,7 +137,28 @@ const FeedbackPage = () => {
     setFormData((prev) => ({ ...prev, nearestPoliceStation: selected }));
   }, []);
 
-  // Sample feedback history data
+  const handleRatingChange = (newRating) => {
+    setRating(newRating);
+  };
+
+  // Function to get the selected feedback type name
+  const getSelectedFeedbackTypeName = () => {
+    const selectedType = feedbackTypes.find((type) => type.id === feedbackType);
+    return selectedType ? selectedType.name.toLowerCase() : "";
+  };
+
+  // Function to check if rating should be shown
+  const shouldShowRating = () => {
+    const typeName = getSelectedFeedbackTypeName();
+    return typeName === "complaint" || typeName === "compliment";
+  };
+
+  // Function to handle feedback type change
+  const handleFeedbackTypeChange = (e) => {
+    setFeedbackType(e.target.value);
+    // Reset rating when changing feedback type
+    setRating(0);
+  };
 
   const getFeedbackTypes = async () => {
     try {
@@ -156,16 +225,31 @@ const FeedbackPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!feedbackType || !formData.nearestPoliceStation || !comment) {
-      toast.error("Please complete all required fields");
+    const showRating = shouldShowRating();
+    
+    // Validation - only require rating for complaint and compliment
+    if (
+      !feedbackType ||
+      !formData.nearestPoliceStation?.value ||
+      !comment ||
+      (showRating && rating === 0)
+    ) {
+      const missingRating = showRating && rating === 0;
+      toast.error(
+        missingRating 
+          ? "Please complete all required fields including the rating"
+          : "Please complete all required fields"
+      );
       return;
     }
 
     const payload = {
       feedbackTypeId: feedbackType,
-      stationId: formData.nearestPoliceStation,
+      stationId: formData.nearestPoliceStation?.value,
       comment,
       officerName: officerName.trim() || "Anonymous",
+      // Send actual rating for complaint/compliment, 0 for suggestion
+      rating: showRating ? rating : 0,
     };
 
     try {
@@ -179,6 +263,7 @@ const FeedbackPage = () => {
       setFormData({ nearestPoliceStation: null });
       setOfficerName("");
       setComment("");
+      setRating(0);
     } catch (error) {
       toast.error("Failed to submit feedback. Please try again.");
       console.error("Feedback submit error:", error?.response?.data || error);
@@ -207,16 +292,6 @@ const FeedbackPage = () => {
           </svg>
           Back
         </button>
-      </div>
-
-      {/* Breadcrumb - Desktop */}
-      <div className="hidden md:block px-6 py-4 bg-white border-b">
-        <div className="flex items-center text-sm text-gray-500">
-          <Home className="w-4 h-4 mr-2" />
-          <span className="mr-2">Home</span>
-          <span className="mr-2">/</span>
-          <span className="text-gray-900">Feedback</span>
-        </div>
       </div>
 
       <div className="px-4 md:px-6 py-6">
@@ -260,7 +335,7 @@ const FeedbackPage = () => {
                   </label>
                   <select
                     value={feedbackType}
-                    onChange={(e) => setFeedbackType(e.target.value)}
+                    onChange={handleFeedbackTypeChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
                   >
                     <option value="">Select feedback type</option>
@@ -281,9 +356,7 @@ const FeedbackPage = () => {
                     <Select
                       options={stations}
                       value={formData.nearestPoliceStation}
-                      onChange={(selectedOption) =>
-                        handleStationChange(selectedOption?.value || "")
-                      }
+                      onChange={handleStationChange}
                       placeholder="Search for nearest police station"
                       isSearchable
                       isClearable
@@ -320,6 +393,19 @@ const FeedbackPage = () => {
                   />
                 </div>
 
+                {/* Star Rating - Only show for Complaint and Compliment */}
+                {shouldShowRating() && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-3">
+                      Star Rating *
+                    </label>
+                    <StarRating
+                      rating={rating}
+                      onRatingChange={handleRatingChange}
+                    />
+                  </div>
+                )}
+
                 {/* Submit Button */}
                 <button
                   onClick={handleSubmit}
@@ -353,7 +439,9 @@ const FeedbackPage = () => {
                       <span className="text-gray-900 font-medium">
                         {item.feedbackType}
                       </span>
-                      <span className="text-gray-600">{formatDateTime(item.createdAt)}</span>
+                      <span className="text-gray-600">
+                        {formatDateTime(item.createdAt)}
+                      </span>
 
                       {/* <div className="flex justify-end space-x-2">
                         <button className="p-1 text-gray-400 hover:text-red-600 transition-colors">

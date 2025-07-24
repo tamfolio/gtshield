@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom"; // Add this import
+import { Link, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   ArrowRight,
@@ -17,7 +17,7 @@ import Navbar from "../../../../Components/Website/Navbar";
 import Footer from "../../../../Components/Website/LandingPage/Footer";
 
 const Community = () => {
-  const navigate = useNavigate(); // Add navigation hook
+  const navigate = useNavigate();
   const [selectedCategory, setSelectedCategory] = useState("View all");
   const [sortBy, setSortBy] = useState("Most recent");
   const [currentPage, setCurrentPage] = useState(1);
@@ -158,7 +158,7 @@ const Community = () => {
 
   return (
     <>
-      <Navbar isAuthenticated={TruckElectric} />
+      <Navbar isAuthenticated={true} />
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
         <div className="bg-white border-b">
@@ -178,195 +178,115 @@ const Community = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Main Content Area */}
-            <div className="lg:col-span-3">
-              {/* Category Filter */}
-              <div className="flex flex-wrap items-center justify-between mb-8">
-                <div className="flex flex-wrap gap-2 mb-4 lg:mb-0">
-                  {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => setSelectedCategory(category)}
-                      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        selectedCategory === category
-                          ? "bg-blue-600 text-white"
-                          : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
-                      }`}
-                    >
-                      {category}
-                    </button>
-                  ))}
-                </div>
-
-                <div className="relative">
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option>Most recent</option>
-                    <option>Most popular</option>
-                    <option>Oldest first</option>
-                  </select>
-                  <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Articles Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
-                {filteredArticles.map((article) => (
-                  <div
-                    key={article.id}
-                    className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
-                    onClick={() => handleArticleClick(article.id)} // Add click handler
-                  >
-                    <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg overflow-hidden">
-                      {article.gradient && (
-                        <div
-                          className={`absolute inset-0 bg-gradient-to-br ${article.gradient} opacity-20`}
-                        />
-                      )}
-                      <div className="absolute top-3 left-3">
-                        <span
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(
-                            article.category
-                          )}`}
-                        >
-                          {getCategoryIcon(article.category)}
-                          {article.category}
-                        </span>
-                      </div>
-                      <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <ArrowRight className="w-5 h-5 text-gray-600" />
-                      </div>
-                    </div>
-                    <div className="p-6">
-                      <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
-                        {article.title}
-                      </h3>
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                        {article.description}
-                      </p>
-                      <div className="flex items-center gap-3 text-sm text-gray-500">
-                        <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
-                            <User className="w-3 h-3" />
-                          </div>
-                          <span>{article.author}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          <span>{article.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Pagination */}
-              <div className="flex items-center justify-between">
-                <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-                  ← Previous
+        {/* Main Content - Centered */}
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Category Filter */}
+          <div className="flex flex-wrap items-center justify-between mb-8">
+            <div className="flex flex-wrap gap-2 mb-4 lg:mb-0">
+              {categories.map((category) => (
+                <button
+                  key={category}
+                  onClick={() => setSelectedCategory(category)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    selectedCategory === category
+                      ? "bg-blue-600 text-white"
+                      : "bg-white text-gray-600 hover:bg-gray-50 border border-gray-200"
+                  }`}
+                >
+                  {category}
                 </button>
-                <div className="flex items-center gap-2">
-                  {[1, 2, 3, "...", 8, 9, 10].map((page, index) => (
-                    <button
-                      key={index}
-                      className={`w-8 h-8 rounded text-sm ${
-                        page === currentPage
-                          ? "bg-blue-600 text-white"
-                          : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                </div>
-                <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
-                  Next →
-                </button>
-              </div>
+              ))}
             </div>
 
-            {/* Sidebar */}
-            <div className="lg:col-span-1">
-              {/* Community Surveys */}
-              <div className="bg-white rounded-lg p-6 shadow-sm mb-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <BarChart3 className="w-5 h-5 text-blue-600" />
-                  <h3 className="font-semibold text-lg">Community Surveys</h3>
-                </div>
-                <p className="text-gray-600 text-sm mb-6">
-                  No spam. Just the latest releases and tips, interesting
-                  articles, and exclusive interviews in your inbox every week.
-                </p>
-                <button className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors mb-3">
-                  <Link to="/survey">Start Survey</Link>
-                </button>
-                <button
-                  className="w-full border border-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                  onClick={() => setShowPoll(true)}
-                >
-                  Start Poll
-                </button>
-              </div>
+            <div className="relative">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="appearance-none bg-white border border-gray-200 rounded-lg px-4 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option>Most recent</option>
+                <option>Most popular</option>
+                <option>Oldest first</option>
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          </div>
 
-              {/* Sample Poll */}
-              {showPoll && (
-                <div className="bg-white rounded-lg p-6 shadow-sm">
-                  <h4 className="font-medium text-gray-900 mb-4">
-                    Question goes here and this is how it goes?
-                  </h4>
-                  <div className="space-y-3">
-                    {[
-                      { label: "Option 1", percentage: 10, selected: false },
-                      { label: "Option 2", percentage: 10, selected: true },
-                      { label: "Option 1", percentage: 10, selected: false },
-                      { label: "Option 1", percentage: 10, selected: false },
-                    ].map((option, index) => (
-                      <div key={index} className="space-y-2">
-                        <div
-                          className={`p-3 rounded-lg border-2 cursor-pointer transition-colors ${
-                            option.selected
-                              ? "border-blue-500 bg-blue-50"
-                              : "border-gray-200 hover:border-gray-300"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div
-                              className={`w-4 h-4 rounded-full border-2 ${
-                                option.selected
-                                  ? "border-blue-500 bg-blue-500"
-                                  : "border-gray-300"
-                              }`}
-                            >
-                              {option.selected && (
-                                <div className="w-2 h-2 bg-white rounded-full mx-auto mt-0.5" />
-                              )}
-                            </div>
-                            <span className="text-sm font-medium">
-                              {option.label}
-                            </span>
-                            <span className="text-sm text-gray-500 ml-auto">
-                              {option.percentage}%
-                            </span>
-                          </div>
-                        </div>
-                        <div className="bg-gray-200 rounded-full h-1">
-                          <div
-                            className="bg-blue-500 h-1 rounded-full transition-all duration-300"
-                            style={{ width: `${option.percentage}%` }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+          {/* Articles Grid - Centered */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {filteredArticles.map((article) => (
+              <div
+                key={article.id}
+                className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow group cursor-pointer"
+                onClick={() => handleArticleClick(article.id)}
+              >
+                <div className="relative h-48 bg-gradient-to-br from-gray-100 to-gray-200 rounded-t-lg overflow-hidden">
+                  {article.gradient && (
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${article.gradient} opacity-20`}
+                    />
+                  )}
+                  <div className="absolute top-3 left-3">
+                    <span
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getCategoryColor(
+                        article.category
+                      )}`}
+                    >
+                      {getCategoryIcon(article.category)}
+                      {article.category}
+                    </span>
+                  </div>
+                  <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <ArrowRight className="w-5 h-5 text-gray-600" />
                   </div>
                 </div>
-              )}
+                <div className="p-6">
+                  <h3 className="font-semibold text-lg text-gray-900 mb-2 group-hover:text-blue-600 transition-colors">
+                    {article.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {article.description}
+                  </p>
+                  <div className="flex items-center gap-3 text-sm text-gray-500">
+                    <div className="flex items-center gap-2">
+                      <div className="w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center">
+                        <User className="w-3 h-3" />
+                      </div>
+                      <span>{article.author}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{article.date}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination - Centered */}
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-4">
+              <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50">
+                ← Previous
+              </button>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, "...", 8, 9, 10].map((page, index) => (
+                  <button
+                    key={index}
+                    className={`min-w-[32px] h-8 px-2 rounded text-sm flex items-center justify-center ${
+                      page === currentPage
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+              <button className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900">
+                Next →
+              </button>
             </div>
           </div>
         </div>

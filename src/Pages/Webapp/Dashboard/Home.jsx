@@ -15,9 +15,11 @@ import { userRequest } from "../../../requestMethod";
 
 const Dashboard = () => {
   const navigate = useNavigate();
- // Update your selectors to match the normalized structure
-const userData = useSelector((state) => state.user?.currentUser?.user);
-const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
+  // Update your selectors to match the normalized structure
+  const userData = useSelector((state) => state.user?.currentUser?.user);
+  const token = useSelector(
+    (state) => state.user?.currentUser?.tokens?.access?.token
+  );
   const [hasReports, setHasReports] = useState(true);
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,6 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
       hour12: true,
     });
   };
-
 
   console.log(setHasReports);
 
@@ -106,9 +107,11 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
 
           {/* Buttons - Mobile: Stacked, Desktop: Side by side */}
           <div className="flex gap-3 justify-center">
-            <button className="bg-white text-[14px] hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg font-medium border border-gray-300 w-full sm:w-auto">
-              Emergency Contact
-            </button>
+            <Link to='/emergency-contact'>
+              <button className="bg-white text-[14px] hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg font-medium border border-gray-300 w-full sm:w-auto">
+                Emergency Contact
+              </button>
+            </Link>
             <button className="text-[14px] bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium w-full sm:w-auto">
               <Link to="/report-incident">Report an Incident</Link>
             </button>

@@ -1,24 +1,217 @@
-const MainView = ({ onStart, onCall }) => (
+import React, { useState, useRef, useEffect } from 'react';
+
+const SosComponent = ({ token, userRequest, userData, userLocation }) => {
+  const [currentView, setCurrentView] = useState('main');
+  const [isRecording, setIsRecording] = useState(false);
+  const [time, setTime] = useState(0);
+  const [playbackTime, setPlaybackTime] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [audioBlob, setAudioBlob] = useState(null);
+  const [audioLevels, setAudioLevels] = useState([]);
+  const [comment, setComment] = useState('');
+  const [address, setAddress] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const mediaRecorderRef = useRef(null);
+  const audioRef = useRef(null);
+  const intervalRef = useRef(null);
+  const playbackIntervalRef = useRef(null);
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
+      if (audioContextRef.current) audioContextRef.current.close();
+    };
+  }, []);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Set up audio analysis
+      audioContextRef.current = new AudioContext();
+      const source = audioContextRef.current.createMediaStreamSource(stream);
+      analyserRef.current = audioContextRef.current.createAnalyser();
+      source.connect(analyserRef.current);
+      
+      const mediaRecorder = new MediaRecorder(stream);
+      const chunks = [];
+      
+      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'audio/wav' });
+        setAudioBlob(blob);
+        setAudioUrl(URL.createObjectURL(blob));
+        setCurrentView('recorded');
+      };
+      
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start();
+      setIsRecording(true);
+      setCurrentView('recording');
+      
+      // Start timer and audio level monitoring
+      intervalRef.current = setInterval(() => {
+        setTime(prev => prev + 1);
+        updateAudioLevels();
+      }, 1000);
+      
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      alert('Could not access microphone. Please check permissions.');
+    }
+  };
+
+  const updateAudioLevels = () => {
+    if (analyserRef.current) {
+      const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+      analyserRef.current.getByteFrequencyData(dataArray);
+      
+      const levels = [];
+      for (let i = 0; i < 40; i++) {
+        const index = Math.floor((i / 40) * dataArray.length);
+        const value = dataArray[index];
+        levels.push((value / 255) * 40 + 10);
+      }
+      setAudioLevels(levels);
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (audioContextRef.current) audioContextRef.current.close();
+    }
+  };
+
+  const togglePlayback = () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.pause();
+        if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
+      } else {
+        audioRef.current.play();
+        playbackIntervalRef.current = setInterval(() => {
+          setPlaybackTime(audioRef.current.currentTime);
+        }, 100);
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const handleCall = () => {
+    // Handle emergency contact call
+    window.open('tel:911', '_self');
+  };
+
+  const handleSendSOS = async () => {
+    // Validate required fields
+    if (!address.trim()) {
+      alert('Please provide an address for the emergency');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const bodyData = {
+        address: address.trim(),
+        comment: comment.trim() || 'Emergency SOS alert',
+        isIdentityHidden: false,
+        isLocationHidden: false,
+        channel: 'web',
+        ...(userLocation && {
+          coordinates: `${userLocation.latitude}, ${userLocation.longitude}`
+        }),
+      };
+
+      console.log('🚀 Submitting SOS with data:', bodyData);
+
+      const formPayload = new FormData();
+      formPayload.append('data', JSON.stringify(bodyData));
+      
+      // Add audio if available
+      if (audioBlob) {
+        formPayload.append('audio', audioBlob, 'emergency_audio.wav');
+      }
+
+      const res = await userRequest(token).post('/sos/new', formPayload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      console.log('✅ SOS sent successfully:', res.data);
+      
+      // Show success and reset
+      alert('Emergency alert sent successfully!');
+      resetComponent();
+      
+    } catch (err) {
+      console.error('❌ Failed to send SOS:', err);
+      alert(err.response?.data?.message || 'Failed to send emergency alert. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const resetComponent = () => {
+    setCurrentView('main');
+    setTime(0);
+    setPlaybackTime(0);
+    setIsPlaying(false);
+    setAudioUrl(null);
+    setAudioBlob(null);
+    setAudioLevels([]);
+    setComment('');
+    setAddress('');
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
+  };
+
+  const MainView = () => (
     <div className="flex flex-col items-center justify-center" style={{ minHeight: 'calc(100vh - 64px)' }}>
       <h1 className="text-2xl font-semibold text-gray-900 mb-16">Emergency</h1>
       <div className="mb-16">
-        <button onClick={onStart} className="w-32 h-32 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
+        <button 
+          onClick={startRecording} 
+          className="w-32 h-32 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg transition-all duration-200 active:scale-95"
+        >
           SOS
         </button>
       </div>
       <h2 className="text-lg text-gray-700 mb-8">Choose Emergency Action</h2>
       <div className="space-y-4">
-        <button onClick={onStart} className="w-80 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
+        <button 
+          onClick={startRecording} 
+          className="w-80 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors duration-200"
+        >
           Send Emergency Alert
         </button>
-        <button onClick={onCall} className="w-80 py-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium">
+        <button 
+          onClick={handleCall} 
+          className="w-80 py-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium transition-colors duration-200"
+        >
           Call Emergency Contact
         </button>
       </div>
     </div>
   );
-  
-  const RecordingView = ({ time, isRecording, onStop, onSend, formatTime, audioLevels }) => (
+
+  const RecordingView = () => (
     <div className="flex flex-col items-center justify-center px-4" style={{ minHeight: 'calc(100vh - 64px)' }}>
       <h1 className="text-2xl font-semibold text-gray-900 mb-16">Emergency</h1>
       <div className="w-full max-w-md">
@@ -37,19 +230,43 @@ const MainView = ({ onStart, onCall }) => (
             </div>
           </div>
         </div>
-        <textarea className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg mb-4" placeholder="Tell us about what happened" />
-        <button onClick={onStop} className="w-full py-4 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg font-medium mb-4">
-          Stop Recording
-        </button>
-        <button onClick={onSend} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
-          Send
-        </button>
+        
+        <div className="space-y-4">
+          <input
+            type="text"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+            placeholder="Emergency location/address *"
+            required
+          />
+          <textarea 
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+            className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg" 
+            placeholder="Tell us about what happened" 
+          />
+          <button 
+            onClick={stopRecording} 
+            className="w-full py-4 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg font-medium transition-colors duration-200"
+          >
+            Stop Recording
+          </button>
+          <button 
+            onClick={handleSendSOS}
+            disabled={isSubmitting || !address.trim()}
+            className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors duration-200"
+          >
+            {isSubmitting ? 'Sending...' : 'Send Emergency Alert'}
+          </button>
+        </div>
       </div>
     </div>
   );
-  
-  const RecordedView = ({ time, playbackTime, isPlaying, audioRef, audioUrl, onPlayPause, onSend, formatTime }) => {
+
+  const RecordedView = () => {
     const progress = time > 0 ? playbackTime / time : 0;
+    
     return (
       <div className="flex flex-col items-center justify-center px-4" style={{ minHeight: 'calc(100vh - 64px)' }}>
         <h1 className="text-2xl font-semibold text-gray-900 mb-16">Emergency</h1>
@@ -61,7 +278,10 @@ const MainView = ({ onStart, onCall }) => (
             </div>
             <AudioWaveform isActive={false} playbackProgress={progress} />
             <div className="mt-4 flex items-center justify-center space-x-4">
-              <button onClick={onPlayPause} className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full">
+              <button 
+                onClick={togglePlayback} 
+                className="w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors duration-200"
+              >
                 {isPlaying ? '⏸' : '▶️'}
               </button>
               <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-2 text-green-600">
@@ -72,18 +292,51 @@ const MainView = ({ onStart, onCall }) => (
               </div>
             </div>
           </div>
-          <textarea className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg mb-4" placeholder="Tell us about what happened" />
-          <button onClick={onSend} className="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium">
-            Send
-          </button>
+          
+          <div className="space-y-4">
+            <input
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+              placeholder="Emergency location/address *"
+              required
+            />
+            <textarea 
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              className="w-full h-32 px-3 py-2 border border-gray-300 rounded-lg" 
+              placeholder="Tell us about what happened" 
+            />
+            <button 
+              onClick={handleSendSOS}
+              disabled={isSubmitting || !address.trim()}
+              className="w-full py-4 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors duration-200"
+            >
+              {isSubmitting ? 'Sending Emergency Alert...' : 'Send Emergency Alert'}
+            </button>
+          </div>
         </div>
+        
+        {audioUrl && (
+          <audio
+            ref={audioRef}
+            src={audioUrl}
+            onEnded={() => {
+              setIsPlaying(false);
+              setPlaybackTime(0);
+              if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
+            }}
+          />
+        )}
       </div>
     );
   };
-  
+
   const AudioWaveform = ({ isActive, playbackProgress = 0, audioLevels = [] }) => {
     const staticBars = [...Array(40)].map(() => Math.random() * 40 + 10);
     const bars = audioLevels.length > 0 ? audioLevels : staticBars;
+    
     return (
       <div className="flex items-center justify-center space-x-1 h-16">
         {bars.map((height, i) => {
@@ -94,13 +347,27 @@ const MainView = ({ onStart, onCall }) => (
               className={`transition-all duration-100 ${
                 isActive ? 'bg-red-500' : isInPlayback ? 'bg-blue-500' : 'bg-gray-300'
               }`}
-              style={{ width: '2px', height: `${height}px`, opacity: isActive || isInPlayback ? 0.8 : 0.6 }}
+              style={{ 
+                width: '2px', 
+                height: `${height}px`, 
+                opacity: isActive || isInPlayback ? 0.8 : 0.6 
+              }}
             />
           );
         })}
       </div>
     );
   };
-  
-  export default SosComponent;
-  
+
+  // Render current view
+  switch (currentView) {
+    case 'recording':
+      return <RecordingView />;
+    case 'recorded':
+      return <RecordedView />;
+    default:
+      return <MainView />;
+  }
+};
+
+export default SosComponent;

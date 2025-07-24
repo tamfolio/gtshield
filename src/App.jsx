@@ -24,6 +24,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import ForgotPasswordFlow from "./Components/Webapp/Auth/ForgotPassword";
 import SosComponent from "./Pages/Webapp/Dashboard/Pages/SOS/SosComponent";
+import EmergencyContact from "./Pages/Webapp/Dashboard/Pages/SOS/EmergencyContact";
 
 function App() {
   return (
@@ -47,6 +48,7 @@ function App() {
         <Route path="/feedback" element={<FeedbackPage />} />
         <Route path="/communities" element={<Community />} />
         <Route path="/sos" element={<SosComponent />} />
+        <Route path="/emergency-contact" element={<EmergencyContact />} />
         <Route path="/survey" element={<Survey />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/forgot-password" element={<ForgotPasswordFlow />} />

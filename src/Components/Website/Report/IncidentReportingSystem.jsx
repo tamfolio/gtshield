@@ -7,6 +7,8 @@ import ReportAnIncident from "./ReportAnIncident";
 const IncidentReportingSystem = ({ isAuthenticated }) => {
   const [currentPage, setCurrentPage] = useState("report");
   const [incidentTypes, setIncidentTypes] = useState([]);
+  const [copied, setCopied] = useState(false);
+
   const [StationsAvailable, setStationsAvailable] = useState([]);
   const [formData, setFormData] = useState({
     incidentType: "",
@@ -51,10 +53,15 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
 
   console.log(incidentTypes);
 
-
-  const copyTrackingId = useCallback(() => {
-    navigator.clipboard.writeText(trackingId);
-  }, [trackingId]);
+  const copyTrackingId = async () => {
+    try {
+      await navigator.clipboard.writeText(trackingId);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 10000); 
+    } catch (err) {
+      console.error("Failed to copy:", err);
+    }
+  };
 
   const handleResetForm = useCallback(() => {
     setFormData({ incidentType: "", description: "", image: null });
@@ -98,9 +105,13 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
                 />
                 <button
                   onClick={copyTrackingId}
-                  className="p-2 text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 relative"
                 >
-                  <Copy className="w-4 h-4" />
+                  {copied ? (
+                    <Check className="w-4 h-4 text-green-600" />
+                  ) : (
+                    <Copy className="w-4 h-4" />
+                  )}
                 </button>
               </div>
             </div>
@@ -183,7 +194,16 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
   }
 
   // Report page (default)
-  return <ReportAnIncident incidentTypes={incidentTypes} StationsAvailable={StationsAvailable} setCurrentPage={setCurrentPage} currentPage={currentPage} trackingId={trackingId} setTrackingId={setTrackingId}/>;
+  return (
+    <ReportAnIncident
+      incidentTypes={incidentTypes}
+      StationsAvailable={StationsAvailable}
+      setCurrentPage={setCurrentPage}
+      currentPage={currentPage}
+      trackingId={trackingId}
+      setTrackingId={setTrackingId}
+    />
+  );
 };
 
 export default IncidentReportingSystem;

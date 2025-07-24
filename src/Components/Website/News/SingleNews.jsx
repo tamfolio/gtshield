@@ -1,106 +1,167 @@
 import React from "react";
 import {
   ArrowLeft,
-  Calendar,
-  User,
-  ExternalLink,
-  MessageCircle,
-  Heart,
-  Share2,
+  Clock,
+  Link2,
+  Twitter,
+  Facebook,
+  Linkedin,
 } from "lucide-react";
 import Navbar from "../Navbar";
 import Footer from "../LandingPage/Footer";
+import { useNavigate } from "react-router-dom";
 
 const SingleNewsPage = ({ article }) => {
-  // Default article data if none provided
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+  const navigate = useNavigate();
+  
   const defaultArticle = {
     id: 1,
-    title: "Community Engagement Hub",
-    subtitle:
-      "How we've been changing communities for the better with our strategies and increase user engagement that can shift our clients goals on UX presentations.",
-    author: "Alec Whitten",
-    date: "17 Jan 2025",
+    title: "News Headline goes here",
+    subtitle: "How do you create compelling presentations that wow your colleagues and impress your managers? Find out with our in-depth guide on UX presentations.",
+    author: {
+      name: "Olivia Rhye",
+      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+      role: "Product Designer"
+    },
+    date: "Published 20 Jan 2024",
     readTime: "5 min read",
-    image:
-      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=500&fit=crop",
-    category: "Community Engagement",
-    tags: ["Community", "Engagement", "Strategy", "UX"],
+    tags: ["Design", "Research", "Presentation"],
     content: {
-      introduction:
-        "We believe that a positive force in lives, and, life often unexpected ways. During the initial customer journey, we ask a lot of questions designed to understand the client's vision and goals. Some family process companies and advice, they can view blueprint in an integral project process.",
       sections: [
         {
+          type: "text",
           heading: "Introduction",
-          text: "We believe that a positive force in lives, and, life often unexpected ways. During the initial customer journey, we ask a lot of questions designed to understand the client's vision and goals. Some family process companies and advice, they can view blueprint in an integral project process.\n\nNothing beats well-earned rest. Perfect feathers provided data which expect approach. Spite of traditional ideas and received thoughts lives of. Mostly, to basics out of feathers expected. Gently provide for our team and us.",
+          text: "Mi tincidunt elit, id quisque ligula ac diam, amet. Vel etiam suspendisse morbi eleifend faucibus eget vestibulum felis. Dictum quis montes, sit sit. Tellus aliquam enim urna, etiam. Mauris posuere vulputate arcu amet, vitae nisi, tellus tincidunt. At feugiat sapien varius id.\n\nEgestas tellus rutrum tellus pellentesque eu tincidunt. Neque tempor arcu feugiat purus diam, sem et. Eget turpis diam gravida accumsan, viverra. Lorem diam tincidunt varius elit, vehicula eu. Ultricies non amet elit. Quam id risus metus turpis volutpat. Amet massa volutpat id."
         },
         {
-          heading: "Software and tools",
-          text: "Slowly car buffalo more milk. Develop to graspable car math marked in. Non demonstrate change light nonetheless movie. Squash, various reusable well service. General with functional advisor networks. Scare well night of formal ideas. Seek our various help with are very different.\n\nGently provide for our team and us. Respect contribution, made task out-there. It necessary throughout difficult lives. Understood, hoping and blooming. Sprintax.\n\nSoft car to sketches and idea. Pushing at you, enter important communion experiences. Primarily help, ball considerations while life various helped care. Lightly hand, careful, and respectful. Feathers provided data which expect approach. Spite of traditional ideas and more towards future experienced. Memcache paper bonus hit. Alone times, approach bonus car ideas, sketches, primary.",
+          type: "quote",
+          text: "In a world older and more complete than ours they move finished and complete, gifted with extensions of the senses we have lost or never attained, living by voices we shall never hear.",
+          author: "Olivia Rhye, Product Designer"
         },
         {
-          heading: "Other resources",
-          text: "Slowly car buffalo more milk. Develop to graspable car math marked in. Non demonstrate change light nonetheless movie. Squash, various reusable well service. General with functional advisor networks. Scare well night of formal ideas. Seek our various help with are very different.\n\nGently provide for our team and us. Respect contribution, made task out-there. It necessary throughout difficult lives. Understood, hoping and blooming. Sprintax.",
+          type: "text",
+          text: "Dolor enim eu tortor urna sed duis nulla. Aliquam vestibulum, nulla odio nisl vitae. In aliquet pellentesque aenean hac vestibulum turpis mi bibendum diam. Tempor integer aliquam in vitae malesuada fringilla.\n\nElit nisi in eleifend sed nisi. Pulvinar at orci, proin imperdiet commodo consectetur convallis risus. Sed condimentum enim dignissim adipiscing faucibus consequat, urna. Viverra purus et erat auctor aliquam. Risus, volutpat vulputate posuere purus tincidunt eleifend."
         },
-      ],
-      quote:
-        "In a world diluted and more ubiquitous than ever, they never trusted and challenged, gifted with small versions of the greatest tools that could possibly be invented, we have never been more ready to excel.",
-    },
+        {
+          type: "image",
+          src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop",
+          caption: "Image caption goes here"
+        },
+        {
+          type: "text",
+          text: "Ipsum sit mattis nulla quam nulla. Gravida id gravida ac enim mauris id. Non pellentesque congue eget consectetur turpis. Sapien, dictum molestie sem tempor. Diam elit, orci, tincidunt aenean tempus. Quis velit eget ut tortor tellus. Sed vel, congue felis elit erat nam nibh orci."
+        },
+        {
+          type: "heading",
+          text: "Software and tools"
+        },
+        {
+          type: "text",
+          text: "Mi tincidunt elit, id quisque ligula ac diam, amet. Vel etiam suspendisse morbi eleifend faucibus eget vestibulum felis. Dictum quis montes, sit sit. Tellus aliquam enim urna, etiam. Mauris posuere vulputate arcu amet, vitae nisi, tellus tincidunt. At feugiat sapien varius id.\n\nEgestas tellus rutrum tellus pellentesque eu tincidunt. Neque tempor arcu feugiat purus diam, sem et. Eget turpis diam gravida accumsan, viverra. Lorem diam tincidunt varius elit, vehicula eu. Ultricies non amet elit. Quam id risus metus turpis volutpat. Amet massa volutpat id."
+        },
+        {
+          type: "heading",
+          text: "Other resources"
+        },
+        {
+          type: "text",
+          text: "Sagittis et eu at elementum, quis in. Proin praesent volutpat egestas sociis sit lorem nunc nunc sit. Eget diam curabitur mi ac. Auctor rutrum lacus malesuada massa ornare et. Vulputate consectetur ac ultrices at diam dui eget fringilla tincidunt. Arcu sit dignissim massa erat cursus vulputate gravida id. Sed quis auctor vulputate hac elementum gravida cursus dis.\n\n1. Lectus id duis vitae porttitor enim gravida morbi.\n2. Eu turpis posuere semper feugiat volutpat elit, ultrices suspendisse. Auctor vel in vitae placerat.\n3. Suspendisse maecenas ac donec scelerisque diam sed est duis purus."
+        },
+        {
+          type: "image",
+          src: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=400&fit=crop",
+          caption: ""
+        },
+        {
+          type: "text",
+          text: "Lectus leo eros faucibus bibendum quis vive. Mattis enim, nisl maecenas nulla diam mi tellus malesuada. Luctus lectus non pellentesque euismod. Dictum non saepe tempor non malesuada morbi duis. Convallis placerat morbi tristique scelerisque at sed. At id mauris venenatis faucibus id gravida ultrices. Quis elit commodo nisi consequat nulla sem bibendum phasellus."
+        },
+        {
+          type: "heading",
+          text: "Heading text"
+        },
+        {
+          type: "text",
+          text: "Morbi sed imperdiet in ipsum, adipiscing elit dui lectus. Tellus id scelerisque est ultricies ultricies. Duis est sit sed leo nisl, blandit elit sagittis. Quisque tristique consequat quam sed. Nisl at scelerisque amet nulla purus habitasse.\n\nNunc sed faucibus bibendum feugiat sed interdum. Ipsum egestas condimentum mi massa. In tincidunt pharetra consectetur sed duis facilisis metus. Etiam egestas in nec sed et. Quis lobortis at sit dictum eget nibh tortor commodo cursus.\n\nOdio felis sagittis, morbi feugiat tortor vitae feugiat fusce aliquet. Nam elementum urna nisi aliquet erat dolor enim. Ornare id morbi eget ipsum. Aliquam senectus neque ut id eget consectetur dictum. Donec posuere pharetra odio consequat scelerisque et, nunc tortor."
+        },
+        {
+          type: "image",
+          src: "https://images.unsplash.com/photo-1494790108755-2616c5a7e01f?w=800&h=400&fit=crop",
+          caption: ""
+        },
+        {
+          type: "text",
+          text: "Nulla efficitur eleifend nisi, sit amet bibendum sapien fringilla ac. Mauris euismod malesuada tellus. Praesent erat magna, gravida a turpis eget fringilla. Donec ac metus magna. Donec varius ante eget arcu malesuada vulputate. Nam vel nunc et felis facilisis tincidunt mauris non. Nulla rutrum vestibulum laoreet."
+        }
+      ]
+    }
   };
 
   const currentArticle = article || defaultArticle;
 
   const handleBack = () => {
-    // Navigate back to news list
-    console.log("Navigate back to news list");
+    navigate('/news');
+  };
+
+  const handleCopyLink = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    // You could add a toast notification here
+    alert('Link copied to clipboard!');
+  };
+
+  const handleShare = (platform) => {
+    const url = window.location.href;
+    const title = currentArticle.title;
+    
+    switch(platform) {
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(title)}`, '_blank');
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank');
+        break;
+      case 'linkedin':
+        window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(url)}`, '_blank');
+        break;
+    }
   };
 
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <Navbar isAuthenticated={false} />
+      <Navbar isAuthenticated={isAuthenticated} />
 
       {/* Article Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="max-w-3xl mx-auto px-4 py-8">
         {/* Back Button */}
         <button
           onClick={handleBack}
-          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6"
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 text-sm"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back to News</span>
+          <span>Back</span>
         </button>
 
         {/* Article Header */}
-        <div className="mb-8">
-          <div className="text-sm text-blue-600 font-medium mb-2">
-            Published Jan 17, 2025
+        <div className="mb-12 text-center">
+          <div className="text-sm text-purple-600 font-medium mb-3">
+            {currentArticle.date}
           </div>
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
             {currentArticle.title}
           </h1>
-          <p className="text-xl text-gray-600 mb-6">
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
             {currentArticle.subtitle}
           </p>
 
-          {/* Article Meta */}
-          <div className="flex items-center space-x-6 text-sm text-gray-500 mb-8">
-            <div className="flex items-center space-x-2">
-              <User className="w-4 h-4" />
-              <span>{currentArticle.author}</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Calendar className="w-4 h-4" />
-              <span>{currentArticle.date}</span>
-            </div>
-            <span>{currentArticle.readTime}</span>
-          </div>
-
           {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-8">
+          <div className="flex justify-center gap-2 mt-8">
             {currentArticle.tags.map((tag) => (
               <span
                 key={tag}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm"
+                className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm"
               >
                 {tag}
               </span>
@@ -108,215 +169,126 @@ const SingleNewsPage = ({ article }) => {
           </div>
         </div>
 
-        {/* Featured Image */}
-        <div className="mb-8">
-          <img
-            src={currentArticle.image}
-            alt={currentArticle.title}
-            className="w-full h-96 object-cover rounded-lg"
-          />
-        </div>
-
         {/* Article Content */}
         <div className="prose prose-lg max-w-none">
-          {/* Introduction Section */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Introduction
-            </h2>
-            <p className="text-gray-700 leading-relaxed mb-4">
-              We believe that a positive force in lives, and, life often
-              unexpected ways. During the initial customer journey, we ask a lot
-              of questions designed to understand the client's vision and goals.
-              Some family process companies and advice, they can view blueprint
-              in an integral project process.
-            </p>
-            <p className="text-gray-700 leading-relaxed">
-              Nothing beats well-earned rest. Perfect feathers provided data
-              which expect approach. Spite of traditional ideas and received
-              thoughts lives of. Mostly, to basics out of feathers expected.
-              Gently provide for our team and us.
-            </p>
-          </div>
+          {currentArticle.content.sections.map((section, index) => {
+            switch (section.type) {
+              case 'heading':
+                return (
+                  <h2 key={index} className="text-3xl font-bold text-gray-900 mt-12 mb-6">
+                    {section.text}
+                  </h2>
+                );
+              case 'text':
+                return (
+                  <div key={index} className="mb-6">
+                    {section.heading && (
+                      <h2 className="text-3xl font-bold text-gray-900 mb-6">
+                        {section.heading}
+                      </h2>
+                    )}
+                    <div className="text-gray-600 leading-relaxed whitespace-pre-line">
+                      {section.text}
+                    </div>
+                  </div>
+                );
+              case 'quote':
+                return (
+                  <blockquote key={index} className="border-l-4 border-purple-600 pl-6 py-4 my-12 bg-purple-50 rounded-r-lg">
+                    <p className="text-lg italic text-gray-800 mb-2">
+                      "{section.text}"
+                    </p>
+                    {section.author && (
+                      <cite className="text-sm text-gray-600 not-italic">
+                        — {section.author}
+                      </cite>
+                    )}
+                  </blockquote>
+                );
+              case 'image':
+                return (
+                  <figure key={index} className="my-10">
+                    <img
+                      src={section.src}
+                      alt={section.caption || 'Article image'}
+                      className="w-full rounded-lg"
+                    />
+                    {section.caption && (
+                      <figcaption className="text-sm text-gray-500 text-center mt-3">
+                        {section.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                );
+              default:
+                return null;
+            }
+          })}
+        </div>
 
-          {/* Image within content */}
-          <div className="mb-8">
-            <img
-              src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop"
-              alt="Team collaboration"
-              className="w-full h-64 object-cover rounded-lg"
-            />
-          </div>
-
-          {/* Main Content Sections */}
-          <div className="space-y-8">
-            <div>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                Slowly car buffalo more milk. Develop to graspable car math
-                marked in. Non demonstrate change light nonetheless movie.
-                Squash, various reusable well service. General with functional
-                advisor networks. Scare well night of formal ideas. Seek our
-                various help with are very different.
-              </p>
-              <p className="text-gray-700 leading-relaxed">
-                Gently provide for our team and us. Respect contribution, made
-                task out-there. It necessary throughout difficult lives.
-                Understood, hoping and blooming. Sprintax.
-              </p>
+        {/* Author Bio Section */}
+        <div className="border-t border-gray-200 pt-8 mt-16">
+          <div className="flex items-center justify-between">
+            {/* Left side - Author info */}
+            <div className="flex items-center gap-4">
+              {/* Author Avatar */}
+              <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
+                <img
+                  src={currentArticle.author.avatar}
+                  alt={currentArticle.author.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              
+              {/* Author Info */}
+              <div>
+                <h3 className="font-semibold text-gray-900 text-lg">
+                  {currentArticle.author.name}
+                </h3>
+                <p className="text-sm text-gray-500">{currentArticle.author.role}</p>
+              </div>
             </div>
 
-            {/* Quote Block */}
-            <blockquote className="border-l-4 border-blue-600 pl-6 py-4 my-8 bg-gray-50 rounded-r-lg">
-              <p className="text-lg italic text-gray-800">
-                "In a world diluted and more ubiquitous than ever, they never
-                trusted and challenged, gifted with small versions of the
-                greatest tools that could possibly be invented, we have never
-                been more ready to excel."
-              </p>
-              <cite className="text-sm text-gray-600 mt-2 block">
-                — Gateway Shield Team
-              </cite>
-            </blockquote>
-
-            <div>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                Gently provide for our team and us. Respect contribution, made
-                task out-there. It necessary throughout difficult lives.
-                Understood, hoping and blooming. Sprintax.
-              </p>
-              <p className="text-gray-700 leading-relaxed">
-                Soft car to sketches and idea. Pushing at you, enter important
-                communion experiences. Primarily help, ball considerations while
-                life various helped care. Lightly hand, careful, and respectful.
-                Feathers provided data which expect approach. Spite of
-                traditional ideas and more towards future experienced. Memcache
-                paper bonus hit. Alone times, approach bonus car ideas,
-                sketches, primary.
-              </p>
-            </div>
-
-            {/* Software and Tools Section */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Software and tools
-              </h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                We believe that a positive force in lives, and, life often
-                unexpected ways. During the initial customer journey, we ask a
-                lot of questions designed to understand the client's vision and
-                goals. Some family process companies and advice, they can view
-                blueprint in an integral project process.
-              </p>
-              <p className="text-gray-700 leading-relaxed">
-                Nothing beats well-earned rest. Perfect feathers provided data
-                which expect approach. Spite of traditional ideas and received
-                thoughts lives of. Mostly, to basics out of feathers expected.
-                Gently provide for our team and us.
-              </p>
-            </div>
-
-            {/* Other Resources Section */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Other resources
-              </h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                Slowly car buffalo more milk. Develop to graspable car math
-                marked in. Non demonstrate change light nonetheless movie.
-                Squash, various reusable well service. General with functional
-                advisor networks. Scare well night of formal ideas. Seek our
-                various help with are very different.
-              </p>
-
-              <ul className="list-disc list-inside space-y-2 text-gray-700">
-                <li>
-                  A comprehensive guide to effective community engagement
-                  strategies
-                </li>
-                <li>
-                  Case studies from successful community transformation projects
-                </li>
-                <li>Tools and templates for measuring community impact</li>
-                <li>Best practices for sustainable community development</li>
-                <li>
-                  Free tools generators designed through combined use utilizing
-                  engagement, directly and to stay productive
-                </li>
-                <li>
-                  Development software programs or technical ideas and more
-                </li>
-              </ul>
-            </div>
-
-            {/* Final Image */}
-            <div className="mb-8">
-              <img
-                src="https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=500&fit=crop"
-                alt="Professional workspace"
-                className="w-full h-80 object-cover rounded-lg"
-              />
-            </div>
-
-            {/* Closing Text */}
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Moving fast
-              </h2>
-              <p className="text-gray-700 leading-relaxed mb-4">
-                Rapidly changing context demands agility. As we learn, teach to
-                understand applications while this can be the best learned
-                programs. Promote communication between individuals and teams
-                while ensuring the best outcomes for the community.
-              </p>
-              <p className="text-gray-700 leading-relaxed">
-                Through quality coaching and outcomes coming into practice,
-                achieve clients and activities. Contribute and engaged future
-                and personal skill. Structure ability tuning and continuing
-                education programs. Programs for local staff and community
-                collaboration, data effective and inclusive deployment.
-              </p>
+            {/* Right side - Share buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleCopyLink}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Copy link"
+              >
+                <Link2 className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => handleShare('twitter')}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Share on Twitter"
+              >
+                <Twitter className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => handleShare('facebook')}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Share on Facebook"
+              >
+                <Facebook className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => handleShare('linkedin')}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                title="Share on LinkedIn"
+              >
+                <Linkedin className="w-5 h-5" />
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Article Actions */}
-        <div className="border-t border-gray-200 pt-6 mt-12">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-4">
-              <button className="flex items-center space-x-2 text-gray-600 hover:text-red-600">
-                <Heart className="w-5 h-5" />
-                <span className="text-sm sm:text-base">24</span>
-              </button>
-              <button className="flex items-center space-x-2 text-gray-600 hover:text-blue-600">
-                <MessageCircle className="w-5 h-5" />
-                <span className="text-sm sm:text-base">12</span>
-              </button>
-              <button className="flex items-center space-x-2 text-gray-600 hover:text-blue-600">
-                <Share2 className="w-5 h-5" />
-                <span className="text-sm sm:text-base">Share</span>
-              </button>
-            </div>
-            <div className="text-sm text-gray-500 sm:text-right">
-              Last updated: {currentArticle.date}
-            </div>
-          </div>
-        </div>
-
-        {/* Author Bio */}
-        <div className="border-t border-gray-200 pt-6 mt-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-              <span className="text-blue-600 font-semibold">AW</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                {currentArticle.author}
-              </h3>
-              <p className="text-sm text-gray-600">
-                Community Engagement Specialist
-              </p>
-            </div>
-          </div>
+        {/* Social Share - Simple text at bottom */}
+        <div className="mt-12 mb-20 text-center">
+          <p className="text-sm text-gray-500">
+            <Clock className="w-4 h-4 inline mr-1" />
+            {currentArticle.readTime}
+          </p>
         </div>
       </div>
 

@@ -7,8 +7,13 @@ const Map = () => {
   const [dateRange, setDateRange] = useState('Last 7 Days');
   const [crimeType, setCrimeType] = useState('Rape');
   const [hoveredArea, setHoveredArea] = useState(null);
+  const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [zoomLevel, setZoomLevel] = useState(1);
+  const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
+  const [touchStartDistance, setTouchStartDistance] = useState(0);
 
-  
   const crimeData = {
     'AbeokutaNorth': { level: 'low', reports: 2 },
     'AbeokutaSouth': { level: 'moderate', reports: 4 },
@@ -99,6 +104,117 @@ const Map = () => {
     return matchingKey ? crimeData[matchingKey] : { level: 'normal', reports: 0 };
   };
 
+  // Get touch distance for pinch zoom
+  const getTouchDistance = (touches) => {
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  };
+
+  // Handle mouse move to track cursor position
+  const handleMouseMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setMousePosition({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+
+    // Handle panning
+    if (isPanning) {
+      const deltaX = e.clientX - lastPanPoint.x;
+      const deltaY = e.clientY - lastPanPoint.y;
+      
+      setPanOffset(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPanPoint({ x: e.clientX, y: e.clientY });
+    }
+  };
+
+  // Handle touch move for mobile
+  const handleTouchMove = (e) => {
+    e.preventDefault(); // Prevent default scrolling behavior
+    
+    if (e.touches.length === 1 && isPanning) {
+      // Single touch - panning
+      const touch = e.touches[0];
+      const deltaX = touch.clientX - lastPanPoint.x;
+      const deltaY = touch.clientY - lastPanPoint.y;
+      
+      setPanOffset(prev => ({
+        x: prev.x + deltaX,
+        y: prev.y + deltaY
+      }));
+      
+      setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+    } else if (e.touches.length === 2) {
+      // Two touch - pinch zoom
+      const currentDistance = getTouchDistance(e.touches);
+      if (touchStartDistance > 0) {
+        const scale = currentDistance / touchStartDistance;
+        const newZoom = Math.max(0.5, Math.min(5, zoomLevel * scale));
+        setZoomLevel(newZoom);
+        setTouchStartDistance(currentDistance);
+      }
+    }
+  };
+
+  // Handle zoom
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev * 1.5, 5));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev / 1.5, 0.5));
+  };
+
+  // Handle pan start
+  const handleMouseDown = (e) => {
+    setIsPanning(true);
+    setLastPanPoint({ x: e.clientX, y: e.clientY });
+    e.preventDefault();
+  };
+
+  // Handle touch start
+  const handleTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      // Single touch - start panning
+      setIsPanning(true);
+      const touch = e.touches[0];
+      setLastPanPoint({ x: touch.clientX, y: touch.clientY });
+    } else if (e.touches.length === 2) {
+      // Two touches - start pinch zoom
+      setIsPanning(false);
+      setTouchStartDistance(getTouchDistance(e.touches));
+    }
+  };
+
+  // Handle pan end
+  const handleMouseUp = () => {
+    setIsPanning(false);
+  };
+
+  // Handle touch end
+  const handleTouchEnd = () => {
+    setIsPanning(false);
+    setTouchStartDistance(0);
+  };
+
+  // Reset zoom and pan
+  const handleReset = () => {
+    setZoomLevel(1);
+    setPanOffset({ x: 0, y: 0 });
+  };
+
+  // Handle wheel zoom
+  const handleWheel = (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    setZoomLevel(prev => Math.max(0.5, Math.min(5, prev * delta)));
+  };
+
   const legendItems = [
     { color: 'bg-yellow-500', label: '0-2 reports/km²', description: 'Low crime concentration' },
     { color: 'bg-orange-500', label: '3-7 reports/km²', description: 'Moderate crime activity' },
@@ -161,8 +277,24 @@ const Map = () => {
       </div>
 
       {/* Map Container */}
-      <div className="relative bg-white rounded-lg border shadow-sm p-4 min-h-96">
-        <svg viewBox="0 0 800 600" className="w-full h-full bg-gray-50">
+      <div className="relative bg-white rounded-lg border shadow-sm p-4 min-h-96 overflow-hidden">
+        <svg 
+          viewBox="0 0 800 600" 
+          className="w-full h-full bg-gray-50 cursor-grab active:cursor-grabbing touch-none"
+          onMouseMove={handleMouseMove}
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onWheel={handleWheel}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ userSelect: 'none', touchAction: 'none' }}
+        >
+          <g 
+            transform={`translate(${panOffset.x}, ${panOffset.y}) scale(${zoomLevel})`}
+            transformOrigin="400 300"
+          >
           {geoData?.features?.map((feature, index) => {
             const lgaName = feature.properties.NAME_2;
             const crimeInfo = getCrimeDataForLGA(lgaName);
@@ -198,60 +330,60 @@ const Map = () => {
             }
             return null;
           })}
+          </g>
         </svg>
         
         {/* Zoom Controls */}
         <div className="absolute top-4 right-4 flex flex-col gap-1 bg-white rounded shadow-md">
-          <button className="w-8 h-8 bg-white border-b border-gray-200 flex items-center justify-center hover:bg-gray-50 first:rounded-t last:rounded-b">
+          <button 
+            onClick={handleZoomIn}
+            className="w-10 h-10 md:w-8 md:h-8 bg-white border-b border-gray-200 flex items-center justify-center hover:bg-gray-50 first:rounded-t last:rounded-b transition-colors"
+            title="Zoom In"
+          >
             <span className="text-lg font-bold text-gray-600">+</span>
           </button>
-          <button className="w-8 h-8 bg-white flex items-center justify-center hover:bg-gray-50 first:rounded-t last:rounded-b">
+          <button 
+            onClick={handleZoomOut}
+            className="w-10 h-10 md:w-8 md:h-8 bg-white border-b border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
+            title="Zoom Out"
+          >
             <span className="text-lg font-bold text-gray-600">−</span>
           </button>
+          <button 
+            onClick={handleReset}
+            className="w-10 h-10 md:w-8 md:h-8 bg-white flex items-center justify-center hover:bg-gray-50 first:rounded-t last:rounded-b transition-colors text-xs"
+            title="Reset View"
+          >
+            <span className="text-gray-600">⌂</span>
+          </button>
+        </div>
+
+        {/* Zoom Level Indicator */}
+        <div className="absolute bottom-4 right-4 bg-white px-2 py-1 rounded shadow text-xs text-gray-600">
+          {Math.round(zoomLevel * 100)}%
+        </div>
+
+        {/* Mobile Instructions */}
+        <div className="absolute bottom-4 left-4 bg-black bg-opacity-75 text-white px-2 py-1 rounded text-xs md:hidden">
+          Pinch to zoom • Drag to pan
         </div>
         
-        {/* Hover Tooltip */}
+        {/* Mouse-Following Tooltip */}
         {hoveredArea && (
-          <div className="absolute top-4 left-4 bg-black text-white px-3 py-2 rounded shadow-lg text-sm">
+          <div 
+            className="absolute bg-black text-white px-3 py-2 rounded shadow-lg text-sm pointer-events-none z-10"
+            style={{
+              left: mousePosition.x + 10,
+              top: mousePosition.y - 10,
+              transform: mousePosition.x > 400 ? 'translateX(-100%)' : 'none'
+            }}
+          >
             <div className="font-medium">{hoveredArea}</div>
             <div>{getCrimeDataForLGA(hoveredArea).reports} reports</div>
             <div className="text-xs opacity-75 capitalize">{getCrimeDataForLGA(hoveredArea).level} activity</div>
           </div>
         )}
       </div>
-      
-      {/* Legend */}
-      <div className="mt-6 flex flex-wrap gap-8 justify-center">
-        {legendItems.map((item, index) => (
-          <div key={index} className="flex items-center gap-2">
-            <div className={`w-5 h-5 rounded ${item.color}`}></div>
-            <div className="text-sm">
-              <div className="font-semibold text-gray-800">{item.label}</div>
-              <div className="text-gray-600 text-xs">{item.description}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      
-      {/* Stats Summary */}
-      {/* <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-gray-50 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-gray-800">{Object.values(crimeData).reduce((sum, data) => sum + data.reports, 0)}</div>
-          <div className="text-sm text-gray-600">Total Reports</div>
-        </div>
-        <div className="bg-red-50 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-red-600">{Object.values(crimeData).filter(data => data.level === 'high').length}</div>
-          <div className="text-sm text-gray-600">High Risk Areas</div>
-        </div>
-        <div className="bg-orange-50 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-orange-600">{Object.values(crimeData).filter(data => data.level === 'moderate').length}</div>
-          <div className="text-sm text-gray-600">Moderate Risk</div>
-        </div>
-        <div className="bg-green-50 p-4 rounded-lg text-center">
-          <div className="text-2xl font-bold text-green-600">{Object.values(crimeData).filter(data => data.level === 'normal').length}</div>
-          <div className="text-sm text-gray-600">Safe Areas</div>
-        </div>
-      </div> */}
     </div>
   );
 };
