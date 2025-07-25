@@ -18,6 +18,7 @@ export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const dispatch = useDispatch();
@@ -37,18 +38,15 @@ export default function SignIn() {
       toast.success("Login successful!");
       navigate("/home");
     } catch (err) {
-      toast.error(err?.response?.data?.error);
+      toast.error(err?.response?.data?.error || "Login failed");
       console.error("Login Error:", err?.response?.data?.error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    console.log(`Sign in with ${provider}`);
-  };
-
   const handleGoogleLogin = async (googleToken) => {
+    setGoogleLoading(true);
     try {
       dispatch(loginStart());
 
@@ -68,15 +66,21 @@ export default function SignIn() {
       navigate("/home");
     } catch (err) {
       dispatch(LoginFailure());
-      toast.error("Google login failed");
+      toast.error(err?.response?.data?.error || "Google login failed");
       console.error("Google login error", err);
+    } finally {
+      setGoogleLoading(false);
     }
+  };
+
+  const handleSocialLogin = (provider) => {
+    console.log(`Sign in with ${provider}`);
   };
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl  p-8">
+        <div className="bg-white rounded-2xl p-8">
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center">
@@ -176,23 +180,59 @@ export default function SignIn() {
             </button>
           </div>
 
-          {/* Social Login Options */}
-          <div className="mt-8 space-y-3">
-            <GoogleLogin
-              onSuccess={(credentialResponse) => {
-                if (!credentialResponse.credential) {
-                  toast.error("No credential returned from Google");
-                  return;
-                }
-                handleGoogleLogin(credentialResponse.credential);
-              }}
-              onError={() => {
-                toast.error("Google Sign In Failed");
-              }}
-            />
+          {/* Divider */}
+          <div className="relative mt-8 mb-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-200"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-4 bg-white text-gray-500 font-medium">
+                OR
+              </span>
+            </div>
+          </div>
 
+          {/* Google Login - Custom Styled */}
+          <div className="space-y-3 mb-6">
+            <div className="relative">
+              {googleLoading && (
+                <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
+                    Signing in...
+                  </div>
+                </div>
+              )}
+              
+              <GoogleLogin
+                onSuccess={(credentialResponse) => {
+                  console.log("Google login success:", credentialResponse);
+                  if (!credentialResponse.credential) {
+                    toast.error("No credential returned from Google");
+                    return;
+                  }
+                  handleGoogleLogin(credentialResponse.credential);
+                }}
+                onError={(error) => {
+                  console.error("Google login error:", error);
+                  toast.error("Google Sign In Failed");
+                  setGoogleLoading(false);
+                }}
+                useOneTap={false}
+                auto_select={false}
+                theme="outline"
+                size="large"
+                text="signin_with"
+                shape="rectangular"
+                logo_alignment="left"
+                width="100%"
+                disabled={googleLoading}
+              />
+            </div>
+
+            {/* Other Social Login Buttons */}
             <button
-              onClick={() => handleSocialLogin("Facebook")}
+              onClick={() => handleSocialLogin("facebook")}
               className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <svg className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
@@ -202,7 +242,7 @@ export default function SignIn() {
             </button>
 
             <button
-              onClick={() => handleSocialLogin("Apple")}
+              onClick={() => handleSocialLogin("apple")}
               className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
             >
               <svg className="w-5 h-5 mr-3" fill="#000000" viewBox="0 0 24 24">
@@ -213,14 +253,14 @@ export default function SignIn() {
           </div>
 
           {/* Sign Up Link */}
-          <div className="text-center mt-8">
+          <div className="text-center">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
               <button
                 onClick={() => console.log("Sign up clicked")}
                 className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
               >
-                Sign up
+                <Link to="/signup">Sign up</Link>
               </button>
             </p>
           </div>

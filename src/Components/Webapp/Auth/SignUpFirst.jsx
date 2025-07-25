@@ -246,13 +246,13 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
               Sign up with Google
             </SocialButton>
 
-            <SocialButton provider="facebook" icon="/assets/facebook.png">
+            {/* <SocialButton provider="facebook" icon="/assets/facebook.png">
               Sign up with Facebook
             </SocialButton>
 
             <SocialButton provider="apple" icon="/assets/apple.png">
               Sign up with Apple
-            </SocialButton>
+            </SocialButton> */}
           </div>
 
           {/* Login Link */}
