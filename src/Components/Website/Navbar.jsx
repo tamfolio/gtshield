@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { Menu, X, Settings, ExternalLink, Bell } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
 
 const Navbar = ({ isAuthenticated, user = null }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
+  const userData = useSelector((state) => state.user?.currentUser?.user);
 
+  console.log(userData.fullName);
   const handleCrimeMapClick = (e) => {
     e.preventDefault();
 
@@ -29,9 +33,15 @@ const Navbar = ({ isAuthenticated, user = null }) => {
     }
   };
 
+  // Check if route is active
+  const isActive = (href) => {
+    return (
+      location.pathname === href || (href === "/" && location.pathname === "/")
+    );
+  };
+
   // Navigation items for authenticated users
   const authenticatedNavItems = [
-    { name: "Home", href: "/home" },
     { name: "Dashboard", href: "/dashboard" },
     { name: "Reports", href: "/reports" },
     { name: "SOS", href: "/sos" },
@@ -116,7 +126,9 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                     <button
                       key={index}
                       onClick={() => scrollToSection(item.target)}
-                      className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
+                      className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                        isActive(item.href) ? "text-[#3538CD]" : "text-gray-700"
+                      } hover:text-[#3538CD]`}
                     >
                       {item.name}
                     </button>
@@ -124,7 +136,9 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                     <a
                       key={index}
                       href={item.href}
-                      className="text-gray-700 hover:text-blue-600 px-3 py-2 text-sm font-medium transition-colors duration-200"
+                      className={`px-3 py-2 text-sm font-medium transition-colors duration-200 ${
+                        isActive(item.href) ? "text-[#3538CD]" : "text-gray-700"
+                      } hover:text-[#3538CD]`}
                     >
                       {item.name}
                     </a>
@@ -139,9 +153,9 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                 // Authenticated user items
                 <>
                   {/* Settings */}
-                  <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                  {/* <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
                     <Settings className="w-5 h-5" />
-                  </button>
+                  </button> */}
 
                   {/* Notifications */}
                   <button className="p-2 text-gray-400 hover:text-gray-600 transition-colors">
@@ -153,14 +167,11 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                   {/* User Avatar */}
                   <div className="flex items-center">
                     <Link to="/profile">
-                      <img
-                        className="w-8 h-8 rounded-full"
-                        src={
-                          user?.avatar ||
-                          "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
-                        }
-                        alt="User avatar"
-                      />
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center">
+                        <span className="text-white font-bold text-sm">
+                          {userData?.fullName?.charAt(0)?.toUpperCase() || "U"}
+                        </span>
+                      </div>
                     </Link>
                   </div>
                 </>
@@ -213,26 +224,32 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                 {isAuthenticated ? (
                   <>
                     <a
-                      href="/home"
-                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
-                    >
-                      Home
-                    </a>
-                    <a
                       href="/dashboard"
-                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                      className={`px-2 py-2 text-sm font-medium transition-colors ${
+                        isActive("/dashboard")
+                          ? "text-[#3538CD]"
+                          : "text-gray-700"
+                      } hover:text-[#3538CD]`}
                     >
                       Dashboard
                     </a>
                     <a
                       href="/reports"
-                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                      className={`px-2 py-2 text-sm font-medium transition-colors ${
+                        isActive("/reports")
+                          ? "text-[#3538CD]"
+                          : "text-gray-700"
+                      } hover:text-[#3538CD]`}
                     >
                       Reports
                     </a>
                     <button
                       onClick={handleCrimeMapClick}
-                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                      className={`px-2 py-2 text-sm font-medium transition-colors ${
+                        isActive("/crime-map")
+                          ? "text-[#3538CD]"
+                          : "text-gray-700"
+                      } hover:text-[#3538CD]`}
                     >
                       Crime Map
                     </button>
@@ -241,25 +258,33 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                   <>
                     <a
                       href="/"
-                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                      className={`px-2 py-2 text-sm font-medium transition-colors ${
+                        isActive("/") ? "text-[#3538CD]" : "text-gray-700"
+                      } hover:text-[#3538CD]`}
                     >
                       Home
                     </a>
                     <button
                       onClick={() => scrollToSection("about-section")}
-                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                      className="text-gray-700 hover:text-[#3538CD] px-2 py-2 text-sm font-medium transition-colors"
                     >
                       About
                     </button>
                     <a
                       href="/news"
-                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                      className={`px-2 py-2 text-sm font-medium transition-colors ${
+                        isActive("/news") ? "text-[#3538CD]" : "text-gray-700"
+                      } hover:text-[#3538CD]`}
                     >
                       News
                     </a>
                     <button
                       onClick={handleCrimeMapClick}
-                      className="text-gray-700 hover:text-blue-600 px-2 py-2 text-sm font-medium transition-colors"
+                      className={`px-2 py-2 text-sm font-medium transition-colors ${
+                        isActive("/crime-map")
+                          ? "text-[#3538CD]"
+                          : "text-gray-700"
+                      } hover:text-[#3538CD]`}
                     >
                       Crime Map
                     </button>
@@ -382,7 +407,11 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                     <button
                       key={index}
                       onClick={() => handleNavClick(item)}
-                      className="block w-full text-left px-6 py-3 text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-200"
+                      className={`block w-full text-left px-6 py-3 transition-colors duration-200 ${
+                        isActive(item.href)
+                          ? "text-[#3538CD] bg-gray-50"
+                          : "text-gray-700"
+                      } hover:bg-gray-50 hover:text-[#3538CD]`}
                     >
                       {item.name}
                     </button>
@@ -390,7 +419,11 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                     <a
                       key={index}
                       href={item.href}
-                      className="block px-6 py-3 text-gray-700 hover:bg-gray-50 hover:text-blue-600 transition-colors duration-200"
+                      className={`block px-6 py-3 transition-colors duration-200 ${
+                        isActive(item.href)
+                          ? "text-[#3538CD] bg-gray-50"
+                          : "text-gray-700"
+                      } hover:bg-gray-50 hover:text-[#3538CD]`}
                       onClick={closeMobileMenu}
                     >
                       {item.name}
@@ -406,10 +439,10 @@ const Navbar = ({ isAuthenticated, user = null }) => {
                 // Authenticated user footer
                 <>
                   {/* Settings */}
-                  <button className="flex items-center w-full px-2 py-2 text-gray-700 hover:text-blue-600 transition-colors">
+                  {/* <button className="flex items-center w-full px-2 py-2 text-gray-700 hover:text-blue-600 transition-colors">
                     <Settings className="w-5 h-5 mr-3" />
                     Settings
-                  </button>
+                  </button> */}
 
                   {/* Open in browser */}
                   <button className="flex items-center w-full px-2 py-2 text-gray-700 hover:text-blue-600 transition-colors">

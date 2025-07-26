@@ -46,7 +46,7 @@ const SuccessModal = ({ isOpen, onClose, type }) => {
             >
               Ok
             </button>
-            <Link to="/home">
+            <Link to="/dashboard">
               <button
                 className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
               >

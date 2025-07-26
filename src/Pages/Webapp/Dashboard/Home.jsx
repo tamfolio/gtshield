@@ -232,7 +232,9 @@ const Dashboard = () => {
 
       {/* Floating SOS Button */}
       <button className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg flex items-center justify-center">
-        <span className="text-sm font-bold">SOS</span>
+        <Link to='/sos'>
+          <span className="text-sm font-bold">SOS</span>
+        </Link>
       </button>
 
       {/* Toggle button for testing - Remove in production */}

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../../../../../Components/Website/Navbar";
 import { userRequest } from "../../../../../requestMethod";
 import { useSelector } from "react-redux";
+import { Link } from "react-router-dom";
 
 function SosComponent() {
   const [currentView, setCurrentView] = useState("main");
@@ -110,6 +111,8 @@ function SosComponent() {
       };
 
       mediaRecorderRef.current.start();
+      setIsRecording(true);
+      setRecordingTime(0);
       getAudioLevels();
     } catch (error) {
       console.error("Mic error:", error);
@@ -117,10 +120,13 @@ function SosComponent() {
     }
   };
 
-  const handleEmergencyAlert = async () => {
+  // Modified: Just navigate to recording view without starting recording
+  const handleEmergencyAlert = () => {
     setCurrentView("recording");
-    setIsRecording(true);
-    setRecordingTime(0);
+  };
+
+  // New function to handle start recording button
+  const handleStartRecording = async () => {
     await startRecording();
   };
 
@@ -147,6 +153,20 @@ function SosComponent() {
     setIsPlaying(false);
     setAudioBlob(null);
     setTextDescription("");
+    
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+  };
+
+  const resetRecording = () => {
+    setCurrentView("recording");
+    setRecordingTime(0);
+    setPlaybackTime(0);
+    setIsPlaying(false);
+    setAudioBlob(null);
+    setAudioLevels([]);
     
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
@@ -252,6 +272,7 @@ function SosComponent() {
         <RecordingView
           time={recordingTime}
           isRecording={isRecording}
+          onStartRecording={handleStartRecording}
           onStop={handleStopRecording}
           onSend={handleSend}
           formatTime={formatTime}
@@ -270,6 +291,7 @@ function SosComponent() {
           audioUrl={audioUrl}
           onPlayPause={handlePlayPause}
           onSend={handleSend}
+          onDeleteRecording={resetRecording}
           formatTime={formatTime}
           textDescription={textDescription}
           setTextDescription={setTextDescription}
@@ -351,7 +373,6 @@ const MainView = ({ onStart, onCall }) => (
     </div>
     <div className="mb-8 md:mb-16">
       <button
-        onClick={onStart}
         className="w-24 h-24 md:w-32 md:h-32 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold shadow-lg"
       >
         SOS
@@ -368,10 +389,11 @@ const MainView = ({ onStart, onCall }) => (
         Send Emergency Alert
       </button>
       <button
-        onClick={onCall}
         className="w-full py-3 md:py-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium"
       >
-        Call Emergency Contact
+        <Link to='/call-emergency-contact'>
+          Call Emergency Contact
+        </Link>
       </button>
     </div>
   </div>
@@ -380,6 +402,7 @@ const MainView = ({ onStart, onCall }) => (
 const RecordingView = ({
   time,
   isRecording,
+  onStartRecording,
   onStop,
   onSend,
   formatTime,
@@ -401,56 +424,91 @@ const RecordingView = ({
       </h1>
       <div className="w-full max-w-md">
         <div className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 mb-6 md:mb-8">
-          <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-600 text-sm md:text-base">Recording...</span>
-            <div className="text-right">
-              <div className="text-gray-600 text-sm md:text-base">{formatTime(time)}</div>
-              <div className={`text-xs ${timeLeft <= 5 ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
-                {timeLeft}s left
-              </div>
-            </div>
-          </div>
-          
-          {/* Progress bar */}
-          <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4">
-            <div 
-              className={`h-1.5 rounded-full transition-all duration-1000 ${
-                timeLeft <= 5 ? 'bg-red-500' : 'bg-blue-500'
-              }`}
-              style={{ width: `${progressPercent}%` }}
-            ></div>
-          </div>
-          
-          <AudioWaveform isActive={isRecording} audioLevels={audioLevels} />
-          <div className="mt-4 flex justify-center">
-            <div className="bg-red-50 border border-red-200 rounded-lg px-3 md:px-4 py-2 text-red-600">
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 md:w-3 md:h-3 bg-red-600 rounded-full animate-pulse"></div>
-                <span className="text-xs md:text-sm font-medium">Recording in progress</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        {/* Recording limit caveat */}
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-          <div className="flex items-start space-x-2">
-            <svg className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
+          {!isRecording ? (
+            // Show ready to record state
             <div>
-              <p className="text-xs md:text-sm text-yellow-800 font-medium">Recording Limited</p>
-              <p className="text-xs text-yellow-700">Maximum recording time is 15 seconds for emergency alerts</p>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-gray-600 text-sm md:text-base">Ready to Record</span>
+                <span className="text-gray-600 text-sm md:text-base">00:00</span>
+              </div>
+              
+              <AudioWaveform isActive={false} />
+              
+              <div className="mt-4 flex justify-center">
+                <button
+                  onClick={onStartRecording}
+                  className="w-16 h-16 md:w-20 md:h-20 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center text-2xl md:text-3xl font-bold shadow-lg"
+                >
+                  🎙️
+                </button>
+              </div>
+              
+              <div className="mt-4 text-center">
+                <p className="text-sm md:text-base text-gray-600 mb-2">Tap the microphone to start recording</p>
+                <p className="text-xs text-gray-500">Maximum recording time: 15 seconds</p>
+              </div>
             </div>
-          </div>
+          ) : (
+            // Show recording in progress state
+            <div>
+              <div className="flex justify-between items-center mb-4">
+                <span className="text-gray-600 text-sm md:text-base">Recording...</span>
+                <div className="text-right">
+                  <div className="text-gray-600 text-sm md:text-base">{formatTime(time)}</div>
+                  <div className={`text-xs ${timeLeft <= 5 ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
+                    {timeLeft}s left
+                  </div>
+                </div>
+              </div>
+              
+              {/* Progress bar */}
+              <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4">
+                <div 
+                  className={`h-1.5 rounded-full transition-all duration-1000 ${
+                    timeLeft <= 5 ? 'bg-red-500' : 'bg-blue-500'
+                  }`}
+                  style={{ width: `${progressPercent}%` }}
+                ></div>
+              </div>
+              
+              <AudioWaveform isActive={isRecording} audioLevels={audioLevels} />
+              
+              <div className="mt-4 flex justify-center">
+                <div className="bg-red-50 border border-red-200 rounded-lg px-3 md:px-4 py-2 text-red-600">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 md:w-3 md:h-3 bg-red-600 rounded-full animate-pulse"></div>
+                    <span className="text-xs md:text-sm font-medium">Recording in progress</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
         
-        <button
-          onClick={onStop}
-          className="w-full py-3 md:py-4 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg font-medium mb-4 text-sm md:text-base"
-        >
-          Stop Recording
-        </button>
+        {/* Recording limit caveat - only show when recording */}
+        {isRecording && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+            <div className="flex items-start space-x-2">
+              <svg className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <p className="text-xs md:text-sm text-yellow-800 font-medium">Recording Limited</p>
+                <p className="text-xs text-yellow-700">Maximum recording time is 15 seconds for emergency alerts</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
+        {/* Stop button - only show when recording */}
+        {isRecording && (
+          <button
+            onClick={onStop}
+            className="w-full py-3 md:py-4 bg-red-100 hover:bg-red-200 text-red-600 rounded-lg font-medium mb-4 text-sm md:text-base"
+          >
+            Stop Recording
+          </button>
+        )}
         
         <textarea
           className="w-full h-24 md:h-32 px-3 py-2 border border-gray-300 rounded-lg mb-4 text-sm md:text-base resize-none"
@@ -459,17 +517,20 @@ const RecordingView = ({
           onChange={(e) => setTextDescription(e.target.value)}
         />
         
-        <button
-          onClick={onSend}
-          disabled={isSubmitting}
-          className={`w-full py-3 md:py-4 rounded-lg font-medium text-sm md:text-base ${
-            isSubmitting 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'
-          } text-white`}
-        >
-          {isSubmitting ? 'Sending...' : 'Send'}
-        </button>
+        {/* Send button - only show if not recording (allows sending without audio) */}
+        {!isRecording && (
+          <button
+            onClick={onSend}
+            disabled={isSubmitting}
+            className={`w-full py-3 md:py-4 rounded-lg font-medium text-sm md:text-base ${
+              isSubmitting 
+                ? 'bg-gray-400 cursor-not-allowed' 
+                : 'bg-blue-600 hover:bg-blue-700'
+            } text-white`}
+          >
+            {isSubmitting ? 'Sending...' : 'Send'}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -483,6 +544,7 @@ const RecordedView = ({
   audioUrl,
   onPlayPause,
   onSend,
+  onDeleteRecording,
   formatTime,
   textDescription,
   setTextDescription,
@@ -521,6 +583,20 @@ const RecordedView = ({
             </div>
           </div>
         </div>
+        
+        {/* Recording Actions */}
+        <div className="flex space-x-3 mb-4">
+          <button
+            onClick={onDeleteRecording}
+            className="flex-1 py-3 md:py-4 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-medium text-sm md:text-base flex items-center justify-center space-x-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            </svg>
+            <span>Delete & Re-record</span>
+          </button>
+        </div>
+        
         <textarea
           className="w-full h-24 md:h-32 px-3 py-2 border border-gray-300 rounded-lg mb-4 text-sm md:text-base resize-none"
           placeholder="Tell us about what happened"

@@ -57,7 +57,7 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
     try {
       await navigator.clipboard.writeText(trackingId);
       setCopied(true);
-      setTimeout(() => setCopied(false), 10000); 
+      setTimeout(() => setCopied(false), 10000); // Hide after 2 seconds
     } catch (err) {
       console.error("Failed to copy:", err);
     }

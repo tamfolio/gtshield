@@ -118,7 +118,7 @@ const ReportDetails = () => {
   const [report, setReport] = useState(null);
   const [currentView, setCurrentView] = useState("details");
   const [loading, setLoading] = useState(true);
-  const [pageToShow, setPageToShow] = useState('review'); // Can be 'reportDetails' or 'review'
+  const [pageToShow, setPageToShow] = useState('reportDetails'); // Can be 'reportDetails' or 'review'
   const { id } = useParams();
   const token = useSelector(
     (state) => state?.user?.currentUser?.tokens?.access?.token

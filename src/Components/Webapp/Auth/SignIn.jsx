@@ -37,7 +37,7 @@ export default function SignIn() {
     try {
       await loginUser(dispatch, credentials);
       toast.success("Login successful!");
-      navigate("/home");
+      navigate("/dashboard");
     } catch (err) {
       toast.error(err?.response?.data?.error);
       console.error("Login Error:", err?.response?.data?.error);
@@ -73,7 +73,7 @@ export default function SignIn() {
       localStorage.setItem("token", token);
 
       toast.success("Logged in with Google!");
-      navigate("/home");
+      navigate("/dashboard");
     } catch (err) {
       dispatch(LoginFailure());
       toast.error("Google login failed");

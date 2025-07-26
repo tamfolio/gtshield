@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { X, Check, Trash2, Edit, AlertTriangle } from "lucide-react";
 import Navbar from "../../../Components/Website/Navbar";
 import DraftSavedModal from "./Modals/DraftSavedModal";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import ReportSubmittedModal from "./Modals/ReportSubmittedModal";
 import ReportAnIncident from "../../../Components/Website/Report/ReportAnIncident";
 import { userRequest } from "../../../requestMethod";
@@ -49,7 +49,7 @@ const GatewayShieldReports = () => {
     (state) => state?.user?.currentUser?.tokens?.access?.token
   );
 
-  console.log(token)
+  console.log(token);
 
   const fetchDrafts = async () => {
     setLoading(true);
@@ -408,7 +408,9 @@ const GatewayShieldReports = () => {
                               <Trash2 className="w-4 h-4" />
                             </button>
                             <button className="text-gray-400 hover:text-blue-600 transition-colors">
-                              <Edit className="w-4 h-4" />
+                              <Link to={`/edit_draft/${draft.id}`}>
+                                <Edit className="w-4 h-4" />
+                              </Link>
                             </button>
                           </div>
                         </td>

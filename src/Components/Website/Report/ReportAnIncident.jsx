@@ -195,7 +195,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
           </button>
 
           <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            <Link to={isAuthenticated === "true" ? "/home" : "/"}>
+            <Link to={isAuthenticated === "true" ? "/dashboard" : "/"}>
               Redirect to Dashboard
             </Link>
           </button>
@@ -248,7 +248,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
           </button>
 
           <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            <Link to="/home">Redirect to Dashboard</Link>
+            <Link to="/dashboard">Redirect to Dashboard</Link>
           </button>
         </div>
       </div>
@@ -320,6 +320,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
       console.log("✅ Incident reported:", res.data);
       setShowSuccess(true);
       setTicketId(res.data.data.ticketId);
+      setTrackingId(res.data.data.ticketId);
 
       // Navigate to confirmation page or show success message
       if (setCurrentPage) {
