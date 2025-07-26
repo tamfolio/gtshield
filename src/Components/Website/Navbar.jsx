@@ -99,15 +99,15 @@ const Navbar = ({ isAuthenticated, user = null }) => {
             {/* Logo and Navigation Items */}
             <div className="flex items-center space-x-8">
               {/* Logo */}
-              <div className="flex items-center">
-                <Link to="/">
+              <Link to="/">
+                <div className="flex items-center">
                   <img src="/assets/Logomark.svg" alt="Gateway Shield Logo" />
 
                   <span className="ml-2 text-xl font-bold text-gray-900">
                     Gateway Shield
                   </span>
-                </Link>
-              </div>
+                </div>
+              </Link>
 
               {/* Desktop Navigation Items */}
               <div className="flex space-x-1">

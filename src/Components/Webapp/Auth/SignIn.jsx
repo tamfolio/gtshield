@@ -12,7 +12,8 @@ import {
   loginStart,
   loginSuccess,
 } from "../../../Redux/LoginSlice";
-import { useGoogleLogin } from "@react-oauth/google";
+import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -45,58 +46,54 @@ export default function SignIn() {
     }
   };
 
-  // Updated Google login with token field
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoadingProvider("google");
-      try {
-        dispatch(loginStart());
+  // JWT-based Google login using the built-in GoogleLogin component
+  const handleGoogleJWTLogin = async (credentialResponse) => {
+    setLoadingProvider("google");
+    try {
+      dispatch(loginStart());
 
-        // Get user info from Google
-        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-          headers: {
-            Authorization: `Bearer ${tokenResponse.access_token}`,
-          },
-        });
+      const idToken = credentialResponse.credential;
+      console.log("ID Token:", idToken);
+      
+      // Optional: Decode token to see user info locally
+      const decoded = jwtDecode(idToken);
+      console.log("Decoded token:", decoded);
 
-        const profile = await res.json();
+      // Send JWT token to your backend
+      const loginRes = await publicRequest.post("/auth/login/google", {
+        token: idToken  // Send the JWT token directly
+      });
 
-        // ✅ Send token field to match backend validation
-        const loginRes = await publicRequest.post("/auth/login/google", {
-          email: profile.email,
-          token: tokenResponse.access_token, // Added token field
-          // You might need to send additional profile data
-          profile: profile
-        });
+      const user = loginRes.data.data.user;
+      const token = loginRes.data.data.tokens.access.token;
 
-        const user = loginRes.data.data.user;
-        const token = loginRes.data.data.tokens.access.token;
+      dispatch(loginSuccess({ user, token }));
 
-        dispatch(loginSuccess({ user, token }));
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", token);
 
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("token", token);
-
-        toast.success("Logged in with Google!");
-        navigate("/home");
-      } catch (err) {
-        dispatch(LoginFailure());
-        toast.error("Google login failed");
-        console.error("Google login error", err);
-      } finally {
-        setLoadingProvider("");
-      }
-    },
-    onError: () => {
-      toast.error("Google Sign In Failed");
+      toast.success("Logged in with Google!");
+      navigate("/home");
+    } catch (err) {
+      dispatch(LoginFailure());
+      toast.error("Google login failed");
+      console.error("Google login error", err);
+    } finally {
       setLoadingProvider("");
-    },
-  });
+    }
+  };
+
+  // Custom Google login trigger that mimics GoogleLogin behavior for JWT
+  const triggerGoogleLogin = () => {
+    // We'll use a ref to trigger the hidden GoogleLogin component
+    setLoadingProvider("google");
+    // The actual login will be handled by the hidden GoogleLogin component
+  };
 
   const handleSocialLogin = (provider) => {
-    if (provider === "google") {
-      googleLogin();
-    } else {
+    if (provider === "facebook") {
+      console.log(`Sign in with ${provider}`);
+    } else if (provider === "apple") {
       console.log(`Sign in with ${provider}`);
     }
   };
@@ -221,9 +218,29 @@ export default function SignIn() {
 
           {/* Social Login Options */}
           <div className="mt-8 space-y-3">
+            {/* Hidden GoogleLogin component for JWT functionality */}
+            <div style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
+              <GoogleLogin
+                onSuccess={handleGoogleJWTLogin}
+                onError={() => {
+                  toast.error("Google Sign In Failed");
+                  setLoadingProvider("");
+                }}
+              />
+            </div>
+            
+            {/* Custom styled Google button */}
             <SocialButton
               provider="google"
-              onClick={() => handleSocialLogin("google")}
+              onClick={() => {
+                // Programmatically click the hidden Google login
+                const googleButton = document.querySelector('[role="button"][aria-labelledby]');
+                if (googleButton) {
+                  googleButton.click();
+                } else {
+                  triggerGoogleLogin();
+                }
+              }}
               icon={
                 <img src="/assets/google.png" alt="Google" className="w-5 h-5 mr-3" />
               }

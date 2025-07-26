@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { Mail, Eye, EyeOff } from "lucide-react";
 import { Link } from "react-router-dom";
 import { publicRequest } from "../../../requestMethod";
-import { useGoogleLogin } from "@react-oauth/google";
-
-
+import { GoogleLogin, useGoogleLogin } from "@react-oauth/google";
+import { jwtDecode } from "jwt-decode";
 
 const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
   const [email, setEmail] = useState("");
@@ -54,63 +53,67 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
       setLocalLoading(false);
     }
   };
-  
 
-  const googleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoadingProvider("google");
-      setLocalLoading(true);
-      try {
-        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-          headers: {
-            Authorization: `Bearer ${tokenResponse.access_token}`,
-          },
-        });
-  
-        const profile = await res.json();
-  
-        const userEmail = profile.email;
-        if (!userEmail) {
-          throw new Error("No email returned from Google");
-        }
-  
-        // Store info in formData
-        setFormData((prev) => ({
-          ...prev,
-          email: userEmail,
-          firstName: profile.given_name || "",
-          lastName: profile.family_name || "",
-          avatar: profile.picture || "",
-        }));
-  
-        // ✅ Send the access token to your backend
-        await publicRequest.post("/auth/signup/google", { 
-          email: userEmail,
-          token: tokenResponse.access_token // Add this line
-        });
-        
-        onNext();
-      } catch (err) {
-        console.error("Google signup error:", err);
-        const msg =
-          err.response?.data?.error ||
-          err.message ||
-          "Something went wrong with Google sign-up.";
-        setEmailError(msg);
-      } finally {
-        setLoadingProvider("");
-        setLocalLoading(false);
+  // JWT-based Google signup using the built-in GoogleLogin component
+  const handleGoogleJWTSignup = async (credentialResponse) => {
+    setLoadingProvider("google");
+    setLocalLoading(true);
+    try {
+      const idToken = credentialResponse.credential;
+      console.log("ID Token:", idToken);
+      
+      // Decode token to get user info locally
+      const decoded = jwtDecode(idToken);
+      console.log("Decoded token:", decoded);
+
+      const userEmail = decoded.email;
+      if (!userEmail) {
+        throw new Error("No email returned from Google");
       }
-    },
-    onError: () => {
-      setEmailError("Google sign-in failed. Please try again.");
-    },
-  });
-  
+
+      // Store info in formData using decoded JWT data
+      setFormData((prev) => ({
+        ...prev,
+        email: userEmail,
+        firstName: decoded.given_name || "",
+        lastName: decoded.family_name || "",
+        avatar: decoded.picture || "",
+      }));
+
+      // Send JWT token to your backend
+      await publicRequest.post("/auth/signup/google", { 
+        token: idToken  // Send the JWT token directly
+      });
+      
+      onNext();
+    } catch (err) {
+      console.error("Google signup error:", err);
+      const msg =
+        err.response?.data?.error ||
+        err.message ||
+        "Something went wrong with Google sign-up.";
+      setEmailError(msg);
+    } finally {
+      setLoadingProvider("");
+      setLocalLoading(false);
+    }
+  };
+
+  // Custom Google login trigger for our styled button
+  const triggerGoogleSignup = () => {
+    // We'll use the hidden GoogleLogin component to trigger JWT-based signup
+    setLoadingProvider("google");
+  };
 
   const handleSocialLogin = (provider) => {
     if (provider === "google") {
-      googleLogin();
+      // Programmatically click the hidden Google login
+      const googleButton = document.querySelector('[role="button"][aria-labelledby]');
+      if (googleButton) {
+        googleButton.click();
+      } else {
+        triggerGoogleSignup();
+      }
     } else {
       setLoadingProvider(provider);
       setTimeout(() => {
@@ -121,7 +124,6 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
       }, 1500);
     }
   };
-
 
   const SocialButton = ({ provider, icon, children, variant = "default" }) => (
     <button
@@ -166,6 +168,19 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
+
+          {/* Hidden GoogleLogin component for JWT functionality */}
+          <div style={{ position: 'absolute', left: '-9999px', visibility: 'hidden' }}>
+            <GoogleLogin
+              onSuccess={handleGoogleJWTSignup}
+              onError={() => {
+                setEmailError("Google sign-up failed. Please try again.");
+                setLoadingProvider("");
+                setLocalLoading(false);
+              }}
+            />
+          </div>
+
           {/* Email Section */}
           <div className="space-y-6 mb-6">
             <div>
@@ -247,7 +262,7 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
 
           {/* Social Login Buttons */}
           <div className="space-y-3 mb-6">
-          <SocialButton provider="google" icon="/assets/google.png">
+            <SocialButton provider="google" icon="/assets/google.png">
               Sign up with Google
             </SocialButton>
 
