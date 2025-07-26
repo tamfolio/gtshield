@@ -64,11 +64,13 @@ No smartphone? No problem.`,
 };
 
 const styles = {
-  // bgColor: 'white',
   titleTextColor: "#181D27",
   rowTitleColor: "#181D27",
-  rowTitleTextSize: '16px', // optional: control font size
-  rowTitleFontWeight: 'bold', // this makes it bold
+  rowContentColor: "#181D27",
+  rowTitleTextSize: '16px',
+  rowTitleFontWeight: '600', // Updated to 600
+  rowContentTextSize: '14px',
+  rowContentFontWeight: '400', // Added font weight for content
 };
 
 const config = {

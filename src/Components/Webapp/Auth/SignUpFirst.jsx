@@ -83,7 +83,12 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
           avatar: profile.picture || "",
         }));
   
-        await publicRequest.post("/auth/signup/email", { email: userEmail });
+        // ✅ Send the access token to your backend
+        await publicRequest.post("/auth/signup/google", { 
+          email: userEmail,
+          token: tokenResponse.access_token // Add this line
+        });
+        
         onNext();
       } catch (err) {
         console.error("Google signup error:", err);

@@ -100,10 +100,13 @@ const Navbar = ({ isAuthenticated, user = null }) => {
             <div className="flex items-center space-x-8">
               {/* Logo */}
               <div className="flex items-center">
-                <img src="/assets/Logomark.svg" alt="Gateway Shield Logo" />
-                <span className="ml-2 text-xl font-bold text-gray-900">
-                  Gateway Shield
-                </span>
+                <Link to="/">
+                  <img src="/assets/Logomark.svg" alt="Gateway Shield Logo" />
+
+                  <span className="ml-2 text-xl font-bold text-gray-900">
+                    Gateway Shield
+                  </span>
+                </Link>
               </div>
 
               {/* Desktop Navigation Items */}
@@ -315,12 +318,14 @@ const Navbar = ({ isAuthenticated, user = null }) => {
         <div className="px-4 sm:px-6">
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
-            <div className="flex items-center">
-              <img src="/assets/Logomark.svg" alt="Gateway Shield Logo" />
-              <span className="ml-2 text-xl font-bold text-gray-900">
-                Gateway Shield
-              </span>
-            </div>
+            <Link to="/">
+              <div className="flex items-center">
+                <img src="/assets/Logomark.svg" alt="Gateway Shield Logo" />
+                <span className="ml-2 text-xl font-bold text-gray-900">
+                  Gateway Shield
+                </span>
+              </div>
+            </Link>
 
             {/* Mobile menu button */}
             <button

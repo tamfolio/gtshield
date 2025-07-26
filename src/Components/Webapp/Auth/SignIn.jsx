@@ -12,13 +12,13 @@ import {
   loginStart,
   loginSuccess,
 } from "../../../Redux/LoginSlice";
-import { GoogleLogin } from "@react-oauth/google";
+import { useGoogleLogin } from "@react-oauth/google";
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [loadingProvider, setLoadingProvider] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const dispatch = useDispatch();
@@ -38,49 +38,88 @@ export default function SignIn() {
       toast.success("Login successful!");
       navigate("/home");
     } catch (err) {
-      toast.error(err?.response?.data?.error || "Login failed");
+      toast.error(err?.response?.data?.error);
       console.error("Login Error:", err?.response?.data?.error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = async (googleToken) => {
-    setGoogleLoading(true);
-    try {
-      dispatch(loginStart());
+  // Updated Google login with token field
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoadingProvider("google");
+      try {
+        dispatch(loginStart());
 
-      const res = await publicRequest.post("/auth/login/google", {
-        token: googleToken,
-      });
+        // Get user info from Google
+        const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+          headers: {
+            Authorization: `Bearer ${tokenResponse.access_token}`,
+          },
+        });
 
-      const user = res.data.data.user;
-      const token = res.data.data.tokens.access.token;
+        const profile = await res.json();
 
-      dispatch(loginSuccess({ user, token }));
+        // ✅ Send token field to match backend validation
+        const loginRes = await publicRequest.post("/auth/login/google", {
+          email: profile.email,
+          token: tokenResponse.access_token, // Added token field
+          // You might need to send additional profile data
+          profile: profile
+        });
 
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", token);
+        const user = loginRes.data.data.user;
+        const token = loginRes.data.data.tokens.access.token;
 
-      toast.success("Logged in with Google!");
-      navigate("/home");
-    } catch (err) {
-      dispatch(LoginFailure());
-      toast.error(err?.response?.data?.error || "Google login failed");
-      console.error("Google login error", err);
-    } finally {
-      setGoogleLoading(false);
+        dispatch(loginSuccess({ user, token }));
+
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("token", token);
+
+        toast.success("Logged in with Google!");
+        navigate("/home");
+      } catch (err) {
+        dispatch(LoginFailure());
+        toast.error("Google login failed");
+        console.error("Google login error", err);
+      } finally {
+        setLoadingProvider("");
+      }
+    },
+    onError: () => {
+      toast.error("Google Sign In Failed");
+      setLoadingProvider("");
+    },
+  });
+
+  const handleSocialLogin = (provider) => {
+    if (provider === "google") {
+      googleLogin();
+    } else {
+      console.log(`Sign in with ${provider}`);
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    console.log(`Sign in with ${provider}`);
-  };
+  const SocialButton = ({ provider, icon, children, onClick }) => (
+    <button
+      onClick={onClick}
+      disabled={loadingProvider === provider}
+      className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {loadingProvider === provider ? (
+        <div className="w-5 h-5 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin mr-3" />
+      ) : (
+        icon
+      )}
+      {loadingProvider === provider ? "Signing in..." : children}
+    </button>
+  );
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        <div className="bg-white rounded-2xl p-8">
+        <div className="bg-white rounded-2xl  p-8">
           {/* Logo */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center">
@@ -180,80 +219,45 @@ export default function SignIn() {
             </button>
           </div>
 
-          {/* Divider */}
-          <div className="relative mt-8 mb-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-gray-500 font-medium">
-                OR
-              </span>
-            </div>
-          </div>
+          {/* Social Login Options */}
+          <div className="mt-8 space-y-3">
+            <SocialButton
+              provider="google"
+              onClick={() => handleSocialLogin("google")}
+              icon={
+                <img src="/assets/google.png" alt="Google" className="w-5 h-5 mr-3" />
+              }
+            >
+              Sign in with Google
+            </SocialButton>
 
-          {/* Google Login - Custom Styled */}
-          <div className="space-y-3 mb-6">
-            <div className="relative">
-              {googleLoading && (
-                <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <div className="w-4 h-4 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-                    Signing in...
-                  </div>
-                </div>
-              )}
-              
-              <GoogleLogin
-                onSuccess={(credentialResponse) => {
-                  console.log("Google login success:", credentialResponse);
-                  if (!credentialResponse.credential) {
-                    toast.error("No credential returned from Google");
-                    return;
-                  }
-                  handleGoogleLogin(credentialResponse.credential);
-                }}
-                onError={(error) => {
-                  console.error("Google login error:", error);
-                  toast.error("Google Sign In Failed");
-                  setGoogleLoading(false);
-                }}
-                useOneTap={false}
-                auto_select={false}
-                theme="outline"
-                size="large"
-                text="signin_with"
-                shape="rectangular"
-                logo_alignment="left"
-                width="100%"
-                disabled={googleLoading}
-              />
-            </div>
-
-            {/* Other Social Login Buttons */}
-            <button
+            <SocialButton
+              provider="facebook"
               onClick={() => handleSocialLogin("facebook")}
-              className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              icon={
+                <svg className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                </svg>
+              }
             >
-              <svg className="w-5 h-5 mr-3" fill="#1877F2" viewBox="0 0 24 24">
-                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-              </svg>
               Sign in with Facebook
-            </button>
+            </SocialButton>
 
-            <button
+            <SocialButton
+              provider="apple"
               onClick={() => handleSocialLogin("apple")}
-              className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              icon={
+                <svg className="w-5 h-5 mr-3" fill="#000000" viewBox="0 0 24 24">
+                  <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
+                </svg>
+              }
             >
-              <svg className="w-5 h-5 mr-3" fill="#000000" viewBox="0 0 24 24">
-                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z" />
-              </svg>
               Sign in with Apple
-            </button>
+            </SocialButton>
           </div>
 
           {/* Sign Up Link */}
-          <div className="text-center">
+          <div className="text-center mt-8">
             <p className="text-sm text-gray-600">
               Don't have an account?{" "}
               <button
