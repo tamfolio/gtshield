@@ -13,6 +13,8 @@ import {
   Trash2,
   Edit3,
   Star,
+  X,
+  Eye,
 } from "lucide-react";
 import Navbar from "../../../../Components/Website/Navbar";
 import { userRequest } from "../../../../requestMethod";
@@ -22,11 +24,11 @@ import Select from "react-select";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
-const SuccessModal = ({ isOpen, onClose, type }) => {
+const SuccessModal = ({ isOpen, onClose, onOkClick, type }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-[rgba(16,24,40,0.7)] bg-opacity-50 flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-[#101828B2] bg-opacity-50 flex items-center justify-center p-4 z-50">
       <div className="bg-white rounded-2xl p-6 w-full max-w-sm mx-4">
         <div className="flex flex-col items-center text-center">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
@@ -34,14 +36,12 @@ const SuccessModal = ({ isOpen, onClose, type }) => {
           </div>
 
           <h3 className="text-lg font-semibold text-gray-900 mb-6">
-            {type === "review"
-              ? "Review submitted successfully"
-              : "Feedback submitted successfully"}
+            Feedback submitted successfully
           </h3>
 
           <div className="w-full space-y-3">
             <button
-              onClick={onClose}
+              onClick={onOkClick}
               className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
             >
               Ok
@@ -54,6 +54,102 @@ const SuccessModal = ({ isOpen, onClose, type }) => {
               </button>
             </Link>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// New Feedback Details Modal Component
+const FeedbackDetailsModal = ({ isOpen, onClose, feedback }) => {
+  if (!isOpen || !feedback) return null;
+
+  const renderStarRating = (feedback) => {
+    // Only show stars if there's actual rating data and it's for complaints or compliments
+    const hasRating = feedback.rating && feedback.rating > 0;
+    const isRatingType = feedback.feedbackType?.toLowerCase() === 'complaint' || 
+                        feedback.feedbackType?.toLowerCase() === 'compliment';
+    
+    if (!hasRating || !isRatingType) {
+      return null;
+    }
+
+    return (
+      <div className="flex items-center space-x-1">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            className={`w-6 h-6 ${
+              star <= feedback.rating
+                ? "text-blue-600 fill-blue-600" 
+                : "text-gray-300"
+            }`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="fixed inset-0 bg-[#101828B2] flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-lg p-6 w-full max-w-sm mx-4">
+        {/* Content */}
+        <div className="space-y-6">
+          {/* Feedback Type */}
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700 font-medium">Feedback Type</span>
+            <span className="text-gray-900 capitalize">{feedback.feedbackType}</span>
+          </div>
+
+          {/* Feedback Recipient */}
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700 font-medium">Feedback Recipient</span>
+            <span className="text-gray-900">{feedback.station ? 'Station' : 'Officer'}</span>
+          </div>
+
+          {/* Station Name or Officer Name */}
+          <div className="flex justify-between items-center">
+            <span className="text-gray-700 font-medium">
+              {feedback.station ? 'Station Name' : 'Officer Name'}
+            </span>
+            <span className="text-gray-900">
+              {feedback.station || feedback.officerName}
+            </span>
+          </div>
+
+          {/* Star Rating (only show if there's actual rating data) */}
+          {renderStarRating(feedback) && (
+            <div className="flex justify-between items-center">
+              <span className="text-gray-700 font-medium">Star Rating</span>
+              {renderStarRating(feedback)}
+            </div>
+          )}
+
+          {/* Comment */}
+          <div>
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-gray-700 font-medium">Comment</span>
+            </div>
+            <p className="text-gray-600 text-sm leading-relaxed">
+              {feedback.comment}
+            </p>
+          </div>
+        </div>
+
+        {/* Footer Buttons */}
+        <div className="flex space-x-3 mt-8">
+          <button
+            onClick={onClose}
+            className="flex-1 bg-white border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onClose}
+            className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+          >
+            Confirm
+          </button>
         </div>
       </div>
     </div>
@@ -89,7 +185,7 @@ const StarRating = ({ rating, onRatingChange }) => {
           <Star
             className={`w-8 h-8 transition-colors ${
               starValue <= (hoveredRating || rating)
-                ? "text-yellow-400 fill-yellow-400"
+                ? "text-blue-600 fill-blue-600"
                 : "text-gray-300"
             }`}
           />
@@ -105,7 +201,8 @@ const StarRating = ({ rating, onRatingChange }) => {
 };
 
 const FeedbackPage = () => {
-  const [feedbackType, setFeedbackType] = useState("Compliment");
+  const [feedbackType, setFeedbackType] = useState("");
+  const [feedbackRecipient, setFeedbackRecipient] = useState("Station");
   const [officerName, setOfficerName] = useState("");
   const [comment, setComment] = useState("");
   const [rating, setRating] = useState(0);
@@ -114,6 +211,10 @@ const FeedbackPage = () => {
   const [feedbackHistory, setFeedbackHistory] = useState([]);
   const [stations, setStations] = useState([]);
   const [activeTab, setActiveTab] = useState("Give Feedback");
+  
+  // New state for feedback details modal
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedFeedback, setSelectedFeedback] = useState(null);
 
   const token = useSelector(
     (state) => state?.user?.currentUser?.tokens?.access?.token
@@ -129,6 +230,7 @@ const FeedbackPage = () => {
       hour12: true,
     });
   };
+  
   const [formData, setFormData] = useState({
     nearestPoliceStation: null,
   });
@@ -139,6 +241,29 @@ const FeedbackPage = () => {
 
   const handleRatingChange = (newRating) => {
     setRating(newRating);
+  };
+
+  const handleOkClick = () => {
+    // Reset all form fields when OK is clicked
+    setFeedbackType("");
+    setFeedbackRecipient("Station");
+    setFormData({ nearestPoliceStation: null });
+    setOfficerName("");
+    setComment("");
+    setRating(0);
+    setShowModal(false);
+  };
+
+  // Function to handle feedback item click
+  const handleFeedbackClick = (feedback) => {
+    setSelectedFeedback(feedback);
+    setShowDetailsModal(true);
+  };
+
+  // Function to close details modal
+  const handleCloseDetailsModal = () => {
+    setShowDetailsModal(false);
+    setSelectedFeedback(null);
   };
 
   // Function to get the selected feedback type name
@@ -158,6 +283,11 @@ const FeedbackPage = () => {
     setFeedbackType(e.target.value);
     // Reset rating when changing feedback type
     setRating(0);
+  };
+
+  // Function to handle feedback recipient change
+  const handleFeedbackRecipientChange = (e) => {
+    setFeedbackRecipient(e.target.value);
   };
 
   const getFeedbackTypes = async () => {
@@ -227,27 +357,38 @@ const FeedbackPage = () => {
   const handleSubmit = async () => {
     const showRating = shouldShowRating();
     
-    // Validation - only require rating for complaint and compliment
+    // Validation - require station for station feedback, officer name for officer feedback
+    const isStationFeedback = feedbackRecipient === "Station";
+    const isOfficerFeedback = feedbackRecipient === "Officer";
+    
     if (
       !feedbackType ||
-      !formData.nearestPoliceStation?.value ||
       !comment ||
+      (isStationFeedback && !formData.nearestPoliceStation?.value) ||
+      (isOfficerFeedback && !officerName.trim()) ||
       (showRating && rating === 0)
     ) {
       const missingRating = showRating && rating === 0;
-      toast.error(
-        missingRating 
-          ? "Please complete all required fields including the rating"
-          : "Please complete all required fields"
-      );
+      let errorMessage = "Please complete all required fields";
+      
+      if (missingRating) {
+        errorMessage += " including the rating";
+      } else if (isStationFeedback && !formData.nearestPoliceStation?.value) {
+        errorMessage = "Please select a station";
+      } else if (isOfficerFeedback && !officerName.trim()) {
+        errorMessage = "Please enter the officer name";
+      }
+      
+      toast.error(errorMessage);
       return;
     }
 
     const payload = {
       feedbackTypeId: feedbackType,
-      stationId: formData.nearestPoliceStation?.value,
+      feedbackRecipient: feedbackRecipient,
+      stationId: isStationFeedback ? formData.nearestPoliceStation?.value : null,
       comment,
-      officerName: officerName.trim() || "Anonymous",
+      officerName: isOfficerFeedback ? officerName.trim() : (officerName.trim() || "Anonymous"),
       // Send actual rating for complaint/compliment, 0 for suggestion
       rating: showRating ? rating : 0,
     };
@@ -255,15 +396,8 @@ const FeedbackPage = () => {
     try {
       await createFeedback(token, payload);
 
-      // ✅ Show success modal
+      // ✅ Show success modal (form will be cleared when OK is clicked)
       setShowModal(true);
-
-      // ✅ Reset form fields
-      setFeedbackType("");
-      setFormData({ nearestPoliceStation: null });
-      setOfficerName("");
-      setComment("");
-      setRating(0);
     } catch (error) {
       toast.error("Failed to submit feedback. Please try again.");
       console.error("Feedback submit error:", error?.response?.data || error);
@@ -347,37 +481,56 @@ const FeedbackPage = () => {
                   </select>
                 </div>
 
-                {/* Station Name */}
+                {/* Feedback Recipient */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Station Name
+                  <label className="block text-sm font-medium text-gray-700 mb-4">
+                    Feedback Recipient
                   </label>
-                  <div className="relative">
-                    <Select
-                      options={stations}
-                      value={formData.nearestPoliceStation}
-                      onChange={handleStationChange}
-                      placeholder="Search for nearest police station"
-                      isSearchable
-                      isClearable
-                      className="react-select-container"
-                      classNamePrefix="react-select"
-                    />
-                  </div>
+                  <select
+                    value={feedbackRecipient}
+                    onChange={handleFeedbackRecipientChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                  >
+                    <option value="Station">Station</option>
+                    <option value="Officer">Officer</option>
+                  </select>
                 </div>
 
-                {/* Officer Name */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Officer Name / Badge Number (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    value={officerName}
-                    onChange={(e) => setOfficerName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
-                  />
-                </div>
+                {/* Conditional Fields based on Feedback Recipient */}
+                {feedbackRecipient === "Station" ? (
+                  /* Station Name */
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Station Name
+                    </label>
+                    <div className="relative">
+                      <Select
+                        options={stations}
+                        value={formData.nearestPoliceStation}
+                        onChange={handleStationChange}
+                        placeholder="Search for nearest police station"
+                        isSearchable
+                        isClearable
+                        className="react-select-container"
+                        classNamePrefix="react-select"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  /* Officer Name */
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Officer Name
+                    </label>
+                    <input
+                      type="text"
+                      value={officerName}
+                      onChange={(e) => setOfficerName(e.target.value)}
+                      placeholder="Search"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none"
+                    />
+                  </div>
+                )}
 
                 {/* Comment */}
                 <div>
@@ -397,7 +550,7 @@ const FeedbackPage = () => {
                 {shouldShowRating() && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-3">
-                      Star Rating *
+                      Star Rating
                     </label>
                     <StarRating
                       rating={rating}
@@ -422,11 +575,9 @@ const FeedbackPage = () => {
                 </h3>
 
                 {/* Table Header */}
-                {/* Header */}
                 <div className="flex justify-between items-center py-3 px-4 bg-gray-50 rounded-lg text-sm font-medium text-gray-600">
                   <span>Feedback Type</span>
                   <span>Date Created</span>
-                  {/* <span className="text-right">Actions</span> */}
                 </div>
 
                 {/* Feedback History List */}
@@ -434,25 +585,23 @@ const FeedbackPage = () => {
                   {feedbackHistory.map((item) => (
                     <div
                       key={item.id}
-                      className="flex justify-between items-center py-4 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+                      onClick={() => handleFeedbackClick(item)}
+                      className="flex justify-between items-center py-4 px-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                     >
-                      <span className="text-gray-900 font-medium">
+                      <span className="text-gray-900 font-medium capitalize">
                         {item.feedbackType}
                       </span>
                       <span className="text-gray-600">
                         {formatDateTime(item.createdAt)}
                       </span>
-
-                      {/* <div className="flex justify-end space-x-2">
-                        <button className="p-1 text-gray-400 hover:text-red-600 transition-colors">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                        <button className="p-1 text-gray-400 hover:text-blue-600 transition-colors">
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                      </div> */}
                     </div>
                   ))}
+                  
+                  {feedbackHistory.length === 0 && (
+                    <div className="text-center py-8">
+                      <p className="text-gray-500">No feedback history found</p>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -463,7 +612,14 @@ const FeedbackPage = () => {
       <SuccessModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
+        onOkClick={handleOkClick}
         type="feedback"
+      />
+
+      <FeedbackDetailsModal
+        isOpen={showDetailsModal}
+        onClose={handleCloseDetailsModal}
+        feedback={selectedFeedback}
       />
     </div>
   );

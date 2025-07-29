@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Clock,
@@ -7,98 +7,85 @@ import {
   Facebook,
   Linkedin,
 } from "lucide-react";
+import { useParams, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify"; // Assuming you're using react-toastify
 import Navbar from "../Navbar";
 import Footer from "../LandingPage/Footer";
-import { useNavigate } from "react-router-dom";
+import { publicRequest } from "../../../requestMethod";
 
-const SingleNewsPage = ({ article }) => {
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
+const SingleNewsPage = () => {
+  const { id } = useParams(); // Get the news ID from URL
   const navigate = useNavigate();
+  const [article, setArticle] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   
-  const defaultArticle = {
-    id: 1,
-    title: "News Headline goes here",
-    subtitle: "How do you create compelling presentations that wow your colleagues and impress your managers? Find out with our in-depth guide on UX presentations.",
-    author: {
-      name: "Olivia Rhye",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
-      role: "Product Designer"
-    },
-    date: "Published 20 Jan 2024",
-    readTime: "5 min read",
-    tags: ["Design", "Research", "Presentation"],
-    content: {
-      sections: [
-        {
-          type: "text",
-          heading: "Introduction",
-          text: "Mi tincidunt elit, id quisque ligula ac diam, amet. Vel etiam suspendisse morbi eleifend faucibus eget vestibulum felis. Dictum quis montes, sit sit. Tellus aliquam enim urna, etiam. Mauris posuere vulputate arcu amet, vitae nisi, tellus tincidunt. At feugiat sapien varius id.\n\nEgestas tellus rutrum tellus pellentesque eu tincidunt. Neque tempor arcu feugiat purus diam, sem et. Eget turpis diam gravida accumsan, viverra. Lorem diam tincidunt varius elit, vehicula eu. Ultricies non amet elit. Quam id risus metus turpis volutpat. Amet massa volutpat id."
-        },
-        {
-          type: "quote",
-          text: "In a world older and more complete than ours they move finished and complete, gifted with extensions of the senses we have lost or never attained, living by voices we shall never hear.",
-          author: "Olivia Rhye, Product Designer"
-        },
-        {
-          type: "text",
-          text: "Dolor enim eu tortor urna sed duis nulla. Aliquam vestibulum, nulla odio nisl vitae. In aliquet pellentesque aenean hac vestibulum turpis mi bibendum diam. Tempor integer aliquam in vitae malesuada fringilla.\n\nElit nisi in eleifend sed nisi. Pulvinar at orci, proin imperdiet commodo consectetur convallis risus. Sed condimentum enim dignissim adipiscing faucibus consequat, urna. Viverra purus et erat auctor aliquam. Risus, volutpat vulputate posuere purus tincidunt eleifend."
-        },
-        {
-          type: "image",
-          src: "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop",
-          caption: "Image caption goes here"
-        },
-        {
-          type: "text",
-          text: "Ipsum sit mattis nulla quam nulla. Gravida id gravida ac enim mauris id. Non pellentesque congue eget consectetur turpis. Sapien, dictum molestie sem tempor. Diam elit, orci, tincidunt aenean tempus. Quis velit eget ut tortor tellus. Sed vel, congue felis elit erat nam nibh orci."
-        },
-        {
-          type: "heading",
-          text: "Software and tools"
-        },
-        {
-          type: "text",
-          text: "Mi tincidunt elit, id quisque ligula ac diam, amet. Vel etiam suspendisse morbi eleifend faucibus eget vestibulum felis. Dictum quis montes, sit sit. Tellus aliquam enim urna, etiam. Mauris posuere vulputate arcu amet, vitae nisi, tellus tincidunt. At feugiat sapien varius id.\n\nEgestas tellus rutrum tellus pellentesque eu tincidunt. Neque tempor arcu feugiat purus diam, sem et. Eget turpis diam gravida accumsan, viverra. Lorem diam tincidunt varius elit, vehicula eu. Ultricies non amet elit. Quam id risus metus turpis volutpat. Amet massa volutpat id."
-        },
-        {
-          type: "heading",
-          text: "Other resources"
-        },
-        {
-          type: "text",
-          text: "Sagittis et eu at elementum, quis in. Proin praesent volutpat egestas sociis sit lorem nunc nunc sit. Eget diam curabitur mi ac. Auctor rutrum lacus malesuada massa ornare et. Vulputate consectetur ac ultrices at diam dui eget fringilla tincidunt. Arcu sit dignissim massa erat cursus vulputate gravida id. Sed quis auctor vulputate hac elementum gravida cursus dis.\n\n1. Lectus id duis vitae porttitor enim gravida morbi.\n2. Eu turpis posuere semper feugiat volutpat elit, ultrices suspendisse. Auctor vel in vitae placerat.\n3. Suspendisse maecenas ac donec scelerisque diam sed est duis purus."
-        },
-        {
-          type: "image",
-          src: "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&h=400&fit=crop",
-          caption: ""
-        },
-        {
-          type: "text",
-          text: "Lectus leo eros faucibus bibendum quis vive. Mattis enim, nisl maecenas nulla diam mi tellus malesuada. Luctus lectus non pellentesque euismod. Dictum non saepe tempor non malesuada morbi duis. Convallis placerat morbi tristique scelerisque at sed. At id mauris venenatis faucibus id gravida ultrices. Quis elit commodo nisi consequat nulla sem bibendum phasellus."
-        },
-        {
-          type: "heading",
-          text: "Heading text"
-        },
-        {
-          type: "text",
-          text: "Morbi sed imperdiet in ipsum, adipiscing elit dui lectus. Tellus id scelerisque est ultricies ultricies. Duis est sit sed leo nisl, blandit elit sagittis. Quisque tristique consequat quam sed. Nisl at scelerisque amet nulla purus habitasse.\n\nNunc sed faucibus bibendum feugiat sed interdum. Ipsum egestas condimentum mi massa. In tincidunt pharetra consectetur sed duis facilisis metus. Etiam egestas in nec sed et. Quis lobortis at sit dictum eget nibh tortor commodo cursus.\n\nOdio felis sagittis, morbi feugiat tortor vitae feugiat fusce aliquet. Nam elementum urna nisi aliquet erat dolor enim. Ornare id morbi eget ipsum. Aliquam senectus neque ut id eget consectetur dictum. Donec posuere pharetra odio consequat scelerisque et, nunc tortor."
-        },
-        {
-          type: "image",
-          src: "https://images.unsplash.com/photo-1494790108755-2616c5a7e01f?w=800&h=400&fit=crop",
-          caption: ""
-        },
-        {
-          type: "text",
-          text: "Nulla efficitur eleifend nisi, sit amet bibendum sapien fringilla ac. Mauris euismod malesuada tellus. Praesent erat magna, gravida a turpis eget fringilla. Donec ac metus magna. Donec varius ante eget arcu malesuada vulputate. Nam vel nunc et felis facilisis tincidunt mauris non. Nulla rutrum vestibulum laoreet."
-        }
-      ]
-    }
-  };
+  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
-  const currentArticle = article || defaultArticle;
+  // Fetch news article on component mount
+  useEffect(() => {
+    const fetchNewsArticle = async () => {
+      if (!id) {
+        setError("No article ID provided");
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await publicRequest.get(`userTools/news/${id}`);
+        
+        if (response.data && response.data.data && response.data.data.news) {
+          const newsData = response.data.data.news;
+          
+          // Debug logging
+          console.log('News data received:', newsData);
+          console.log('Cover image URL:', newsData.coverImage);
+          
+          // Transform API response to match component structure
+          const transformedArticle = {
+            id: newsData.id,
+            title: newsData.title,
+            subtitle: newsData.subtitle,
+            author: {
+              name: "Admin", // Default since API doesn't provide author info
+              avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face",
+              role: "Content Creator"
+            },
+            date: `Published ${new Date(newsData.datePublished).toLocaleDateString('en-US', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            })}`,
+            readTime: "5 min read", // Default since API doesn't provide read time
+            tags: newsData.tags || [],
+            coverImage: newsData.coverImage,
+            content: {
+              sections: [
+                {
+                  type: "text",
+                  text: newsData.bodyText
+                }
+              ]
+            }
+          };
+          
+          console.log('Transformed article:', transformedArticle);
+          setArticle(transformedArticle);
+        } else {
+          setError("Article not found");
+        }
+      } catch (err) {
+        console.error("Error fetching news article:", err);
+        setError(err?.response?.data?.error || "Failed to fetch article");
+        toast.error("Failed to load article");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNewsArticle();
+  }, [id]);
 
   const handleBack = () => {
     navigate('/news');
@@ -107,13 +94,12 @@ const SingleNewsPage = ({ article }) => {
   const handleCopyLink = () => {
     const url = window.location.href;
     navigator.clipboard.writeText(url);
-    // You could add a toast notification here
-    alert('Link copied to clipboard!');
+    toast.success('Link copied to clipboard!');
   };
 
   const handleShare = (platform) => {
     const url = window.location.href;
-    const title = currentArticle.title;
+    const title = article?.title || 'Check out this article';
     
     switch(platform) {
       case 'twitter':
@@ -127,6 +113,55 @@ const SingleNewsPage = ({ article }) => {
         break;
     }
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar isAuthenticated={isAuthenticated} />
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading article...</p>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Error state
+  if (error || !article) {
+    return (
+      <div className="min-h-screen bg-white">
+        <Navbar isAuthenticated={isAuthenticated} />
+        <div className="max-w-3xl mx-auto px-4 py-8">
+          <button
+            onClick={handleBack}
+            className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-8 text-sm"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>Back</span>
+          </button>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h2>
+              <p className="text-gray-600 mb-6">{error || "The article you're looking for doesn't exist."}</p>
+              <button
+                onClick={handleBack}
+                className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Back to News
+              </button>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -147,31 +182,58 @@ const SingleNewsPage = ({ article }) => {
         {/* Article Header */}
         <div className="mb-12 text-center">
           <div className="text-sm text-purple-600 font-medium mb-3">
-            {currentArticle.date}
+            {article.date}
           </div>
           <h1 className="text-5xl font-bold text-gray-900 mb-6 leading-tight">
-            {currentArticle.title}
+            {article.title}
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-            {currentArticle.subtitle}
-          </p>
+          {article.subtitle && (
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
+              {article.subtitle}
+            </p>
+          )}
 
           {/* Tags */}
-          <div className="flex justify-center gap-2 mt-8">
-            {currentArticle.tags.map((tag) => (
-              <span
-                key={tag}
-                className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
+          {article.tags && article.tags.length > 0 && (
+            <div className="flex justify-center gap-2 mt-8">
+              {article.tags.map((tag) => (
+                <span
+                  key={tag}
+                  className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-sm"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Cover Image */}
+        {article.coverImage && (
+          <figure className="mb-12">
+            <img
+              src={article.coverImage}
+              alt={article.title}
+              className="w-full rounded-lg"
+              onError={(e) => {
+                console.error('Image failed to load:', article.coverImage);
+                // Show a placeholder or hide the image
+                e.target.src = 'https://images.unsplash.com/photo-1586953208448-b95a79798f07?w=800&h=400&fit=crop';
+                e.target.classList.add('opacity-50');
+              }}
+              onLoad={() => {
+                console.log('Image loaded successfully:', article.coverImage);
+              }}
+            />
+            <figcaption className="text-sm text-gray-500 text-center mt-2">
+              URL: {article.coverImage}
+            </figcaption>
+          </figure>
+        )}
 
         {/* Article Content */}
         <div className="prose prose-lg max-w-none">
-          {currentArticle.content.sections.map((section, index) => {
+          {article.content.sections.map((section, index) => {
             switch (section.type) {
               case 'heading':
                 return (
@@ -234,8 +296,8 @@ const SingleNewsPage = ({ article }) => {
               {/* Author Avatar */}
               <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0">
                 <img
-                  src={currentArticle.author.avatar}
-                  alt={currentArticle.author.name}
+                  src={article.author.avatar}
+                  alt={article.author.name}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -243,9 +305,9 @@ const SingleNewsPage = ({ article }) => {
               {/* Author Info */}
               <div>
                 <h3 className="font-semibold text-gray-900 text-lg">
-                  {currentArticle.author.name}
+                  {article.author.name}
                 </h3>
-                <p className="text-sm text-gray-500">{currentArticle.author.role}</p>
+                <p className="text-sm text-gray-500">{article.author.role}</p>
               </div>
             </div>
 
@@ -287,7 +349,7 @@ const SingleNewsPage = ({ article }) => {
         <div className="mt-12 mb-20 text-center">
           <p className="text-sm text-gray-500">
             <Clock className="w-4 h-4 inline mr-1" />
-            {currentArticle.readTime}
+            {article.readTime}
           </p>
         </div>
       </div>

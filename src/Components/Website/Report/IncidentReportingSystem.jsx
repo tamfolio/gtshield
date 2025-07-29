@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Upload, Copy, Check, Search } from "lucide-react";
+import { Upload, Copy, Check, Search, Loader2, AlertCircle } from "lucide-react";
 import Select from "react-select";
 import { fetchIncidentTypes, fetchStations } from "../../../Api/incidentApi";
 import ReportAnIncident from "./ReportAnIncident";
@@ -17,6 +17,9 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
   });
   const [trackingId, setTrackingId] = useState("");
   const [searchTrackingId, setSearchTrackingId] = useState("");
+  const [trackingResult, setTrackingResult] = useState(null);
+  const [trackingError, setTrackingError] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     const getTypes = async () => {
@@ -57,7 +60,7 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
     try {
       await navigator.clipboard.writeText(trackingId);
       setCopied(true);
-      setTimeout(() => setCopied(false), 10000); // Hide after 2 seconds
+      setTimeout(() => setCopied(false), 10000); // Hide after 10 seconds
     } catch (err) {
       console.error("Failed to copy:", err);
     }
@@ -70,8 +73,68 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
   }, []);
 
   const handleSearchTrackingIdChange = useCallback((e) => {
-    setSearchTrackingId(e.target.value);
-  }, []);
+    const value = e.target.value;
+    setSearchTrackingId(value);
+    
+    // Clear previous results when user starts typing
+    if (trackingResult || trackingError) {
+      setTrackingResult(null);
+      setTrackingError("");
+    }
+  }, [trackingResult, trackingError]);
+
+  // Mock API function for tracking - replace with your actual API call
+  const trackIncident = async (trackingId) => {
+    const response = await fetch(`/api/track-incident/${trackingId}`);
+    
+    if (!response.ok) {
+      throw new Error('Tracking ID not found');
+    }
+    
+    return await response.json();
+  };
+
+  const handleTrackSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!searchTrackingId.trim()) {
+      setTrackingError("Please enter a tracking ID");
+      return;
+    }
+
+    setIsSearching(true);
+    setTrackingError("");
+    setTrackingResult(null);
+
+    try {
+      // Mock delay to simulate API call
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Mock response based on the tracking ID for demonstration
+      if (searchTrackingId.toUpperCase() === "DHDHEYUUIAIAI") {
+        setTrackingResult({
+          status: "Pending",
+          dateSubmitted: "06 May, 2025",
+          report: "Police are on their way.",
+          trackingId: searchTrackingId.toUpperCase()
+        });
+      } else if (searchTrackingId.toUpperCase() === "DDSFFSAAD") {
+        throw new Error("TRACKING ID not found.");
+      } else {
+        // For any other ID, simulate a found result
+        setTrackingResult({
+          status: "Under Investigation",
+          dateSubmitted: "05 May, 2025",
+          report: "Case has been assigned to an officer.",
+          trackingId: searchTrackingId.toUpperCase()
+        });
+      }
+    } catch (error) {
+      setTrackingError(error.message);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   if (currentPage === "confirmation") {
     return (
@@ -156,7 +219,7 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
             >
               Report An Incident
             </button>
-            <button className="px-4 py-2  border border-gray-300 rounded-md text-gray-700 bg-gray-50">
+            <button className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-gray-50">
               Track an Anonymous Report
             </button>
           </div>
@@ -172,21 +235,85 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
               </p>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Tracking ID
-              </label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <input
-                  type="text"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Your tracking ID"
-                  value={searchTrackingId}
-                  onChange={handleSearchTrackingIdChange}
-                />
+            <form onSubmit={handleTrackSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Tracking ID
+                </label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                      trackingError ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="Your tracking ID"
+                    value={searchTrackingId}
+                    onChange={handleSearchTrackingIdChange}
+                    disabled={isSearching}
+                  />
+                  {trackingError && (
+                    <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 w-4 h-4" />
+                  )}
+                </div>
+                
+                {trackingError && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {trackingError}
+                  </p>
+                )}
               </div>
-            </div>
+
+              {/* Submit button - only show if no result is displayed */}
+              {!trackingResult && (
+                <button
+                  type="submit"
+                  disabled={isSearching || !searchTrackingId.trim()}
+                  className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Searching...
+                    </>
+                  ) : (
+                    'Submit'
+                  )}
+                </button>
+              )}
+            </form>
+
+            {/* Display tracking results */}
+            {trackingResult && (
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Status: </span>
+                    <span className="text-sm text-gray-900">{trackingResult.status}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Date Submitted: </span>
+                    <span className="text-sm text-gray-900">{trackingResult.dateSubmitted}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm font-medium text-gray-700">Report: </span>
+                    <span className="text-sm text-gray-900">{trackingResult.report}</span>
+                  </div>
+                </div>
+                
+                {/* Option to search again */}
+                <button
+                  onClick={() => {
+                    setSearchTrackingId("");
+                    setTrackingResult(null);
+                    setTrackingError("");
+                  }}
+                  className="mt-4 w-full py-2 px-4 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50"
+                >
+                  Search Another ID
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

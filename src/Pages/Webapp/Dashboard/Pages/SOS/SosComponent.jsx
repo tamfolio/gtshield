@@ -25,7 +25,7 @@ function SosComponent() {
 
   const token = useSelector(
     (state) => state?.user?.currentUser?.tokens?.access?.token
-  )
+  );
 
   // Effects for timer and playback
   useEffect(() => {
@@ -153,7 +153,7 @@ function SosComponent() {
     setIsPlaying(false);
     setAudioBlob(null);
     setTextDescription("");
-    
+
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
@@ -167,7 +167,7 @@ function SosComponent() {
     setIsPlaying(false);
     setAudioBlob(null);
     setAudioLevels([]);
-    
+
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
       setAudioUrl(null);
@@ -186,7 +186,7 @@ function SosComponent() {
     try {
       // Create FormData for multipart/form-data request
       const formData = new FormData();
-      
+
       // Prepare the data object
       const sosData = {
         address: "Current Location", // You might want to get actual location
@@ -194,35 +194,34 @@ function SosComponent() {
         isIdentityHidden: false,
         isLocationHidden: false, // Set based on user preference
         channel: "web",
-        coordinates: "3.54534E, 7.43435N" // Get actual coordinates from geolocation
+        coordinates: "3.54534E, 7.43435N", // Get actual coordinates from geolocation
       };
-      
+
       // Append the JSON data
-      formData.append('data', JSON.stringify(sosData));
-      
+      formData.append("data", JSON.stringify(sosData));
+
       // Convert audioBlob to File and append
-      const audioFile = new File([audioBlob], 'emergency-audio.wav', {
-        type: 'audio/wav'
+      const audioFile = new File([audioBlob], "emergency-audio.wav", {
+        type: "audio/wav",
       });
-      formData.append('audio', audioFile);
+      formData.append("audio", audioFile);
 
       // Make the API call using userRequest (same pattern as your review submission)
-      const res = await userRequest(token).post('/sos/new', formData);
+      const res = await userRequest(token).post("/sos/new", formData);
 
       console.log("✅ Emergency alert sent:", res.data);
-      
+
       // Show success modal instead of alert
       setShowSuccessModal(true);
-
     } catch (err) {
       console.error("❌ Failed to send emergency alert:", err);
-      
+
       // Show user-friendly error message (same pattern as your review code)
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.message || 
-                          "Failed to send emergency alert";
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Failed to send emergency alert";
       alert(`Error: ${errorMessage}`);
-      
     } finally {
       setIsSubmitting(false);
     }
@@ -252,7 +251,7 @@ function SosComponent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar isAuthenticated={true} />
-      
+
       {/* Success Modal */}
       {showSuccessModal && (
         <SuccessModal
@@ -324,23 +323,33 @@ const SuccessModal = ({ onStayOnPage, onRedirectToDashboard, onClose }) => (
       >
         ✕
       </button>
-      
+
       <div className="p-6 text-center">
         {/* Success Icon */}
         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-          <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
+          <svg
+            className="h-6 w-6 text-green-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M5 13l4 4L19 7"
+            ></path>
           </svg>
         </div>
-        
+
         <h3 className="text-lg font-semibold text-gray-900 mb-2">
           Help is on it's way
         </h3>
-        
+
         <p className="text-sm text-gray-600 mb-6">
           We are connecting your case to the nearest police station
         </p>
-        
+
         <div className="space-y-3">
           <button
             onClick={onStayOnPage}
@@ -348,7 +357,7 @@ const SuccessModal = ({ onStayOnPage, onRedirectToDashboard, onClose }) => (
           >
             Stay on Page
           </button>
-          
+
           <button
             onClick={onRedirectToDashboard}
             className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium"
@@ -372,9 +381,7 @@ const MainView = ({ onStart, onCall }) => (
       </h1>
     </div>
     <div className="mb-8 md:mb-16">
-      <button
-        className="w-24 h-24 md:w-32 md:h-32 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold shadow-lg"
-      >
+      <button className="w-24 h-24 md:w-32 md:h-32 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold shadow-lg">
         SOS
       </button>
     </div>
@@ -388,12 +395,14 @@ const MainView = ({ onStart, onCall }) => (
       >
         Send Emergency Alert
       </button>
+      <button className="w-full py-3 md:py-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium">
+        <Link to="/call-emergency-contact">Call Emergency Contact</Link>
+      </button>
       <button
-        className="w-full py-3 md:py-4 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg font-medium"
+        onClick={() => window.open("tel:08000009111", "_self")}
+        className="w-full py-3 md:py-4 bg-white border-[1px] border-solid border-[#D5D7DA] text-[#414651] rounded-lg font-medium"
       >
-        <Link to='/call-emergency-contact'>
-          Call Emergency Contact
-        </Link>
+        Call Contact Center
       </button>
     </div>
   </div>
@@ -413,7 +422,7 @@ const RecordingView = ({
 }) => {
   const timeLeft = 15 - time;
   const progressPercent = (time / 15) * 100;
-  
+
   return (
     <div
       className="flex flex-col items-center justify-center px-4 sm:px-6 md:px-8"
@@ -428,12 +437,16 @@ const RecordingView = ({
             // Show ready to record state
             <div>
               <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-600 text-sm md:text-base">Ready to Record</span>
-                <span className="text-gray-600 text-sm md:text-base">00:00</span>
+                <span className="text-gray-600 text-sm md:text-base">
+                  Ready to Record
+                </span>
+                <span className="text-gray-600 text-sm md:text-base">
+                  00:00
+                </span>
               </div>
-              
+
               <AudioWaveform isActive={false} />
-              
+
               <div className="mt-4 flex justify-center">
                 <button
                   onClick={onStartRecording}
@@ -442,64 +455,92 @@ const RecordingView = ({
                   🎙️
                 </button>
               </div>
-              
+
               <div className="mt-4 text-center">
-                <p className="text-sm md:text-base text-gray-600 mb-2">Tap the microphone to start recording</p>
-                <p className="text-xs text-gray-500">Maximum recording time: 15 seconds</p>
+                <p className="text-sm md:text-base text-gray-600 mb-2">
+                  Tap the microphone to start recording
+                </p>
+                <p className="text-xs text-gray-500">
+                  Maximum recording time: 15 seconds
+                </p>
               </div>
             </div>
           ) : (
             // Show recording in progress state
             <div>
               <div className="flex justify-between items-center mb-4">
-                <span className="text-gray-600 text-sm md:text-base">Recording...</span>
+                <span className="text-gray-600 text-sm md:text-base">
+                  Recording...
+                </span>
                 <div className="text-right">
-                  <div className="text-gray-600 text-sm md:text-base">{formatTime(time)}</div>
-                  <div className={`text-xs ${timeLeft <= 5 ? 'text-red-500 font-semibold' : 'text-gray-500'}`}>
+                  <div className="text-gray-600 text-sm md:text-base">
+                    {formatTime(time)}
+                  </div>
+                  <div
+                    className={`text-xs ${
+                      timeLeft <= 5
+                        ? "text-red-500 font-semibold"
+                        : "text-gray-500"
+                    }`}
+                  >
                     {timeLeft}s left
                   </div>
                 </div>
               </div>
-              
+
               {/* Progress bar */}
               <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4">
-                <div 
+                <div
                   className={`h-1.5 rounded-full transition-all duration-1000 ${
-                    timeLeft <= 5 ? 'bg-red-500' : 'bg-blue-500'
+                    timeLeft <= 5 ? "bg-red-500" : "bg-blue-500"
                   }`}
                   style={{ width: `${progressPercent}%` }}
                 ></div>
               </div>
-              
+
               <AudioWaveform isActive={isRecording} audioLevels={audioLevels} />
-              
+
               <div className="mt-4 flex justify-center">
                 <div className="bg-red-50 border border-red-200 rounded-lg px-3 md:px-4 py-2 text-red-600">
                   <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 md:w-3 md:h-3 bg-red-600 rounded-full animate-pulse"></div>
-                    <span className="text-xs md:text-sm font-medium">Recording in progress</span>
+                    <span className="text-xs md:text-sm font-medium">
+                      Recording in progress
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
           )}
         </div>
-        
+
         {/* Recording limit caveat - only show when recording */}
         {isRecording && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
             <div className="flex items-start space-x-2">
-              <svg className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              <svg
+                className="w-4 h-4 text-yellow-600 mt-0.5 flex-shrink-0"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                  clipRule="evenodd"
+                />
               </svg>
               <div>
-                <p className="text-xs md:text-sm text-yellow-800 font-medium">Recording Limited</p>
-                <p className="text-xs text-yellow-700">Maximum recording time is 15 seconds for emergency alerts</p>
+                <p className="text-xs md:text-sm text-yellow-800 font-medium">
+                  Recording Limited
+                </p>
+                <p className="text-xs text-yellow-700">
+                  Maximum recording time is 15 seconds for emergency alerts
+                </p>
               </div>
             </div>
           </div>
         )}
-        
+
         {/* Stop button - only show when recording */}
         {isRecording && (
           <button
@@ -509,26 +550,26 @@ const RecordingView = ({
             Stop Recording
           </button>
         )}
-        
+
         <textarea
           className="w-full h-24 md:h-32 px-3 py-2 border border-gray-300 rounded-lg mb-4 text-sm md:text-base resize-none"
           placeholder="Tell us about what happened"
           value={textDescription}
           onChange={(e) => setTextDescription(e.target.value)}
         />
-        
+
         {/* Send button - only show if not recording (allows sending without audio) */}
         {!isRecording && (
           <button
             onClick={onSend}
             disabled={isSubmitting}
             className={`w-full py-3 md:py-4 rounded-lg font-medium text-sm md:text-base ${
-              isSubmitting 
-                ? 'bg-gray-400 cursor-not-allowed' 
-                : 'bg-blue-600 hover:bg-blue-700'
+              isSubmitting
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-blue-600 hover:bg-blue-700"
             } text-white`}
           >
-            {isSubmitting ? 'Sending...' : 'Send'}
+            {isSubmitting ? "Sending..." : "Send"}
           </button>
         )}
       </div>
@@ -562,7 +603,9 @@ const RecordedView = ({
       <div className="w-full max-w-md">
         <div className="bg-white border border-gray-200 rounded-lg p-4 md:p-6 mb-6 md:mb-8">
           <div className="flex justify-between items-center mb-4">
-            <span className="text-gray-600 text-sm md:text-base">Recorded Message</span>
+            <span className="text-gray-600 text-sm md:text-base">
+              Recorded Message
+            </span>
             <span className="text-gray-600 text-sm md:text-base">
               {formatTime(isPlaying ? playbackTime : time)}
             </span>
@@ -578,25 +621,37 @@ const RecordedView = ({
             <div className="bg-green-50 border border-green-200 rounded-lg px-3 md:px-4 py-2 text-green-600">
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 md:w-3 md:h-3 bg-green-600 rounded-full"></div>
-                <span className="text-xs md:text-sm font-medium">Recording completed</span>
+                <span className="text-xs md:text-sm font-medium">
+                  Recording completed
+                </span>
               </div>
             </div>
           </div>
         </div>
-        
+
         {/* Recording Actions */}
         <div className="flex space-x-3 mb-4">
           <button
             onClick={onDeleteRecording}
             className="flex-1 py-3 md:py-4 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 rounded-lg font-medium text-sm md:text-base flex items-center justify-center space-x-2"
           >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              ></path>
             </svg>
             <span>Delete & Re-record</span>
           </button>
         </div>
-        
+
         <textarea
           className="w-full h-24 md:h-32 px-3 py-2 border border-gray-300 rounded-lg mb-4 text-sm md:text-base resize-none"
           placeholder="Tell us about what happened"
@@ -607,12 +662,12 @@ const RecordedView = ({
           onClick={onSend}
           disabled={isSubmitting}
           className={`w-full py-3 md:py-4 rounded-lg font-medium text-sm md:text-base ${
-            isSubmitting 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-600 hover:bg-blue-700'
+            isSubmitting
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-blue-600 hover:bg-blue-700"
           } text-white`}
         >
-          {isSubmitting ? 'Sending...' : 'Send'}
+          {isSubmitting ? "Sending..." : "Send"}
         </button>
       </div>
     </div>

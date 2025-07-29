@@ -16,7 +16,7 @@ const CallEmergencyContact = () => {
     const fetchEmergencyContacts = async () => {
       setLoading(true);
       try {
-        const res = await userRequestse(token).get(
+        const res = await userRequest(token).get(
           "/user/emergencyContact/all"
         );
         console.log("✅ Emergency contacts fetched:", res.data);

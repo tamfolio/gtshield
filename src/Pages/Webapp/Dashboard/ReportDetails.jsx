@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Edit, Check, Clock, AlertCircle, Home, Star } from "lucide-react";
+import { ArrowLeft, Edit, Check, Clock, AlertCircle, Home, Star, ImageIcon, Eye, ExternalLink } from "lucide-react";
 import Navbar from "../../../Components/Website/Navbar";
 import FeedbackModal from "./Modals/FeedbackModal";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +7,87 @@ import { useParams } from "react-router-dom";
 import { userRequest } from "../../../requestMethod";
 import { useSelector } from "react-redux";
 import LeaveAReview from "./LeaveAReview";
+
+// Image Component with Error Handling and Loading State
+const ImageWithFallback = ({ src, alt, index, onClick }) => {
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+    console.log(`❌ Failed to load image: ${src}`);
+  };
+
+  if (imageError) {
+    return (
+      <div className="w-full h-64 bg-gray-100 rounded-lg flex flex-col items-center justify-center border-2 border-dashed border-gray-300">
+        <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
+        <p className="text-sm text-gray-500 text-center px-4">
+          Failed to load image
+        </p>
+        <button
+          onClick={() => window.open(src, '_blank')}
+          className="mt-2 text-blue-600 hover:text-blue-700 text-sm flex items-center"
+        >
+          <ExternalLink className="w-4 h-4 mr-1" />
+          Open in new tab
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative group">
+      {imageLoading && (
+        <div className="absolute inset-0 bg-gray-100 rounded-lg flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`w-full h-64 object-cover rounded-lg shadow-sm group-hover:shadow-md transition-all cursor-pointer ${
+          imageLoading ? 'opacity-0' : 'opacity-100'
+        }`}
+        onLoad={handleImageLoad}
+        onError={handleImageError}
+        onClick={onClick}
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 rounded-lg transition-all duration-200 flex items-center justify-center opacity-0 group-hover:opacity-100">
+        <Eye className="w-8 h-8 text-white" />
+      </div>
+    </div>
+  );
+};
+
+// Image Modal for Full View
+const ImageModal = ({ isOpen, onClose, imageSrc, imageAlt }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+      <div className="relative max-w-4xl max-h-full">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-white hover:text-gray-300 bg-black bg-opacity-50 rounded-full p-2 z-10"
+        >
+          <ArrowLeft className="w-6 h-6 transform rotate-45" />
+        </button>
+        <img
+          src={imageSrc}
+          alt={imageAlt}
+          className="max-w-full max-h-full object-contain rounded-lg"
+        />
+      </div>
+    </div>
+  );
+};
 
 // Common Header Component with Breadcrumb
 const ReportHeader = ({ incident, onBackToReports, pageToShow, onBackToDetails, showReviewButton, onLeaveReview, currentView, onSaveChanges, getStatusColor, getStatusIcon }) => (
@@ -84,30 +165,6 @@ const ReportHeader = ({ incident, onBackToReports, pageToShow, onBackToDetails, 
 
 // Review Component
 const ReviewComponent = ({ incident, onBackToDetails }) => {
-  const [rating, setRating] = useState(0);
-  const [review, setReview] = useState("");
-  const [isAnonymous, setIsAnonymous] = useState(false);
-
-  const handleStarClick = (starIndex) => {
-    setRating(starIndex + 1);
-  };
-
-  const handleSubmitReview = () => {
-    const reviewData = {
-      rating,
-      review,
-      isAnonymous,
-      incidentId: incident?.id,
-      timestamp: new Date().toISOString()
-    };
-    
-    console.log("Review submitted:", reviewData);
-    // Here you would typically send the review to your API
-    
-    // Go back to details view after submission
-    onBackToDetails();
-  };
-
   return (
    <LeaveAReview/>
   );
@@ -119,6 +176,8 @@ const ReportDetails = () => {
   const [currentView, setCurrentView] = useState("details");
   const [loading, setLoading] = useState(true);
   const [pageToShow, setPageToShow] = useState('reportDetails'); // Can be 'reportDetails' or 'review'
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [showImageModal, setShowImageModal] = useState(false);
   const { id } = useParams();
   const token = useSelector(
     (state) => state?.user?.currentUser?.tokens?.access?.token
@@ -148,7 +207,18 @@ const ReportDetails = () => {
     const fetchIncident = async () => {
       try {
         const res = await userRequest(token).get(`/incident/${id}`);
-        setIncident(res.data.data.incident);
+        const incidentData = res.data.data.incident;
+        setIncident(incidentData);
+        
+        // Debug: Log the incident data and images
+        console.log("✅ Incident fetched:", incidentData);
+        console.log("📸 Images array:", incidentData.incidentImages);
+        
+        if (incidentData.incidentImages) {
+          incidentData.incidentImages.forEach((image, index) => {
+            console.log(`📸 Image ${index + 1}:`, image);
+          });
+        }
       } catch (error) {
         console.error("❌ Failed to fetch incident:", error);
       } finally {
@@ -161,48 +231,6 @@ const ReportDetails = () => {
     }
   }, [id, token]);
 
-  const reportsData = {
-    1: {
-      id: 1,
-      type: "Rape Case",
-      dateReported: "Jan 4, 2025",
-      dateCreated: "16th May, 2025",
-      status: "Resolved",
-      submissionTime: "8:00am",
-      location: "Street name, Ogun State",
-      description:
-        "Dolor enim eu tortor urna sed duis nulla. Aliquam vestibulum, nulla odio nisl vitae. In aliquet pellentesque aenean hac vestibulum turpis mi bibendum diam. Tempor integer aliquam in vitae malesuada fringilla. Elit nisl in eleifend sed nisl. Pulvinar at orci, proin imperdiet commodo consectetur convallis risus.",
-      details: [
-        "Ipsum sit mattis nulla quam nulla. Gravida id gravida ac enim mauris id.Diam elit, orci, tincidunt aenean tempus. Quis velit eget ut tortor tellus. Sed vel, congue felis elit erat nam nibh orci.",
-        "Non pellentesque congue eget consectetur turpis.",
-        "Sapien, dictum molestie sem tempor. Diam elit, orci, tincidunt aenean tempus. Quis velit eget ut tortor tellus. Sed vel, congue felis elit erat nam nibh orci.",
-      ],
-      images: [
-        "https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=300&fit=crop",
-      ],
-    },
-    // ... other report data
-  };
-
-  // Simulate API call to fetch report data
-  useEffect(() => {
-    const fetchReport = async () => {
-      setLoading(true);
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      const reportData = reportsData[reportId];
-      if (reportData) {
-        setReport(reportData);
-      }
-      setLoading(false);
-    };
-
-    fetchReport();
-  }, [reportId]);
-
   const getStatusColor = (status) => {
     switch (status) {
       case "In Progress":
@@ -210,6 +238,8 @@ const ReportDetails = () => {
       case "Closed":
       case "Resolved":
         return "bg-green-100 text-green-800";
+      case "new":
+        return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
     }
@@ -229,7 +259,6 @@ const ReportDetails = () => {
 
   const handleBackToReports = () => {
     navigate("/reports");
-    console.log("Navigate back to /reports");
   };
 
   const handleEdit = () => {
@@ -237,20 +266,6 @@ const ReportDetails = () => {
   };
 
   const handleFeedbackSubmit = (feedbackData) => {
-    const newReview = {
-      id: Date.now(), // Simple ID generation
-      name: feedbackData.hideIdentity ? null : "Current User",
-      rating: feedbackData.rating,
-      comment: feedbackData.description,
-      date: new Date().toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      likes: 0,
-      anonymous: feedbackData.hideIdentity,
-    };
-
     setShowFeedbackModal(false);
     console.log("Feedback submitted:", feedbackData);
   };
@@ -266,6 +281,12 @@ const ReportDetails = () => {
   const handleSaveChanges = () => {
     setCurrentView("details");
     console.log("Save changes for report:", reportId);
+  };
+
+  const handleImageClick = (imageSrc, index) => {
+    console.log(`🖼️ Image clicked: ${imageSrc}`);
+    setSelectedImage({ src: imageSrc, alt: `Evidence ${index + 1}` });
+    setShowImageModal(true);
   };
 
   if (loading) {
@@ -307,6 +328,14 @@ const ReportDetails = () => {
         isOpen={showFeedbackModal}
         onClose={() => setShowFeedbackModal(false)}
         reportType={incident?.incidentType}
+      />
+
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+        imageSrc={selectedImage?.src}
+        imageAlt={selectedImage?.alt}
       />
 
       {/* Main Content */}
@@ -394,21 +423,53 @@ const ReportDetails = () => {
 
               {/* Images Section */}
               <div className="space-y-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Evidence & Documentation
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {incident?.incidentImages?.map((image, index) => (
-                    <div key={index} className="relative group">
-                      <img
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold text-gray-900">
+                    Evidence & Documentation
+                  </h2>
+                  {incident?.incidentImages?.length > 0 && (
+                    <span className="text-sm text-gray-500">
+                      {incident.incidentImages.length} image(s) uploaded
+                    </span>
+                  )}
+                </div>
+
+                {/* Debug Information - Remove in production */}
+                {process.env.NODE_ENV === 'development' && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                    <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Info:</h3>
+                    <p className="text-xs text-yellow-700">
+                      Images array: {JSON.stringify(incident?.incidentImages)}
+                    </p>
+                    <p className="text-xs text-yellow-700">
+                      Array length: {incident?.incidentImages?.length || 0}
+                    </p>
+                  </div>
+                )}
+
+                {incident?.incidentImages && incident.incidentImages.length > 0 ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {incident.incidentImages.map((image, index) => (
+                      <ImageWithFallback
+                        key={index}
                         src={image}
                         alt={`Evidence ${index + 1}`}
-                        className="w-full h-64 object-cover rounded-lg shadow-sm group-hover:shadow-md transition-shadow cursor-pointer"
+                        index={index}
+                        onClick={() => handleImageClick(image, index)}
                       />
-                      <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 rounded-lg transition-opacity"></div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 bg-gray-50 rounded-lg">
+                    <ImageIcon className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No Evidence Uploaded
+                    </h3>
+                    <p className="text-gray-500">
+                      No images or documents were provided with this report.
+                    </p>
+                  </div>
+                )}
 
                 {currentView === "edit" && (
                   <div className="flex justify-center pt-4">

@@ -1,98 +1,86 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import { userRequest } from "../../../requestMethod";
 
 const NewsBlog = () => {
   const [activeFilter, setActiveFilter] = useState("View all");
   const [currentPage, setCurrentPage] = useState(1);
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({});
+
+  // Assuming you have userRequest function and token available
+  // You might need to import these or pass them as props
+  const token = "your-token-here"; // Replace with actual token
 
   const filters = [
     "View all",
     "Security Alerts",
-    "Platform Updates",
+    "Platform Updates", 
     "Success Stories",
     "Press Coverage",
   ];
 
-  const articles = [
-    {
-      id: 1,
-      title: "Bill Walsh leadership lessons",
-      description:
-        "Like to know the secrets of transforming a 2-14 team into a 3x Super Bowl winning Dynasty?",
-      author: "Alec Whitten",
-      date: "17 Jan 2025",
-      image:
-        "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=240&fit=crop",
-      tags: ["Security Alert", "Management"],
-      category: "Security Alerts",
-    },
-    {
-      id: 2,
-      title: "PM mental models",
-      description:
-        "Mental models are simple expressions of complex processes or relationships.",
-      author: "Demi Wilkinson",
-      date: "16 Jan 2025",
-      image:
-        "https://images.unsplash.com/photo-1552664730-d307ca884978?w=400&h=240&fit=crop",
-      tags: ["Product", "Research", "Frameworks"],
-      category: "Success Stories",
-    },
-    {
-      id: 3,
-      title: "What is Wireframing?",
-      description:
-        "Introduction to Wireframing and its Principles. Learn from the best in the industry.",
-      author: "Candice Wu",
-      date: "15 Jan 2025",
-      image:
-        "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=240&fit=crop",
-      tags: ["Design", "Research"],
-      category: "Platform Updates",
-    },
-    {
-      id: 4,
-      title: "How collaboration makes us better designers",
-      description:
-        "Collaboration can make our teams stronger, and our individual designs better.",
-      author: "Natali Craig",
-      date: "14 Jan 2025",
-      image:
-        "https://images.unsplash.com/photo-1542744173-8e7e53415bb0?w=400&h=240&fit=crop",
-      tags: ["Design", "Research"],
-      category: "Success Stories",
-    },
-    {
-      id: 5,
-      title: "Our top 10 Javascript frameworks to use",
-      description:
-        "JavaScript frameworks make development easy with extensive features and functionalities.",
-      author: "Drew Cano",
-      date: "13 Jan 2025",
-      image:
-        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=240&fit=crop",
-      tags: ["Software Development", "Tools", "SaaS"],
-      category: "Platform Updates",
-    },
-    {
-      id: 6,
-      title: "Podcast: Creating a better CX Community",
-      description:
-        "Starting a community doesn't need to be complicated, but how do you get started?",
-      author: "Orlando Diggs",
-      date: "12 Jan 2025",
-      image:
-        "https://images.unsplash.com/photo-1478737270239-2f02b77fc618?w=400&h=240&fit=crop",
-      tags: ["Podcasts", "Customer Success"],
-      category: "Press Coverage",
-    },
-  ];
+  // Fetch news data from API
+  const fetchNews = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await userRequest(token).get("/userTools/news/all");
+      console.log("✅ News fetched:", res.data);
+      
+      const newsData = res.data?.data?.news?.data || [];
+      const paginationData = res.data?.data?.news?.pagination || {};
+      
+      // Transform API data to match component structure
+      const transformedArticles = newsData.map(article => ({
+        id: article.id,
+        title: article.title,
+        description: article.subtitle || article.bodyText?.substring(0, 100) + "...",
+        author: "Author", // API doesn't seem to have author field
+        date: new Date(article.datePublished).toLocaleDateString('en-US', {
+          day: 'numeric',
+          month: 'short', 
+          year: 'numeric'
+        }),
+        image: article.coverImage || "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=240&fit=crop",
+        tags: article.tags || [],
+        category: "Platform Updates", // You might want to map tags to categories
+        caption: article.caption,
+        bodyText: article.bodyText,
+        isActive: article.isActive,
+        isDraft: article.isDraft
+      }));
 
-  const filteredArticles =
-    activeFilter === "View all"
-      ? articles
-      : articles.filter((article) => article.category === activeFilter);
+      setArticles(transformedArticles);
+      setPagination(paginationData);
+    } catch (err) {
+      console.error("❌ Failed to fetch news:", err);
+      setError("Failed to fetch news articles");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchNews();
+  }, []);
+
+  // Refetch when filter changes
+  useEffect(() => {
+    // Filter is handled client-side, no need to refetch
+  }, [activeFilter]);
+
+  const filteredArticles = activeFilter === "View all" 
+    ? articles 
+    : articles.filter(article => 
+        article.tags.some(tag => 
+          tag.toLowerCase().includes(activeFilter.toLowerCase().replace(/\s+/g, ''))
+        )
+      );
 
   const totalPages = Math.ceil(filteredArticles.length / 6);
   const paginatedArticles = filteredArticles.slice(
@@ -102,20 +90,47 @@ const NewsBlog = () => {
 
   const getTagColor = (tag) => {
     const colors = {
-      "Security Alert": "bg-red-100 text-red-800",
-      Management: "bg-gray-100 text-gray-800",
-      Product: "bg-blue-100 text-blue-800",
-      Research: "bg-purple-100 text-purple-800",
-      Frameworks: "bg-orange-100 text-orange-800",
-      Design: "bg-green-100 text-green-800",
-      "Software Development": "bg-emerald-100 text-emerald-800",
-      Tools: "bg-yellow-100 text-yellow-800",
-      SaaS: "bg-pink-100 text-pink-800",
-      Podcasts: "bg-indigo-100 text-indigo-800",
-      "Customer Success": "bg-cyan-100 text-cyan-800",
+      "gateway": "bg-red-100 text-red-800",
+      "crimewatch": "bg-gray-100 text-gray-800", 
+      "modal": "bg-blue-100 text-blue-800",
+      "kidnapping": "bg-purple-100 text-purple-800",
+      "lost": "bg-orange-100 text-orange-800",
+      "security": "bg-green-100 text-green-800",
     };
-    return colors[tag] || "bg-gray-100 text-gray-800";
+    
+    const cleanTag = tag.replace('#', '').toLowerCase();
+    return colors[cleanTag] || "bg-gray-100 text-gray-800";
   };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="text-center">
+          <div className="text-red-600 text-lg mb-4">{error}</div>
+          <button 
+            onClick={() => fetchNews()}
+            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-12">
@@ -157,12 +172,15 @@ const NewsBlog = () => {
             key={article.id}
             className="group cursor-pointer"
           >
-            <article key={article.id} className="group cursor-pointer">
+            <article className="group cursor-pointer">
               <div className="aspect-video mb-4 overflow-hidden rounded-lg bg-gray-100">
                 <img
-                  src={article.image}
+                  src={article.coverImage}
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  onError={(e) => {
+                    e.target.src = "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=240&fit=crop";
+                  }}
                 />
               </div>
 
@@ -183,14 +201,12 @@ const NewsBlog = () => {
                 </p>
 
                 <div className="flex flex-wrap gap-2">
-                  {article.tags.map((tag) => (
+                  {article.tags.map((tag, index) => (
                     <span
-                      key={tag}
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getTagColor(
-                        tag
-                      )}`}
+                      key={index}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getTagColor(tag)}`}
                     >
-                      {tag}
+                      {tag.replace('#', '')}
                     </span>
                   ))}
                 </div>
@@ -200,67 +216,79 @@ const NewsBlog = () => {
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-          disabled={currentPage === 1}
-          className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span>Previous</span>
-        </button>
-
-        <div className="flex space-x-1">
-          {[...Array(totalPages)].map((_, i) => {
-            const page = i + 1;
-            if (
-              page === 1 ||
-              page === totalPages ||
-              (page >= currentPage - 1 && page <= currentPage + 1)
-            ) {
-              return (
-                <button
-                  key={page}
-                  onClick={() => setCurrentPage(page)}
-                  className={`w-10 h-10 rounded-md text-sm font-medium ${
-                    currentPage === page
-                      ? "bg-blue-600 text-white"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
-                  }`}
-                >
-                  {page}
-                </button>
-              );
-            } else if (page === 2 && currentPage > 4) {
-              return (
-                <span key="dots1" className="px-2">
-                  ...
-                </span>
-              );
-            } else if (
-              page === totalPages - 1 &&
-              currentPage < totalPages - 3
-            ) {
-              return (
-                <span key="dots2" className="px-2">
-                  ...
-                </span>
-              );
-            }
-            return null;
-          })}
+      {/* No Results Message */}
+      {paginatedArticles.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <div className="text-gray-500 text-lg">No articles found</div>
+          <div className="text-gray-400 text-sm mt-2">
+            Try adjusting your filters or check back later
+          </div>
         </div>
+      )}
 
-        <button
-          onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-          disabled={currentPage === totalPages}
-          className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <span>Next</span>
-          <ChevronRight className="w-4 h-4" />
-        </button>
-      </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+            disabled={currentPage === 1}
+            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span>Previous</span>
+          </button>
+
+          <div className="flex space-x-1">
+            {[...Array(totalPages)].map((_, i) => {
+              const page = i + 1;
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= currentPage - 1 && page <= currentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-10 h-10 rounded-md text-sm font-medium ${
+                      currentPage === page
+                        ? "bg-blue-600 text-white"
+                        : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                );
+              } else if (page === 2 && currentPage > 4) {
+                return (
+                  <span key="dots1" className="px-2">
+                    ...
+                  </span>
+                );
+              } else if (
+                page === totalPages - 1 &&
+                currentPage < totalPages - 3
+              ) {
+                return (
+                  <span key="dots2" className="px-2">
+                    ...
+                  </span>
+                );
+              }
+              return null;
+            })}
+          </div>
+
+          <button
+            onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+            disabled={currentPage === totalPages}
+            className="flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span>Next</span>
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

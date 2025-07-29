@@ -1,11 +1,15 @@
-import React, { useState, useMemo } from 'react';
-import { MapPin, Calendar, AlertTriangle } from 'lucide-react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { MapPin, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
 import { geoData } from '../../../data/ogun_state';
+import { toast } from 'react-toastify';
+
+import { useSelector } from 'react-redux';
+import { publicRequest, userRequest } from '../../../requestMethod';
 
 const Map = () => {
-  const [selectedLocation, setSelectedLocation] = useState('Select Location');
-  const [dateRange, setDateRange] = useState('Last 7 Days');
-  const [crimeType, setCrimeType] = useState('Rape');
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [dateRange, setDateRange] = useState('7d');
+  const [crimeType, setCrimeType] = useState('');
   const [hoveredArea, setHoveredArea] = useState(null);
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [zoomLevel, setZoomLevel] = useState(1);
@@ -13,28 +17,152 @@ const Map = () => {
   const [isPanning, setIsPanning] = useState(false);
   const [lastPanPoint, setLastPanPoint] = useState({ x: 0, y: 0 });
   const [touchStartDistance, setTouchStartDistance] = useState(0);
+  const [crimeData, setCrimeData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // New state for dropdowns
+  const [lgas, setLgas] = useState([]);
+  const [incidentTypes, setIncidentTypes] = useState([]);
+  const [loadingLgas, setLoadingLgas] = useState(true);
+  const [loadingIncidents, setLoadingIncidents] = useState(true);
 
-  const crimeData = {
-    'AbeokutaNorth': { level: 'low', reports: 2 },
-    'AbeokutaSouth': { level: 'moderate', reports: 4 },
-    'AdoOdo/Ota': { level: 'low', reports: 2 },
-    'Ewekoro': { level: 'high', reports: 8 },
-    'Ifo': { level: 'normal', reports: 0 },
-    'IjebuEast': { level: 'normal', reports: 0 },
-    'IjebuNorth': { level: 'moderate', reports: 4 },
-    'IjebuNorthEast': { level: 'moderate', reports: 3 },
-    'IjebuOde': { level: 'moderate', reports: 6 },
-    'Ikenne': { level: 'low', reports: 2 },
-    'ImekoAfon': { level: 'normal', reports: 0 },
-    'Ipokia': { level: 'normal', reports: 0 },
-    'Obafemi-Owode': { level: 'moderate', reports: 5 },
-    'Odeda': { level: 'normal', reports: 0 },
-    'OgunWaterside': { level: 'low', reports: 1 },
-    'RemoNorth': { level: 'moderate', reports: 3 },
-    'Sagamu': { level: 'low', reports: 1 },
-    'YewaNorth': { level: 'normal', reports: 0 },
-    'YewaSouth': { level: 'low', reports: 1 }
+  const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
+  const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
+
+  // Fetch LGAs from API
+  const fetchLgas = async () => {
+    try {
+      setLoadingLgas(true);
+      const response = await publicRequest.get("/options/lgas/all");
+      console.log("LGAs API response:", response.data);
+      
+      // Fix: Access the 'lgas' array inside the data object
+      const formattedLgas = response.data?.data?.lgas?.map((item) => ({
+        label: item.name,
+        value: item.id,
+      })) || [];
+      
+      console.log("Formatted LGAs:", formattedLgas); // Add this for debugging
+      setLgas(formattedLgas);
+    } catch (error) {
+      console.error("Error fetching LGAs:", error);
+      toast.error("Failed to load locations");
+    } finally {
+      setLoadingLgas(false);
+    }
   };
+
+  // Fetch incident types from API
+  const fetchIncidentTypes = async () => {
+    try {
+      setLoadingIncidents(true);
+      const response = await publicRequest.get("/incident/types");
+      console.log("Incident types API response:", response.data);
+      
+      const formattedData = response.data?.data?.map((item) => ({
+        label: item.name,
+        value: item.id,
+      })) || [];
+      
+      setIncidentTypes(formattedData);
+    } catch (error) {
+      console.error("Error fetching incident types:", error);
+      toast.error("Failed to load crime types");
+    } finally {
+      setLoadingIncidents(false);
+    }
+  };
+
+  // Fetch crime data from API with filters
+  const fetchCrimeData = async () => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      let response;
+      
+      // Build query parameters
+      const params = new URLSearchParams();
+      if (selectedLocation) params.append('lgaId', selectedLocation);
+      if (crimeType) params.append('incidentTypeId', crimeType);
+      if (dateRange) params.append('dateRange', dateRange);
+      
+      const queryString = params.toString();
+      const endpoint = `/crimeMap/all${queryString ? `?${queryString}` : ''}`;
+      
+      if (isAuthenticated && token) {
+        // Authenticated request - gets detailed data
+        response = await userRequest(token).get(endpoint);
+      } else {
+        // Unauthenticated request - gets count only
+        response = await publicRequest.get(endpoint);
+      }
+
+      const apiData = response.data.data.crimeMaps;
+      const processedData = {};
+
+      if (isAuthenticated) {
+        // Process detailed authenticated response
+        Object.keys(apiData).forEach(location => {
+          const locationData = apiData[location];
+          const count = locationData.count || 0;
+          
+          // Determine crime level based on count
+          let level = 'normal';
+          if (count >= 8) level = 'high';
+          else if (count >= 3) level = 'moderate';
+          else if (count > 0) level = 'low';
+          
+          processedData[location.replace(/\s+/g, '')] = {
+            level,
+            reports: count,
+            crimes: locationData.crimes || []
+          };
+        });
+      } else {
+        // Process simple unauthenticated response
+        Object.keys(apiData).forEach(location => {
+          const count = apiData[location];
+          
+          // Determine crime level based on count
+          let level = 'normal';
+          if (count >= 8) level = 'high';
+          else if (count >= 3) level = 'moderate';
+          else if (count > 0) level = 'low';
+          
+          processedData[location.replace(/\s+/g, '')] = {
+            level,
+            reports: count
+          };
+        });
+      }
+
+      setCrimeData(processedData);
+    } catch (err) {
+      console.error('Failed to fetch crime data:', err);
+      setError('Failed to load crime data. Please try again.');
+      toast.error('Failed to load crime data');
+      
+      // Fallback to empty data structure
+      setCrimeData({});
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch initial data on component mount
+  useEffect(() => {
+    fetchLgas();
+    fetchIncidentTypes();
+  }, []);
+
+  // Fetch crime data when filters change
+  useEffect(() => {
+    if (!loadingLgas && !loadingIncidents) {
+      fetchCrimeData();
+    }
+  }, [selectedLocation, crimeType, dateRange, isAuthenticated, token, loadingLgas, loadingIncidents]);
 
   // Calculate bounding box and create projection
   const { bounds, projection } = useMemo(() => {
@@ -215,6 +343,18 @@ const Map = () => {
     setZoomLevel(prev => Math.max(0.5, Math.min(5, prev * delta)));
   };
 
+  // Refresh data
+  const handleRefresh = () => {
+    fetchCrimeData();
+  };
+
+  // Clear all filters
+  const handleClearFilters = () => {
+    setSelectedLocation('');
+    setCrimeType('');
+    setDateRange('7d');
+  };
+
   const legendItems = [
     { color: 'bg-yellow-500', label: '0-2 reports/km²', description: 'Low crime concentration' },
     { color: 'bg-orange-500', label: '3-7 reports/km²', description: 'Moderate crime activity' },
@@ -222,7 +362,39 @@ const Map = () => {
     { color: 'bg-gray-300', label: '0 reports/km²', description: 'Normal Zone' }
   ];
 
-  const availableLocations = Object.keys(crimeData);
+  // Show loading state for initial load
+  if (loadingLgas || loadingIncidents) {
+    return (
+      <div className="w-full max-w-6xl mx-auto p-6 bg-white">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="flex flex-col items-center gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+            <p className="text-gray-600">Loading map data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="w-full max-w-6xl mx-auto p-6 bg-white">
+        <div className="flex items-center justify-center min-h-96">
+          <div className="flex flex-col items-center gap-4">
+            <AlertTriangle className="w-8 h-8 text-red-600" />
+            <p className="text-red-600">{error}</p>
+            <button 
+              onClick={handleRefresh}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto p-6 bg-white">
@@ -234,11 +406,12 @@ const Map = () => {
           <select 
             value={selectedLocation}
             onChange={(e) => setSelectedLocation(e.target.value)}
-            className="px-3 py-1 border rounded-md text-sm"
+            className="px-3 py-1 border rounded-md text-sm min-w-32"
+            disabled={loadingLgas}
           >
-            <option>Select Location</option>
-            {availableLocations.map(area => (
-              <option key={area} value={area}>{area}</option>
+            <option value="">All Locations</option>
+            {lgas.map(lga => (
+              <option key={lga.value} value={lga.value}>{lga.label}</option>
             ))}
           </select>
         </div>
@@ -251,10 +424,11 @@ const Map = () => {
             onChange={(e) => setDateRange(e.target.value)}
             className="px-3 py-1 border rounded-md text-sm"
           >
-            <option>Last 7 Days</option>
-            <option>Last 30 Days</option>
-            <option>Last 90 Days</option>
-            <option>Last Year</option>
+            <option value='24h'>Last 24 Hours</option>
+            <option value='7d'>Last 7 Days</option>
+            <option value='30d'>Last 30 Days</option>
+            <option value='3m'>Last 90 Days</option>
+            <option value='12m'>Last Year</option>
           </select>
         </div>
         
@@ -264,20 +438,76 @@ const Map = () => {
           <select 
             value={crimeType}
             onChange={(e) => setCrimeType(e.target.value)}
-            className="px-3 py-1 border rounded-md text-sm"
+            className="px-3 py-1 border rounded-md text-sm min-w-32"
+            disabled={loadingIncidents}
           >
-            <option>Rape</option>
-            <option>Theft</option>
-            <option>Assault</option>
-            <option>Burglary</option>
-            <option>Robbery</option>
-            <option>Vandalism</option>
+            <option value="">All Types</option>
+            {incidentTypes.map(type => (
+              <option key={type.value} value={type.value}>{type.label}</option>
+            ))}
           </select>
+        </div>
+
+        <div className="flex gap-2 ml-auto">
+          <button 
+            onClick={handleClearFilters}
+            className="px-3 py-1 bg-gray-500 text-white rounded-md text-sm hover:bg-gray-600 transition-colors"
+          >
+            Clear Filters
+          </button>
+          <button 
+            onClick={handleRefresh}
+            disabled={loading}
+            className="px-3 py-1 bg-blue-600 text-white rounded-md text-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-1"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Refresh'}
+          </button>
         </div>
       </div>
 
+      {/* Authentication Status */}
+      <div className="mb-4 p-2 bg-blue-50 rounded text-sm text-blue-700">
+        {isAuthenticated ? 
+          '🔒 Authenticated - Viewing detailed crime data' : 
+          '🔓 Public view - Limited data available. Sign in for detailed information.'
+        }
+      </div>
+
+      {/* Active Filters Display */}
+      {(selectedLocation || crimeType || dateRange !== '7d') && (
+        <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-medium text-yellow-800">Active Filters:</span>
+            {selectedLocation && (
+              <span className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs">
+                Location: {lgas.find(l => l.value === selectedLocation)?.label}
+              </span>
+            )}
+            {crimeType && (
+              <span className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs">
+                Type: {incidentTypes.find(t => t.value === crimeType)?.label}
+              </span>
+            )}
+            {dateRange !== '7d' && (
+              <span className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs">
+                Period: {dateRange}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Map Container */}
       <div className="relative bg-white rounded-lg border shadow-sm p-4 min-h-96 overflow-hidden">
+        {loading && (
+          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-20">
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+              <span className="text-sm text-gray-600">Updating map...</span>
+            </div>
+          </div>
+        )}
+        
         <svg 
           viewBox="0 0 800 600" 
           className="w-full h-full bg-gray-50 cursor-grab active:cursor-grabbing touch-none"
@@ -381,8 +611,29 @@ const Map = () => {
             <div className="font-medium">{hoveredArea}</div>
             <div>{getCrimeDataForLGA(hoveredArea).reports} reports</div>
             <div className="text-xs opacity-75 capitalize">{getCrimeDataForLGA(hoveredArea).level} activity</div>
+            {isAuthenticated && getCrimeDataForLGA(hoveredArea).crimes && (
+              <div className="text-xs opacity-75 mt-1">
+                Click for detailed view
+              </div>
+            )}
           </div>
         )}
+      </div>
+
+      {/* Legend */}
+      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+        <h3 className="text-sm font-medium mb-3">Crime Intensity Legend</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {legendItems.map((item, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <div className={`w-4 h-4 rounded ${item.color}`}></div>
+              <div>
+                <div className="text-xs font-medium">{item.label}</div>
+                <div className="text-xs text-gray-600">{item.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

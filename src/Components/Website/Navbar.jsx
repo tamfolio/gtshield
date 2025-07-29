@@ -9,7 +9,6 @@ const Navbar = ({ isAuthenticated, user = null }) => {
   const location = useLocation();
   const userData = useSelector((state) => state.user?.currentUser?.user);
 
-  console.log(userData.fullName);
   const handleCrimeMapClick = (e) => {
     e.preventDefault();
 
