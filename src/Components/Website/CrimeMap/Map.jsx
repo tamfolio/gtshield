@@ -1,13 +1,13 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { MapPin, Calendar, AlertTriangle, Loader2 } from 'lucide-react';
+import { MapPin, Calendar, AlertTriangle, Loader2, Eye, Clock, MapPinIcon } from 'lucide-react';
 import { geoData } from '../../../data/ogun_state';
 import { toast } from 'react-toastify';
-
 import { useSelector } from 'react-redux';
 import { publicRequest, userRequest } from '../../../requestMethod';
 
 const Map = () => {
   const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedLocationName, setSelectedLocationName] = useState('');
   const [dateRange, setDateRange] = useState('7d');
   const [crimeType, setCrimeType] = useState('');
   const [hoveredArea, setHoveredArea] = useState(null);
@@ -232,6 +232,68 @@ const Map = () => {
     return matchingKey ? crimeData[matchingKey] : { level: 'normal', reports: 0 };
   };
 
+  // Handle LGA selection from dropdown
+  const handleLocationChange = (value) => {
+    setSelectedLocation(value);
+    if (value) {
+      const selectedLga = lgas.find(lga => lga.value === parseInt(value));
+      setSelectedLocationName(selectedLga ? selectedLga.label : '');
+    } else {
+      setSelectedLocationName('');
+    }
+  };
+
+  // Handle map area click
+  const handleAreaClick = (lgaName) => {
+    if (isAuthenticated) {
+      const selectedLga = lgas.find(lga => lga.label === lgaName);
+      if (selectedLga) {
+        setSelectedLocation(selectedLga.value.toString());
+        setSelectedLocationName(lgaName);
+      }
+    }
+  };
+
+  // Get detailed crime data for selected LGA
+  const getSelectedLGADetails = () => {
+    if (!selectedLocationName || !isAuthenticated) return null;
+    
+    // Find the crime data for the selected LGA
+    const lgaData = Object.keys(crimeData).find(key => 
+      normalizeName(key) === normalizeName(selectedLocationName)
+    );
+    
+    if (lgaData && crimeData[lgaData].crimes) {
+      return {
+        name: selectedLocationName,
+        count: crimeData[lgaData].reports,
+        crimes: crimeData[lgaData].crimes
+      };
+    }
+    
+    return null;
+  };
+
+  // Format date for display
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  // Get status badge color
+  const getStatusBadgeColor = (status) => {
+    switch (status.toLowerCase()) {
+      case 'new': return 'bg-blue-100 text-blue-800';
+      case 'in-progress': return 'bg-yellow-100 text-yellow-800';
+      case 'resolved': return 'bg-green-100 text-green-800';
+      case 'closed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   // Get touch distance for pinch zoom
   const getTouchDistance = (touches) => {
     const dx = touches[0].clientX - touches[1].clientX;
@@ -351,6 +413,7 @@ const Map = () => {
   // Clear all filters
   const handleClearFilters = () => {
     setSelectedLocation('');
+    setSelectedLocationName('');
     setCrimeType('');
     setDateRange('7d');
   };
@@ -361,6 +424,9 @@ const Map = () => {
     { color: 'bg-red-600', label: '8+ reports/km²', description: 'High concentration / Hotspot area' },
     { color: 'bg-gray-300', label: '0 reports/km²', description: 'Normal Zone' }
   ];
+
+  // Get selected LGA details for display
+  const selectedLGADetails = getSelectedLGADetails();
 
   // Show loading state for initial load
   if (loadingLgas || loadingIncidents) {
@@ -405,7 +471,7 @@ const Map = () => {
           <span className="text-sm font-medium">Location:</span>
           <select 
             value={selectedLocation}
-            onChange={(e) => setSelectedLocation(e.target.value)}
+            onChange={(e) => handleLocationChange(e.target.value)}
             className="px-3 py-1 border rounded-md text-sm min-w-32"
             disabled={loadingLgas}
           >
@@ -480,12 +546,12 @@ const Map = () => {
             <span className="font-medium text-yellow-800">Active Filters:</span>
             {selectedLocation && (
               <span className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs">
-                Location: {lgas.find(l => l.value === selectedLocation)?.label}
+                Location: {lgas.find(l => l.value === parseInt(selectedLocation))?.label}
               </span>
             )}
             {crimeType && (
               <span className="px-2 py-1 bg-yellow-200 text-yellow-800 rounded text-xs">
-                Type: {incidentTypes.find(t => t.value === crimeType)?.label}
+                Type: {incidentTypes.find(t => t.value === parseInt(crimeType))?.label}
               </span>
             )}
             {dateRange !== '7d' && (
@@ -541,9 +607,12 @@ const Map = () => {
                 <g key={index}>
                   <path
                     d={pathData}
-                    className={`${getColorClass(crimeInfo.level)} stroke-white stroke-2 cursor-pointer transition-all duration-200`}
+                    className={`${getColorClass(crimeInfo.level)} stroke-white stroke-2 cursor-pointer transition-all duration-200 ${
+                      selectedLocationName === lgaName ? 'stroke-blue-600 stroke-4' : ''
+                    }`}
                     onMouseEnter={() => setHoveredArea(lgaName)}
                     onMouseLeave={() => setHoveredArea(null)}
+                    onClick={() => handleAreaClick(lgaName)}
                   />
                   <text
                     x={centerX}
@@ -635,6 +704,134 @@ const Map = () => {
           ))}
         </div>
       </div>
+
+      {/* Detailed Crime Information Table - Only for Authenticated Users */}
+      {isAuthenticated && selectedLGADetails && (
+        <div className="mt-6 p-4 bg-white border rounded-lg shadow-sm">
+          <div className="flex items-center gap-3 mb-4">
+            <MapPinIcon className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-semibold text-gray-900">
+              {selectedLGADetails.name} - Crime Details
+            </h3>
+            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+              {selectedLGADetails.count} {selectedLGADetails.count === 1 ? 'Report' : 'Reports'}
+            </span>
+          </div>
+          
+          {selectedLGADetails.crimes && selectedLGADetails.crimes.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full table-auto">
+                <thead>
+                  <tr className="border-b border-gray-200 bg-gray-50">
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Location</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Crime Type</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Date Reported</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Last Updated</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Status</th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-700">Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedLGADetails.crimes.map((crime, index) => (
+                    <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-2">
+                          <div className={`w-2 h-2 rounded-full ${
+                            getCrimeDataForLGA(selectedLGADetails.name).level === 'high' ? 'bg-red-500' :
+                            getCrimeDataForLGA(selectedLGADetails.name).level === 'moderate' ? 'bg-orange-500' :
+                            getCrimeDataForLGA(selectedLGADetails.name).level === 'low' ? 'bg-yellow-500' : 'bg-gray-500'
+                          }`}></div>
+                          <span className="font-medium text-gray-900">{selectedLGADetails.name}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-sm font-medium">
+                          {crime.crimetype}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1 text-gray-600">
+                          <Calendar className="w-4 h-4" />
+                          <span className="text-sm">{formatDate(crime.dateReported)}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="flex items-center gap-1 text-gray-600">
+                          <Clock className="w-4 h-4" />
+                          <span className="text-sm">{formatDate(crime.lastUpdated)}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 rounded text-xs font-medium capitalize ${getStatusBadgeColor(crime.status)}`}>
+                          {crime.status}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">
+                        <div className="max-w-xs">
+                          <p className="text-sm text-gray-700 truncate" title={crime.description}>
+                            {crime.description || 'No description provided'}
+                          </p>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Eye className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+              <p className="text-lg font-medium mb-1">No detailed crime data available</p>
+              <p className="text-sm">Try selecting a different location or adjusting your filters.</p>
+            </div>
+          )}
+          
+          {/* Clear Selection Button */}
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <button
+              onClick={() => {
+                setSelectedLocation('');
+                setSelectedLocationName('');
+              }}
+              className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm"
+            >
+              Clear Selection
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Instruction for Non-Authenticated Users */}
+      {!isAuthenticated && selectedLocationName && (
+        <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-yellow-600" />
+            <div>
+              <h4 className="font-medium text-yellow-800">Detailed Information Requires Authentication</h4>
+              <p className="text-sm text-yellow-700 mt-1">
+                Sign in to view detailed crime information for {selectedLocationName}. 
+                Public users can only see crime count and intensity levels.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Show message when LGA is selected but no data available */}
+      {isAuthenticated && selectedLocationName && !selectedLGADetails && (
+        <div className="mt-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="flex items-center gap-3">
+            <MapPinIcon className="w-5 h-5 text-gray-600" />
+            <div>
+              <h4 className="font-medium text-gray-800">{selectedLocationName} Selected</h4>
+              <p className="text-sm text-gray-600 mt-1">
+                No detailed crime reports found for this location in the selected time period. 
+                Try adjusting your filters or selecting a different date range.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
