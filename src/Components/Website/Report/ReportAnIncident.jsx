@@ -255,61 +255,13 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
     setFormData((prev) => ({ ...prev, hideIdentity: e.target.checked }));
   };
 
-  const handleAnonSubmit = async () => {
-    if (!formData.incidentType || !formData.description) {
-      alert("Please fill in all required fields (Incident Type, Description, and Address)");
-      return;
-    }
-
-    try {
-      const bodyData = {
-        incidentTypeId: formData.incidentType?.value,
-        isDraft: null,
-        address: "",
-        description: formData.description,
-        isIdentityHidden: null,
-        isLocationHidden: false,
-        isAnonymous: true,
-        channel: "web",
-        stationId: null,
-        userId: null,
-      };
-
-      console.log("🚀 Submitting form with data:", formData);
-      console.log("🚀 Body data:", bodyData);
-
-      const formPayload = new FormData();
-      formPayload.append("data", JSON.stringify(bodyData));
-      if (formData.image) {
-        formPayload.append("image", formData.image);
-      }
-
-      const res = await userRequest(token).post("/incident/new", formPayload, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
-
-      console.log("✅ Incident reported:", res.data);
-      setShowSuccess(true);
-      setTrackingId(res.data.data.ticketId);
-      setTicketId(res.data.data.ticketId);
-
-      if (setCurrentPage) {
-        setCurrentPage("confirmation");
-      }
-    } catch (err) {
-      console.error("❌ Failed to submit incident:", err);
-      toast(err.response.data.message);
-    }
-  };
-
+ 
   const handleSaveAsDraft = async () => {
     if (!formData.incidentType || !formData.description || !formData.address) {
       alert("Please fill in all required fields (Incident Type, Description, and Address)");
       return;
     }
-
+  
     try {
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
@@ -327,25 +279,32 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
           longitude: userLocation.longitude,
         }),
       };
-
+  
       console.log("🚀 Submitting form with data:", formData);
       console.log("🚀 Body data:", bodyData);
-
+  
       const formPayload = new FormData();
       formPayload.append("data", JSON.stringify(bodyData));
-      if (formData.image) {
-        formPayload.append("image", formData.image);
+      
+      // Append images correctly
+      formData.images.forEach((image, index) => {
+        formPayload.append(`images`, image); // or `image_${index}` depending on backend expectation
+      });
+      
+      // Append video if exists
+      if (formData.video) {
+        formPayload.append("video", formData.video);
       }
-
+  
       const res = await userRequest(token).post("/incident/new", formPayload, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-
+  
       setShowDraftSuccess(true);
       console.log("✅ Incident reported:", res.data);
-
+  
       if (setCurrentPage) {
         setCurrentPage("confirmation");
       }
@@ -354,12 +313,13 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
       toast(err.response.data.message);
     }
   };
+  
   const handleSubmit = async () => {
     if (!formData.incidentType || !formData.description || !formData.address) {
       alert("Please fill in all required fields (Incident Type, Description, and Address)");
       return;
     }
-
+  
     try {
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
@@ -377,27 +337,91 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
           longitude: userLocation.longitude,
         }),
       };
-
+  
       console.log("🚀 Submitting form with data:", formData);
       console.log("🚀 Body data:", bodyData);
-
+  
       const formPayload = new FormData();
       formPayload.append("data", JSON.stringify(bodyData));
-      if (formData.image) {
-        formPayload.append("image", formData.image);
+      
+      // Append images correctly
+      formData.images.forEach((image, index) => {
+        formPayload.append(`images`, image); // or `image_${index}` depending on backend expectation
+      });
+      
+      // Append video if exists
+      if (formData.video) {
+        formPayload.append("video", formData.video);
       }
-
+  
       const res = await userRequest(token).post("/incident/new", formPayload, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-
+  
       console.log("✅ Incident reported:", res.data);
       setShowSuccess(true);
       setTicketId(res.data.data.ticketId);
       setTrackingId(res.data.data.ticketId);
-
+  
+      if (setCurrentPage) {
+        setCurrentPage("confirmation");
+      }
+    } catch (err) {
+      console.error("❌ Failed to submit incident:", err);
+      toast(err.response.data.message);
+    }
+  };
+  
+  // Also fix the handleAnonSubmit function
+  const handleAnonSubmit = async () => {
+    if (!formData.incidentType || !formData.description) {
+      alert("Please fill in all required fields (Incident Type and Description)");
+      return;
+    }
+  
+    try {
+      const bodyData = {
+        incidentTypeId: formData.incidentType?.value,
+        isDraft: null,
+        address: "",
+        description: formData.description,
+        isIdentityHidden: null,
+        isLocationHidden: false,
+        isAnonymous: true,
+        channel: "web",
+        stationId: null,
+        userId: null,
+      };
+  
+      console.log("🚀 Submitting form with data:", formData);
+      console.log("🚀 Body data:", bodyData);
+  
+      const formPayload = new FormData();
+      formPayload.append("data", JSON.stringify(bodyData));
+      
+      // Append images correctly for anonymous submission too
+      formData.images.forEach((image, index) => {
+        formPayload.append(`images`, image);
+      });
+      
+      // Append video if exists
+      if (formData.video) {
+        formPayload.append("video", formData.video);
+      }
+  
+      const res = await userRequest(token).post("/incident/new", formPayload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+  
+      console.log("✅ Incident reported:", res.data);
+      setShowSuccess(true);
+      setTrackingId(res.data.data.ticketId);
+      setTicketId(res.data.data.ticketId);
+  
       if (setCurrentPage) {
         setCurrentPage("confirmation");
       }

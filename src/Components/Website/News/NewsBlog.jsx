@@ -175,7 +175,7 @@ const NewsBlog = () => {
             <article className="group cursor-pointer">
               <div className="aspect-video mb-4 overflow-hidden rounded-lg bg-gray-100">
                 <img
-                  src={article.coverImage}
+                  src={article.image}
                   alt={article.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   onError={(e) => {

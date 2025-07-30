@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { ArrowLeft, Edit, Check, Clock, AlertCircle, Home, Star, ImageIcon, Eye, ExternalLink } from "lucide-react";
+import {
+  ArrowLeft,
+  Edit,
+  Check,
+  Clock,
+  AlertCircle,
+  Home,
+  Star,
+  ImageIcon,
+  Eye,
+  ExternalLink,
+} from "lucide-react";
 import Navbar from "../../../Components/Website/Navbar";
 import FeedbackModal from "./Modals/FeedbackModal";
 import { useNavigate } from "react-router-dom";
@@ -32,7 +43,7 @@ const ImageWithFallback = ({ src, alt, index, onClick }) => {
           Failed to load image
         </p>
         <button
-          onClick={() => window.open(src, '_blank')}
+          onClick={() => window.open(src, "_blank")}
           className="mt-2 text-blue-600 hover:text-blue-700 text-sm flex items-center"
         >
           <ExternalLink className="w-4 h-4 mr-1" />
@@ -53,7 +64,7 @@ const ImageWithFallback = ({ src, alt, index, onClick }) => {
         src={src}
         alt={alt}
         className={`w-full h-64 object-cover rounded-lg shadow-sm group-hover:shadow-md transition-all cursor-pointer ${
-          imageLoading ? 'opacity-0' : 'opacity-100'
+          imageLoading ? "opacity-0" : "opacity-100"
         }`}
         onLoad={handleImageLoad}
         onError={handleImageError}
@@ -90,12 +101,23 @@ const ImageModal = ({ isOpen, onClose, imageSrc, imageAlt }) => {
 };
 
 // Common Header Component with Breadcrumb
-const ReportHeader = ({ incident, onBackToReports, pageToShow, onBackToDetails, showReviewButton, onLeaveReview, currentView, onSaveChanges, getStatusColor, getStatusIcon }) => (
+const ReportHeader = ({
+  incident,
+  onBackToReports,
+  pageToShow,
+  onBackToDetails,
+  showReviewButton,
+  onLeaveReview,
+  currentView,
+  onSaveChanges,
+  getStatusColor,
+  getStatusIcon,
+}) => (
   <div className="p-6 border-b border-gray-200">
     <div className="flex items-center justify-between">
       <div className="flex items-center space-x-4">
         <button
-          onClick={pageToShow === 'review' ? onBackToDetails : onBackToReports}
+          onClick={pageToShow === "review" ? onBackToDetails : onBackToReports}
           className="text-gray-400 hover:text-gray-600 transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -128,7 +150,7 @@ const ReportHeader = ({ incident, onBackToReports, pageToShow, onBackToDetails, 
             <span className="text-gray-900 font-medium">
               {incident?.incidentType}
             </span>
-            {pageToShow === 'review' && (
+            {pageToShow === "review" && (
               <>
                 <span className="mx-2">/</span>
                 <span className="text-gray-900 font-medium">Review</span>
@@ -140,16 +162,18 @@ const ReportHeader = ({ incident, onBackToReports, pageToShow, onBackToDetails, 
 
       {/* Action Buttons */}
       <div className="flex items-center space-x-3">
-        {showReviewButton && pageToShow === 'reportDetails' && currentView === "details" && (
-          <button
-            onClick={onLeaveReview}
-            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
-          >
-            Leave a Review
-          </button>
-        )}
+        {showReviewButton &&
+          pageToShow === "reportDetails" &&
+          currentView === "details" && (
+            <button
+              onClick={onLeaveReview}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+            >
+              Leave a Review
+            </button>
+          )}
 
-        {currentView === "edit" && pageToShow === 'reportDetails' && (
+        {currentView === "edit" && pageToShow === "reportDetails" && (
           <button
             onClick={onSaveChanges}
             className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
@@ -165,9 +189,7 @@ const ReportHeader = ({ incident, onBackToReports, pageToShow, onBackToDetails, 
 
 // Review Component
 const ReviewComponent = ({ incident, onBackToDetails }) => {
-  return (
-   <LeaveAReview/>
-  );
+  return <LeaveAReview />;
 };
 
 const ReportDetails = () => {
@@ -175,7 +197,7 @@ const ReportDetails = () => {
   const [report, setReport] = useState(null);
   const [currentView, setCurrentView] = useState("details");
   const [loading, setLoading] = useState(true);
-  const [pageToShow, setPageToShow] = useState('reportDetails'); // Can be 'reportDetails' or 'review'
+  const [pageToShow, setPageToShow] = useState("reportDetails"); // Can be 'reportDetails' or 'review'
   const [selectedImage, setSelectedImage] = useState(null);
   const [showImageModal, setShowImageModal] = useState(false);
   const { id } = useParams();
@@ -209,11 +231,11 @@ const ReportDetails = () => {
         const res = await userRequest(token).get(`/incident/${id}`);
         const incidentData = res.data.data.incident;
         setIncident(incidentData);
-        
+
         // Debug: Log the incident data and images
         console.log("✅ Incident fetched:", incidentData);
         console.log("📸 Images array:", incidentData.incidentImages);
-        
+
         if (incidentData.incidentImages) {
           incidentData.incidentImages.forEach((image, index) => {
             console.log(`📸 Image ${index + 1}:`, image);
@@ -230,6 +252,8 @@ const ReportDetails = () => {
       fetchIncident();
     }
   }, [id, token]);
+
+  console.log('checkingdata', incident)
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -271,11 +295,11 @@ const ReportDetails = () => {
   };
 
   const handleLeaveReview = () => {
-    setPageToShow('review');
+    setPageToShow("review");
   };
 
   const handleBackToReportDetails = () => {
-    setPageToShow('reportDetails');
+    setPageToShow("reportDetails");
   };
 
   const handleSaveChanges = () => {
@@ -318,7 +342,9 @@ const ReportDetails = () => {
     );
   }
 
-  const isResolved = incident?.incidentStatus === "Closed" || incident?.incidentStatus === "Resolved";
+  const isResolved =
+    incident?.incidentStatus === "Closed" ||
+    incident?.incidentStatus === "Resolved";
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -356,9 +382,9 @@ const ReportDetails = () => {
           />
 
           {/* Conditional Content */}
-          {pageToShow === 'review' ? (
-            <ReviewComponent 
-              incident={incident} 
+          {pageToShow === "review" ? (
+            <ReviewComponent
+              incident={incident}
               onBackToDetails={handleBackToReportDetails}
             />
           ) : (
@@ -434,25 +460,13 @@ const ReportDetails = () => {
                   )}
                 </div>
 
-                {/* Debug Information - Remove in production */}
-                {process.env.NODE_ENV === 'development' && (
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                    <h3 className="text-sm font-medium text-yellow-800 mb-2">Debug Info:</h3>
-                    <p className="text-xs text-yellow-700">
-                      Images array: {JSON.stringify(incident?.incidentImages)}
-                    </p>
-                    <p className="text-xs text-yellow-700">
-                      Array length: {incident?.incidentImages?.length || 0}
-                    </p>
-                  </div>
-                )}
-
-                {incident?.incidentImages && incident.incidentImages.length > 0 ? (
+                {incident?.incidentImages &&
+                incident.incidentImages.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {incident.incidentImages.map((image, index) => (
                       <ImageWithFallback
                         key={index}
-                        src={image}
+                        src={image} // ✅ Use the actual image URL from the data
                         alt={`Evidence ${index + 1}`}
                         index={index}
                         onClick={() => handleImageClick(image, index)}

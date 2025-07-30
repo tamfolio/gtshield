@@ -51,7 +51,6 @@ const Navbar = ({ isAuthenticated, user = null }) => {
       onClick: handleCrimeMapClick, // Custom click handler
       type: "custom",
     },
-    { name: "Community", href: "/communities" },
     { name: "Feedback", href: "/feedback" },
   ];
 
