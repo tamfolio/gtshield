@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify'; // or your preferred toast library
 import { userRequest } from "../../../../../requestMethod";
-import { updateUserPhone } from "../../../../../redux/loginSlice"; // Import the action
+import { updateUserPhone } from "../../../../../Redux/LoginSlice";// Import the action
 
 const EditProfile = ({ onCancel }) => {
   const dispatch = useDispatch();
