@@ -85,14 +85,23 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
     return newErrors;
   };
 
-  // Function to get the complete phone number for submission
+  // Function to get the complete phone number for submission - ALWAYS adds +234
   const getFormattedPhoneNumber = () => {
     if (!formData.phoneNumber) return '';
-    const cleanPhone = formData.phoneNumber.replace(/[^\d]/g, '');
+    
+    // Remove any existing country code and non-digit characters
+    let cleanPhone = formData.phoneNumber.replace(/[^\d]/g, '');
+    
+    // Remove +234 if user somehow entered it
+    if (cleanPhone.startsWith('234')) {
+      cleanPhone = cleanPhone.substring(3);
+    }
+    
+    // Always return with +234 prefix
     return `+234${cleanPhone}`;
   };
 
-  // Updated handleContinue function
+  // Updated handleContinue function - ENSURES +234 is added to payload
   const handleContinue = () => {
     const formErrors = validateForm();
     
@@ -102,24 +111,32 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
       return;
     }
     
-    // Format phone number for submission
+    // Format phone number for submission - GUARANTEED +234 prefix
     const formattedData = {
       ...formData,
-      phoneNumber: getFormattedPhoneNumber() // This will be +234XXXXXXXXXX
+      phoneNumber: getFormattedPhoneNumber() // This will ALWAYS be +234XXXXXXXXXX
     };
     
+    // Log to confirm the format
+    console.log("Phone number in payload:", formattedData.phoneNumber);
+    
     setErrors({});
-    onNext(formattedData); // Pass the formatted data
+    onNext(formattedData); // Pass the formatted data with +234 prefix
   };
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
     let processedValue = value;
 
-    // Handle phone number formatting
+    // Handle phone number formatting - only store digits
     if (name === 'phoneNumber') {
-      // Remove any non-digit characters
-      const cleanValue = value.replace(/[^\d]/g, '');
+      // Remove any non-digit characters and country codes
+      let cleanValue = value.replace(/[^\d]/g, '');
+      
+      // Remove +234 if user enters it (we'll add it in the payload)
+      if (cleanValue.startsWith('234')) {
+        cleanValue = cleanValue.substring(3);
+      }
       
       // Limit to 10 digits (after +234)
       if (cleanValue.length <= 10) {
@@ -347,7 +364,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
               {errors.fullName && <p className="mt-1 text-xs text-red-500">{errors.fullName}</p>}
             </div>
 
-            {/* Phone Number - Updated */}
+            {/* Phone Number - Updated with guaranteed +234 */}
             <div>
               <label
                 htmlFor="phoneNumber"
@@ -379,7 +396,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
               )}
               {errors.phoneNumber && <p className="mt-1 text-xs text-red-500">{errors.phoneNumber}</p>}
               <p className="mt-1 text-xs text-gray-500">
-                Enter 10 digits starting with 7, 8, or 9
+                Enter 10 digits starting with 7, 8, or 9 (payload will include +234)
               </p>
             </div>
 

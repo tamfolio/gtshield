@@ -55,6 +55,26 @@ export const SignUpOtp = ({ formData,  onPrevious, onSubmit }) => {
     }
   };
 
+  const formatPhoneNumber = (phone) => {
+    if (!phone) return '';
+    
+    // If it already starts with +234, return as is
+    if (phone.startsWith('+234')) {
+      return phone;
+    }
+    
+    // If it starts with 234, add the +
+    if (phone.startsWith('234')) {
+      return `+${phone}`;
+    }
+    
+    // Otherwise, assume it's just the 10-digit number and add +234
+    const cleanPhone = phone.replace(/[^\d]/g, '');
+    return `+234${cleanPhone}`;
+  };
+
+
+
   const handleFinalSubmit = async () => {
     const otp = otpDigits.join("");
     const {
@@ -67,11 +87,14 @@ export const SignUpOtp = ({ formData,  onPrevious, onSubmit }) => {
       password,
     } = formData;
 
+    // Format the phone number here, inside the function where formData is accessible
+    const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
+
     const payload = {
       userName: username,
       fullName,
       address,
-      phoneNumber,
+      phoneNumber: formattedPhoneNumber,
       gender,
       state,
       provider: "Email",
