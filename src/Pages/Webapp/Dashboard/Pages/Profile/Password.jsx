@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Eye, EyeOff, Monitor, Smartphone, MoreHorizontal } from "lucide-react";
 import { userRequest } from "../../../../../requestMethod";
 import { useSelector, useDispatch } from 'react-redux';
-import { LogOut } from "../../../../../redux/loginSlice"; // Import logout action
+import { LogOut } from "../../../../../Redux/LoginSlice"; 
 import { toast } from "react-toastify";
 import { useNavigate } from "react-router-dom"; // For navigation
 
