@@ -1,6 +1,7 @@
+import { Link } from "react-router-dom";
+
 export const PasswordResetSuccessStep = ({setCurrentStep}) => (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <Navbar isAuthenticated={false} />
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
@@ -17,12 +18,14 @@ export const PasswordResetSuccessStep = ({setCurrentStep}) => (
           </div>
 
           <div className="space-y-6">
+            <Link to='/login'>
             <button
               onClick={() => setCurrentStep(1)}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               Continue
             </button>
+            </Link>
           </div>
 
           

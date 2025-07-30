@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { toast } from 'react-toastify'; // or your preferred toast library
 import { userRequest } from "../../../../../requestMethod";
+import { updateUserPhone } from "../../../../../redux/loginSlice"; // Import the action
 
 const EditProfile = ({ onCancel }) => {
+  const dispatch = useDispatch();
   const userData = useSelector((state) => state.user?.currentUser?.user);
   const [formData, setFormData] = useState({
     phoneNumber: userData?.phoneNumber || ''
@@ -43,7 +45,7 @@ const EditProfile = ({ onCancel }) => {
 
       console.log("🚀 Updating phone number with data:", bodyData);
 
-      const res = await userRequest(token).put("/user/update/basic", bodyData, {
+      const res = await userRequest(token).patch("/user/update/basic", bodyData, {
         headers: {
           "Content-Type": "application/json",
         },
@@ -51,11 +53,11 @@ const EditProfile = ({ onCancel }) => {
 
       console.log("✅ Phone number updated:", res.data);
       
+      // Update Redux state immediately after successful API call
+      dispatch(updateUserPhone(formData.phoneNumber.trim()));
+      
       // Show success message
       toast.success("Phone number updated successfully!");
-      
-      // Optional: Update local state or Redux store
-      // dispatch(updateUserPhone(formData.phoneNumber));
       
       // Navigate back or close edit mode
       if (onCancel) {

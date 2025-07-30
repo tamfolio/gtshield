@@ -138,7 +138,7 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
 
   if (currentPage === "confirmation") {
     return (
-      <div className="min-h-screen bg-gray-600 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-[#101828B2] flex items-center justify-center p-4">
         <div className="bg-white rounded-lg shadow-xl p-8 max-w-md w-full">
           <div className="text-center">
             <div className="mx-auto w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">

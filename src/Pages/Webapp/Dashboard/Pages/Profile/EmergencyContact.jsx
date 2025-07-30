@@ -5,7 +5,13 @@ import { toast } from "react-toastify";
 import { userRequest } from "../../../../../requestMethod";
 
 // Delete Confirmation Modal Component
-const DeleteModal = ({ isOpen, onClose, onConfirm, contactName, isDeleting }) => {
+const DeleteModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  contactName,
+  isDeleting,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -16,15 +22,17 @@ const DeleteModal = ({ isOpen, onClose, onConfirm, contactName, isDeleting }) =>
           <div className="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mb-4">
             <AlertTriangle className="w-6 h-6 text-yellow-600" />
           </div>
-          
+
           {/* Modal Content */}
           <h3 className="text-lg font-semibold text-gray-900 mb-2">
             Delete Emergency Contact
           </h3>
           <p className="text-gray-600 mb-6">
-            Are you sure you want to delete {contactName ? `"${contactName}"` : 'this emergency contact'}? This action cannot be undone.
+            Are you sure you want to delete{" "}
+            {contactName ? `"${contactName}"` : "this emergency contact"}? This
+            action cannot be undone.
           </p>
-          
+
           {/* Action Buttons */}
           <div className="flex gap-3 w-full">
             <button
@@ -60,16 +68,61 @@ function EmergencyContact() {
       fullName: "",
       phoneNumber: "",
       relationship: "",
-    }
+    },
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   // Delete modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [contactToDelete, setContactToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
+  const token = useSelector(
+    (state) => state.user?.currentUser?.tokens?.access?.token
+  );
+
+  // Phone number validation function
+  const validatePhoneNumber = (phoneNumber) => {
+    // Check if it's exactly 10 digits (no more, no less)
+    const phoneRegex = /^\d{10}$/;
+    return phoneRegex.test(phoneNumber);
+  };
+
+  // Format phone number for payload (add +234 prefix)
+  const formatPhoneForPayload = (phoneNumber) => {
+    return `+234${phoneNumber}`;
+  };
+
+  // Form validation function
+  const isFormValid = () => {
+    if (editingContact) {
+      // For editing, validate the single contact
+      const contact = contacts[0];
+      return (
+        contact.fullName.trim() !== "" &&
+        validatePhoneNumber(contact.phoneNumber) &&
+        contact.relationship.trim() !== ""
+      );
+    } else {
+      // For adding new contacts, at least one contact should be complete
+      const validContacts = contacts.filter(
+        (contact) =>
+          contact.fullName.trim() !== "" &&
+          validatePhoneNumber(contact.phoneNumber) &&
+          contact.relationship.trim() !== ""
+      );
+      return validContacts.length > 0;
+    }
+  };
+
+  // Check if individual contact is valid
+  const isContactValid = (contact) => {
+    return (
+      contact.fullName.trim() !== "" &&
+      validatePhoneNumber(contact.phoneNumber) &&
+      contact.relationship.trim() !== ""
+    );
+  };
 
   // Fetch emergency contacts function (extracted for reuse)
   const fetchEmergencyContacts = async () => {
@@ -124,18 +177,25 @@ function EmergencyContact() {
         fullName: "",
         phoneNumber: "",
         relationship: "",
-      }
+      },
     ]);
   };
 
   const handleEdit = (contact) => {
     setEditingContact(contact);
-    setContacts([{
-      id: 1,
-      fullName: contact.fullName || "",
-      phoneNumber: contact.phoneNumber || "",
-      relationship: contact.relationship || "",
-    }]);
+    // Remove +234 prefix when editing to show only the 10 digits
+    const phoneWithoutPrefix = contact.phoneNumber?.startsWith('+234') 
+      ? contact.phoneNumber.slice(4) 
+      : contact.phoneNumber || "";
+    
+    setContacts([
+      {
+        id: 1,
+        fullName: contact.fullName || "",
+        phoneNumber: phoneWithoutPrefix,
+        relationship: contact.relationship || "",
+      },
+    ]);
     setShowAddForm(true);
   };
 
@@ -157,20 +217,23 @@ function EmergencyContact() {
 
     setIsDeleting(true);
     try {
-      await userRequest(token).delete(`/user/emergencyContact/${contactToDelete.id}`);
+      await userRequest(token).delete(
+        `/user/emergencyContact/${contactToDelete.id}`
+      );
       toast.success("Emergency contact deleted successfully!");
-      
+
       // Refresh the list after deletion
       await fetchEmergencyContacts();
-      
+
       // Close modal
       setShowDeleteModal(false);
       setContactToDelete(null);
     } catch (err) {
       console.error("❌ Failed to delete emergency contact:", err);
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.message || 
-                          "Failed to delete emergency contact";
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Failed to delete emergency contact";
       toast.error(`Error: ${errorMessage}`);
     } finally {
       setIsDeleting(false);
@@ -179,14 +242,17 @@ function EmergencyContact() {
 
   const handleSave = async () => {
     // Validation
-    const validContacts = contacts.filter(contact => 
-      contact.fullName.trim() && contact.phoneNumber.trim() && contact.relationship.trim()
-    );
-
-    if (validContacts.length === 0) {
-      toast.error("Please fill in at least one complete emergency contact.");
+    if (!isFormValid()) {
+      toast.error("Please fill in all required fields with valid information.");
       return;
     }
+
+    const validContacts = contacts.filter(
+      (contact) =>
+        contact.fullName.trim() &&
+        validatePhoneNumber(contact.phoneNumber) &&
+        contact.relationship.trim()
+    );
 
     setIsSubmitting(true);
 
@@ -195,19 +261,19 @@ function EmergencyContact() {
         // Update existing contact
         const contactData = {
           fullName: validContacts[0].fullName.trim(),
-          phoneNumber: validContacts[0].phoneNumber.trim(),
-          relationship: validContacts[0].relationship.trim()
+          phoneNumber: formatPhoneForPayload(validContacts[0].phoneNumber.trim()),
+          relationship: validContacts[0].relationship.trim(),
         };
 
         const response = await userRequest(token).put(
-          `/user/emergencyContact/${editingContact.id}`, 
+          `/user/emergencyContact/${editingContact.id}`,
           contactData
         );
 
         console.log("✅ Emergency contact updated:", response.data);
         toast.success("Emergency contact updated successfully!");
         setEditingContact(null);
-        
+
         // Refresh the list after update
         await fetchEmergencyContacts();
       } else {
@@ -215,35 +281,42 @@ function EmergencyContact() {
         const promises = validContacts.map(async (contact) => {
           const contactData = {
             fullName: contact.fullName.trim(),
-            phoneNumber: contact.phoneNumber.trim(),
-            relationship: contact.relationship.trim()
+            phoneNumber: formatPhoneForPayload(contact.phoneNumber.trim()),
+            relationship: contact.relationship.trim(),
           };
 
-          return await userRequest(token).post('/user/emergencyContact/', contactData);
+          return await userRequest(token).post(
+            "/user/emergencyContact/",
+            contactData
+          );
         });
 
         const responses = await Promise.all(promises);
-        console.log("✅ Emergency contacts saved:", responses.map(res => res.data));
+        console.log(
+          "✅ Emergency contacts saved:",
+          responses.map((res) => res.data)
+        );
 
-        const successMessage = responses[0]?.data?.message || "Emergency contacts saved successfully!";
+        const successMessage =
+          responses[0]?.data?.message ||
+          "Emergency contacts saved successfully!";
         toast.success(successMessage);
-        
+
         // Refresh the list after adding
         await fetchEmergencyContacts();
       }
-      
+
       // Reset form
       clearAllFields();
       setShowAddForm(false);
-
     } catch (err) {
       console.error("❌ Failed to save emergency contacts:", err);
-      
-      const errorMessage = err.response?.data?.error || 
-                          err.response?.data?.message || 
-                          "Failed to save emergency contacts";
+
+      const errorMessage =
+        err.response?.data?.error ||
+        err.response?.data?.message ||
+        "Failed to save emergency contacts";
       toast.error(`Error: ${errorMessage}`);
-      
     } finally {
       setIsSubmitting(false);
     }
@@ -288,11 +361,20 @@ function EmergencyContact() {
           <div className="space-y-4">
             {emergencyContacts.length > 0 ? (
               emergencyContacts.map((contact, index) => (
-                <div key={contact.id || index} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+                <div
+                  key={contact.id || index}
+                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                >
                   <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{contact.fullName}</h3>
-                    <p className="text-sm text-gray-600">{contact.phoneNumber}</p>
-                    <p className="text-sm text-gray-500">{contact.relationship}</p>
+                    <h3 className="font-medium text-gray-900">
+                      {contact.fullName}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      {contact.phoneNumber}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {contact.relationship}
+                    </p>
                   </div>
                   <div className="flex items-center space-x-4">
                     <button
@@ -333,14 +415,16 @@ function EmergencyContact() {
           <div className="space-y-8">
             <div className="mb-4">
               <h2 className="text-lg font-medium text-gray-900">
-                {editingContact ? 'Edit Emergency Contact' : 'Add Emergency Contact'}
+                {editingContact
+                  ? "Edit Emergency Contact"
+                  : "Add Emergency Contact"}
               </h2>
             </div>
 
             {contacts.map((contact, index) => (
               <div key={contact.id} className="space-y-4">
                 {index > 0 && <hr className="border-gray-200" />}
-                
+
                 {/* Full Name */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -352,9 +436,16 @@ function EmergencyContact() {
                     onChange={(e) =>
                       handleInputChange(contact.id, "fullName", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                      contact.fullName.trim() === "" && showAddForm
+                        ? "border-red-300 bg-red-50"
+                        : "border-gray-300"
+                    }`}
                     placeholder="Full Name"
                   />
+                  {contact.fullName.trim() === "" && showAddForm && (
+                    <p className="text-red-500 text-xs mt-1">Full name is required</p>
+                  )}
                 </div>
 
                 {/* Phone Number */}
@@ -364,19 +455,36 @@ function EmergencyContact() {
                   </label>
                   <div className="flex">
                     <div className="flex items-center px-3 py-2 border border-r-0 border-gray-300 bg-gray-50 rounded-l-lg">
-                      <span className="text-sm text-gray-600 mr-2">NG</span>
+                      <span className="text-sm text-gray-600 mr-2">+234</span>
                       <ChevronDown className="w-4 h-4 text-gray-400" />
                     </div>
                     <input
                       type="tel"
                       value={contact.phoneNumber}
-                      onChange={(e) =>
-                        handleInputChange(contact.id, "phoneNumber", e.target.value)
-                      }
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="+234**********"
+                      onChange={(e) => {
+                        // Only allow digits and limit to 10 characters
+                        const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                        handleInputChange(contact.id, "phoneNumber", value);
+                      }}
+                      maxLength={10}
+                      className={`flex-1 px-3 py-2 border rounded-r-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        !validatePhoneNumber(contact.phoneNumber) && contact.phoneNumber !== ""
+                          ? "border-red-300 bg-red-50"
+                          : contact.phoneNumber === "" && showAddForm
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300"
+                      }`}
+                      placeholder="8012345678"
                     />
                   </div>
+                  {contact.phoneNumber !== "" && !validatePhoneNumber(contact.phoneNumber) && (
+                    <p className="text-red-500 text-xs mt-1">
+                      Please enter exactly 10 digits
+                    </p>
+                  )}
+                  {contact.phoneNumber === "" && showAddForm && (
+                    <p className="text-red-500 text-xs mt-1">Phone number is required</p>
+                  )}
                 </div>
 
                 {/* Relationship */}
@@ -388,27 +496,73 @@ function EmergencyContact() {
                     <select
                       value={contact.relationship}
                       onChange={(e) =>
-                        handleInputChange(contact.id, "relationship", e.target.value)
+                        handleInputChange(
+                          contact.id,
+                          "relationship",
+                          e.target.value
+                        )
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white text-gray-900"
+                      className={`w-full px-3 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 appearance-none bg-white text-gray-900 ${
+                        contact.relationship === "" && showAddForm
+                          ? "border-red-300 bg-red-50"
+                          : "border-gray-300"
+                      }`}
                     >
                       <option value="">Select relationship</option>
-                      <option value="Brother">Brother</option>
-                      <option value="Sister">Sister</option>
+                      <option value="Grand Father">Grand Father</option>
+                      <option value="Grand Mother">Grand Mother</option>
+                      <option value="Husband">Husband</option>
+                      <option value="Wife">Wife</option>
                       <option value="Father">Father</option>
                       <option value="Mother">Mother</option>
-                      <option value="Parent">Parent</option>
-                      <option value="Spouse">Spouse</option>
+                      <option value="Brother">Brother</option>
+                      <option value="Sister">Sister</option>
                       <option value="Child">Child</option>
+                      <option value="Aunt">Aunt</option>
+                      <option value="Uncle">Uncle</option>
+                      <option value="Niece">Niece</option>
+                      <option value="Nephew">Nephew</option>
+                      <option value="Father-in-law">Father-in-law</option>
+                      <option value="Mother-in-law">Mother-in-law</option>
+                      <option value="Guardian">Guardian</option>
                       <option value="Friend">Friend</option>
                       <option value="Other">Other</option>
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   </div>
+                  {contact.relationship === "" && showAddForm && (
+                    <p className="text-red-500 text-xs mt-1">Please select a relationship</p>
+                  )}
                 </div>
 
-                {/* Remove Contact Button (only show if more than 1 contact and not editing) */}
+                {/* Contact validation indicator */}
                 {contacts.length > 1 && !editingContact && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div
+                        className={`w-2 h-2 rounded-full ${
+                          isContactValid(contact) ? "bg-green-500" : "bg-red-500"
+                        }`}
+                      />
+                      <span
+                        className={`text-xs ${
+                          isContactValid(contact) ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {isContactValid(contact) ? "Complete" : "Incomplete"}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => removeContact(contact.id)}
+                      className="text-red-600 text-sm font-medium hover:text-red-700 transition-colors"
+                    >
+                      Remove Contact
+                    </button>
+                  </div>
+                )}
+
+                {/* Remove Contact Button (only show if more than 1 contact and not editing) */}
+                {contacts.length > 1 && !editingContact && contacts.length === 1 && (
                   <button
                     onClick={() => removeContact(contact.id)}
                     className="text-red-600 text-sm font-medium hover:text-red-700 transition-colors"
@@ -441,10 +595,18 @@ function EmergencyContact() {
               </button>
               <button
                 onClick={handleSave}
-                disabled={isSubmitting}
-                className="px-6 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting || !isFormValid()}
+                className={`px-6 py-2 font-medium rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${
+                  isSubmitting || !isFormValid()
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
+                }`}
               >
-                {isSubmitting ? "Saving..." : editingContact ? "Update contact" : "Save changes"}
+                {isSubmitting
+                  ? "Saving..."
+                  : editingContact
+                  ? "Update contact"
+                  : "Save changes"}
               </button>
             </div>
           </div>

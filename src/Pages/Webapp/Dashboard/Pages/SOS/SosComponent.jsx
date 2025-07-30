@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Navbar from "../../../../../Components/Website/Navbar";
 import { userRequest } from "../../../../../requestMethod";
 import { useSelector } from "react-redux";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 function SosComponent() {
   const [currentView, setCurrentView] = useState("main");
@@ -16,6 +16,7 @@ function SosComponent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [textDescription, setTextDescription] = useState("");
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const navigate = useNavigate();
 
   const mediaRecorderRef = useRef(null);
   const audioContextRef = useRef(null);
@@ -153,6 +154,7 @@ function SosComponent() {
     setIsPlaying(false);
     setAudioBlob(null);
     setTextDescription("");
+    setAudioLevels([]);
 
     if (audioUrl) {
       URL.revokeObjectURL(audioUrl);
@@ -235,17 +237,44 @@ function SosComponent() {
     resetState();
   };
 
+  const resetToRecordingView = () => {
+    setCurrentView("recording"); // Stay on recording page
+    setRecordingTime(0);
+    setPlaybackTime(0);
+    setIsPlaying(false);
+    setIsRecording(false); // Make sure recording state is reset
+    setAudioBlob(null);
+    setTextDescription(""); // Clear the text description
+    setAudioLevels([]); // Clear audio levels
+  
+    // Clean up any existing audio URLs
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
+  
+    // Clean up any ongoing recording sessions
+    if (mediaRecorderRef.current?.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+    }
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close();
+    }
+  };
+
   const handleStayOnPage = () => {
     setShowSuccessModal(false);
-    // Keep current state, don't reset
+    resetToRecordingView();
+    //reset all the inputs , the recording and the text , i still want to be on the recording page , but fresh 
   };
 
   const handleRedirectToDashboard = () => {
     setShowSuccessModal(false);
     resetState();
-    // Add your navigation logic here
-    // e.g., window.location.href = '/dashboard' or use your router
-    console.log("Redirecting to dashboard...");
+    navigate('/dashboard')
   };
 
   return (

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { X, Check, Trash2, Edit, AlertTriangle } from "lucide-react";
 import Navbar from "../../../Components/Website/Navbar";
 import DraftSavedModal from "./Modals/DraftSavedModal";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import ReportSubmittedModal from "./Modals/ReportSubmittedModal";
 import ReportAnIncident from "../../../Components/Website/Report/ReportAnIncident";
 import { userRequest } from "../../../requestMethod";
@@ -10,7 +10,23 @@ import { useSelector } from "react-redux";
 
 const GatewayShieldReports = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("Report Incident");
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(
+    location.state?.activeTab || "Report Incident"
+  );
+
+  useEffect(() => {
+    if (location.state?.activeTab) {
+      setActiveTab(location.state.activeTab);
+      
+      // Fetch data based on the active tab
+      if (location.state.activeTab === 'Drafts') {
+        fetchDrafts();
+      } else if (location.state.activeTab === 'All Reports') {
+        fetchIncidents();
+      }
+    }
+  }, [location.state]);
   const [selectedReport, setSelectedReport] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedDraft, setSelectedDraft] = useState(null);
@@ -457,9 +473,11 @@ const GatewayShieldReports = () => {
 
       {/* Floating SOS Button */}
       <div className="fixed bottom-6 right-6 z-40">
-        <button className="w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center font-bold text-sm">
-          SOS
-        </button>
+        <Link to="/sos">
+          <button className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg flex items-center justify-center">
+            <span className="text-sm font-bold">SOS</span>
+          </button>
+        </Link>
       </div>
     </div>
   );

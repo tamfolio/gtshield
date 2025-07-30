@@ -33,10 +33,18 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
       newErrors.fullName = "Full name is required";
     }
 
+    // Updated phone number validation
     if (!formData.phoneNumber?.trim()) {
       newErrors.phoneNumber = "Phone number is required";
-    } else if (formData.phoneNumber.length < 10) {
-      newErrors.phoneNumber = "Phone number must be at least 10 digits";
+    } else {
+      const cleanPhone = formData.phoneNumber.replace(/[^\d]/g, '');
+      if (cleanPhone.length !== 10) {
+        newErrors.phoneNumber = "Phone number must be exactly 10 digits after +234";
+      }
+      // Additional validation for Nigerian phone format
+      else if (!cleanPhone.match(/^[789]/)) {
+        newErrors.phoneNumber = "Phone number must start with 7, 8, or 9 after +234";
+      }
     }
 
     if (!formData.state) {
@@ -77,18 +85,31 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
     return newErrors;
   };
 
+  // Function to get the complete phone number for submission
+  const getFormattedPhoneNumber = () => {
+    if (!formData.phoneNumber) return '';
+    const cleanPhone = formData.phoneNumber.replace(/[^\d]/g, '');
+    return `+234${cleanPhone}`;
+  };
+
+  // Updated handleContinue function
   const handleContinue = () => {
     const formErrors = validateForm();
     
     if (Object.keys(formErrors).length > 0) {
       setErrors(formErrors);
-      // Show toast equivalent
       console.log("Please fix all errors before continuing.");
       return;
     }
     
+    // Format phone number for submission
+    const formattedData = {
+      ...formData,
+      phoneNumber: getFormattedPhoneNumber() // This will be +234XXXXXXXXXX
+    };
+    
     setErrors({});
-    onNext(); 
+    onNext(formattedData); // Pass the formatted data
   };
 
   const handleInputChange = (e) => {
@@ -97,9 +118,16 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
 
     // Handle phone number formatting
     if (name === 'phoneNumber') {
-      // Remove any non-digit characters except +
+      // Remove any non-digit characters
       const cleanValue = value.replace(/[^\d]/g, '');
-      processedValue = cleanValue;
+      
+      // Limit to 10 digits (after +234)
+      if (cleanValue.length <= 10) {
+        processedValue = cleanValue;
+      } else {
+        // Don't update if more than 10 digits
+        return;
+      }
     }
 
     setFormData((prev) => ({
@@ -319,7 +347,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
               {errors.fullName && <p className="mt-1 text-xs text-red-500">{errors.fullName}</p>}
             </div>
 
-            {/* Phone Number */}
+            {/* Phone Number - Updated */}
             <div>
               <label
                 htmlFor="phoneNumber"
@@ -328,7 +356,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
                 Phone Number *
               </label>
               <div className="flex">
-                <div className="px-3 py-2 border border-gray-300 border-r-0 rounded-l-md bg-gray-50 text-gray-700 text-sm flex items-center">
+                <div className="px-3 py-2 border border-gray-300 border-r-0 rounded-l-md bg-gray-50 text-gray-700 text-sm flex items-center font-medium">
                   +234
                 </div>
                 <input
@@ -338,12 +366,21 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
                   value={formData.phoneNumber || ''}
                   onChange={handleInputChange}
                   placeholder="8012345678"
+                  maxLength="10"
                   className={`flex-1 px-3 py-2 border rounded-r-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
                     errors.phoneNumber ? 'border-red-500' : 'border-gray-300'
                   }`}
                 />
               </div>
+              {formData.phoneNumber && (
+                <div className="mt-1 text-xs text-gray-500">
+                  Complete number: +234{formData.phoneNumber}
+                </div>
+              )}
               {errors.phoneNumber && <p className="mt-1 text-xs text-red-500">{errors.phoneNumber}</p>}
+              <p className="mt-1 text-xs text-gray-500">
+                Enter 10 digits starting with 7, 8, or 9
+              </p>
             </div>
 
             {/* State */}
@@ -708,6 +745,8 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
                   I accept the{" "}
                   <Link
                     to="/terms-of-use"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-500 underline"
                   >
                     Terms
@@ -715,6 +754,8 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
                   and{" "}
                   <Link
                     to="/privacy-policy"
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className="text-blue-600 hover:text-blue-500 underline"
                   >
                     Privacy Policy

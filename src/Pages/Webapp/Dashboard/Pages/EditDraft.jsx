@@ -211,7 +211,7 @@ function EditDraftIncident() {
   };
 
   const handleBackToReports = () => {
-    navigate("/reports");
+    navigate("/reports", { state: { activeTab: 'Drafts' } });
   };
 
   const handleSubmit = async () => {

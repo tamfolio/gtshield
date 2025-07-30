@@ -47,9 +47,7 @@ const SuccessModal = ({ isOpen, onClose, onOkClick, type }) => {
               Ok
             </button>
             <Link to="/dashboard">
-              <button
-                className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-              >
+              <button className="w-full bg-gray-100 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors">
                 Go to Dashboard
               </button>
             </Link>
@@ -67,9 +65,10 @@ const FeedbackDetailsModal = ({ isOpen, onClose, feedback }) => {
   const renderStarRating = (feedback) => {
     // Only show stars if there's actual rating data and it's for complaints or compliments
     const hasRating = feedback.rating && feedback.rating > 0;
-    const isRatingType = feedback.feedbackType?.toLowerCase() === 'complaint' || 
-                        feedback.feedbackType?.toLowerCase() === 'compliment';
-    
+    const isRatingType =
+      feedback.feedbackType?.toLowerCase() === "complaint" ||
+      feedback.feedbackType?.toLowerCase() === "compliment";
+
     if (!hasRating || !isRatingType) {
       return null;
     }
@@ -81,7 +80,7 @@ const FeedbackDetailsModal = ({ isOpen, onClose, feedback }) => {
             key={star}
             className={`w-6 h-6 ${
               star <= feedback.rating
-                ? "text-blue-600 fill-blue-600" 
+                ? "text-blue-600 fill-blue-600"
                 : "text-gray-300"
             }`}
           />
@@ -98,19 +97,25 @@ const FeedbackDetailsModal = ({ isOpen, onClose, feedback }) => {
           {/* Feedback Type */}
           <div className="flex justify-between items-center">
             <span className="text-gray-700 font-medium">Feedback Type</span>
-            <span className="text-gray-900 capitalize">{feedback.feedbackType}</span>
+            <span className="text-gray-900 capitalize">
+              {feedback.feedbackType}
+            </span>
           </div>
 
           {/* Feedback Recipient */}
           <div className="flex justify-between items-center">
-            <span className="text-gray-700 font-medium">Feedback Recipient</span>
-            <span className="text-gray-900">{feedback.station ? 'Station' : 'Officer'}</span>
+            <span className="text-gray-700 font-medium">
+              Feedback Recipient
+            </span>
+            <span className="text-gray-900">
+              {feedback.station ? "Station" : "Officer"}
+            </span>
           </div>
 
           {/* Station Name or Officer Name */}
           <div className="flex justify-between items-center">
             <span className="text-gray-700 font-medium">
-              {feedback.station ? 'Station Name' : 'Officer Name'}
+              {feedback.station ? "Station Name" : "Officer Name"}
             </span>
             <span className="text-gray-900">
               {feedback.station || feedback.officerName}
@@ -211,7 +216,7 @@ const FeedbackPage = () => {
   const [feedbackHistory, setFeedbackHistory] = useState([]);
   const [stations, setStations] = useState([]);
   const [activeTab, setActiveTab] = useState("Give Feedback");
-  
+
   // New state for feedback details modal
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedFeedback, setSelectedFeedback] = useState(null);
@@ -230,7 +235,7 @@ const FeedbackPage = () => {
       hour12: true,
     });
   };
-  
+
   const [formData, setFormData] = useState({
     nearestPoliceStation: null,
   });
@@ -356,11 +361,11 @@ const FeedbackPage = () => {
 
   const handleSubmit = async () => {
     const showRating = shouldShowRating();
-    
+
     // Validation - require station for station feedback, officer name for officer feedback
     const isStationFeedback = feedbackRecipient === "Station";
     const isOfficerFeedback = feedbackRecipient === "Officer";
-    
+
     if (
       !feedbackType ||
       !comment ||
@@ -370,7 +375,7 @@ const FeedbackPage = () => {
     ) {
       const missingRating = showRating && rating === 0;
       let errorMessage = "Please complete all required fields";
-      
+
       if (missingRating) {
         errorMessage += " including the rating";
       } else if (isStationFeedback && !formData.nearestPoliceStation?.value) {
@@ -378,7 +383,7 @@ const FeedbackPage = () => {
       } else if (isOfficerFeedback && !officerName.trim()) {
         errorMessage = "Please enter the officer name";
       }
-      
+
       toast.error(errorMessage);
       return;
     }
@@ -386,9 +391,13 @@ const FeedbackPage = () => {
     const payload = {
       feedbackTypeId: feedbackType,
       feedbackRecipient: feedbackRecipient,
-      stationId: isStationFeedback ? formData.nearestPoliceStation?.value : null,
+      stationId: isStationFeedback
+        ? formData.nearestPoliceStation?.value
+        : null,
       comment,
-      officerName: isOfficerFeedback ? officerName.trim() : (officerName.trim() || "Anonymous"),
+      officerName: isOfficerFeedback
+        ? officerName.trim()
+        : officerName.trim() || "Anonymous",
       // Send actual rating for complaint/compliment, 0 for suggestion
       rating: showRating ? rating : 0,
     };
@@ -448,7 +457,10 @@ const FeedbackPage = () => {
               Give Feedback
             </button>
             <button
-              onClick={() => setActiveTab("Feedback History")}
+              onClick={async () => {
+                await getFeedbackHistory();
+                setActiveTab("Feedback History");
+              }}
               className={`pb-3 font-medium ${
                 activeTab === "Feedback History"
                   ? "text-blue-600 border-b-2 border-blue-600"
@@ -596,7 +608,7 @@ const FeedbackPage = () => {
                       </span>
                     </div>
                   ))}
-                  
+
                   {feedbackHistory.length === 0 && (
                     <div className="text-center py-8">
                       <p className="text-gray-500">No feedback history found</p>

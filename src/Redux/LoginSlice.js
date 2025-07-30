@@ -59,8 +59,32 @@ const loginSlice = createSlice({
       state.otpSuccess = false;
       state.otpError = false;
     },
+    // Add this new action for updating user phone number
+    updateUserPhone: (state, action) => {
+      if (state.currentUser.user) {
+        state.currentUser.user.phoneNumber = action.payload;
+      }
+    },
+    // Optional: Add a more general action to update any user field
+    updateUserData: (state, action) => {
+      if (state.currentUser.user) {
+        state.currentUser.user = {
+          ...state.currentUser.user,
+          ...action.payload
+        };
+      }
+    },
   },
 });
 
-export const { loginStart, loginSuccess, LoginFailure,LogOut,resetSuccess } = loginSlice.actions;
+export const { 
+  loginStart, 
+  loginSuccess, 
+  LoginFailure, 
+  LogOut, 
+  resetSuccess,
+  updateUserPhone,
+  updateUserData 
+} = loginSlice.actions;
+
 export default loginSlice.reducer;

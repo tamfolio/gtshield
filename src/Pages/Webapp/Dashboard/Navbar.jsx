@@ -14,7 +14,6 @@ const DashboardNavbar = () => {
     { name: "SOS", href: "/sos" },
     { name: "News", href: "/news" },
     { name: "Crime Map", href: "/crime-map" },
-    { name: "Community", href: "/community" },
     { name: "Feedback", href: "/feedback" },
   ];
 

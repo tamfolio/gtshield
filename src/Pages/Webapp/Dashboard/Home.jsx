@@ -7,9 +7,11 @@ import {
   MessageSquare,
   Menu,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import Navbar from "../../../Components/Website/Navbar";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate,useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { userRequest } from "../../../requestMethod";
 
@@ -24,6 +26,13 @@ const Dashboard = () => {
   const [incidents, setIncidents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(5);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalIncidents, setTotalIncidents] = useState(0);
+  
   localStorage.setItem("isAuthenticated", "true");
 
   console.log(incidents);
@@ -33,13 +42,26 @@ const Dashboard = () => {
       setLoading(true);
       try {
         const res = await userRequest(token).get(
-          "/incident/all?page=1&size=10"
+          `/incident/all?page=${currentPage}&size=${pageSize}`
         );
         console.log("✅ Incidents fetched:", res.data);
-        setIncidents(res.data?.data?.incidents?.data || []);
+        
+        const incidentsData = res.data?.data?.incidents;
+        const paginationData = incidentsData?.pagination;
+        
+        setIncidents(incidentsData?.data || []);
+        setTotalPages(paginationData?.totalPages || 0);
+        setTotalIncidents(paginationData?.total || 0);
+        setHasReports((incidentsData?.data || []).length > 0);
+        
+        // Update current page from API response to stay in sync
+        if (paginationData?.currentPage) {
+          setCurrentPage(paginationData.currentPage);
+        }
       } catch (err) {
         console.error("❌ Failed to fetch incidents:", err);
         setError("Failed to fetch incidents");
+        setHasReports(false);
       } finally {
         setLoading(false);
       }
@@ -48,7 +70,7 @@ const Dashboard = () => {
     if (token) {
       fetchIncidents();
     }
-  }, [token]);
+  }, [token, currentPage, pageSize]);
 
   const formatDate = (isoString) => {
     return new Date(isoString).toLocaleString("en-US", {
@@ -61,7 +83,77 @@ const Dashboard = () => {
     });
   };
 
-  console.log(setHasReports);
+  // Pagination handlers
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    setPageSize(newSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+  };
+
+  // Helper function to get status color
+  const getStatusColor = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'new':
+        return 'bg-blue-100 text-blue-800';
+      case 'onhold':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'in progress':
+      case 'inprogress':
+        return 'bg-orange-100 text-orange-800';
+      case 'resolved':
+      case 'solved':
+        return 'bg-green-100 text-green-800';
+      case 'closed':
+        return 'bg-gray-100 text-gray-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Generate page numbers for pagination
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Always show first page
+      pages.push(1);
+      
+      if (currentPage > 3) {
+        pages.push('...');
+      }
+      
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      
+      for (let i = start; i <= end; i++) {
+        if (!pages.includes(i)) {
+          pages.push(i);
+        }
+      }
+      
+      if (currentPage < totalPages - 2) {
+        pages.push('...');
+      }
+      
+      // Always show last page
+      if (totalPages > 1) {
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
 
   const reports = [
     {
@@ -107,7 +199,7 @@ const Dashboard = () => {
 
           {/* Buttons - Mobile: Stacked, Desktop: Side by side */}
           <div className="flex gap-3 justify-center">
-            <Link to='/emergency-contact'>
+            <Link to="/emergency-contact">
               <button className="bg-white text-[14px] hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg font-medium border border-gray-300 w-full sm:w-auto">
                 Emergency Contact
               </button>
@@ -118,17 +210,42 @@ const Dashboard = () => {
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex justify-center items-center py-16">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex">
+              <AlertTriangle className="h-5 w-5 text-red-400" />
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">Error</h3>
+                <p className="text-sm text-red-700 mt-1">{error}</p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Reports Section */}
-        {hasReports ? (
-          /* Desktop Table View */
+        {!loading && hasReports ? (
           <div className="w-full lg:w-2/3">
             <div className="bg-white rounded-lg shadow-sm border border-[#E9EAEB]">
-              <div className="px-6 py-4 border-b border-b-[#E9EAEB]">
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Recent Report
-                </h2>
+              {/* Header with pagination info and page size selector */}
+              <div className="px-6 py-4 border-b border-b-[#E9EAEB] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    Recent Reports
+                  </h2>
+                </div>
+                
+    
               </div>
 
+              {/* Desktop Table View */}
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
@@ -158,7 +275,7 @@ const Dashboard = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${report.statusColor}`}
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(report.incidentStatus)}`}
                           >
                             {report.incidentStatus}
                           </span>
@@ -176,68 +293,133 @@ const Dashboard = () => {
                   </tbody>
                 </table>
               </div>
-            </div>
-          </div>
-        ) : (
-          /* Mobile Card View and Desktop */
-          <div className="space-y-4">
-            {/* Mobile Table Headers - Only show on mobile when there are reports */}
-            {hasReports && (
-              <div className="sm:hidden bg-white rounded-lg shadow-sm border overflow-hidden">
-                <div className="grid grid-cols-3 gap-4 px-4 py-3 bg-gray-50 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div>Report Type</div>
-                  <div>Date Reported</div>
-                  <div>Status</div>
-                </div>
-                {reports.map((report) => (
-                  <div
-                    key={report.id}
-                    className="grid grid-cols-3 gap-4 px-4 py-4 border-t border-gray-100"
-                  >
-                    <div className="text-sm font-medium text-gray-900">
-                      {report.type}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {report.dateReported}
-                    </div>
-                    <div>
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${report.statusColor}`}
-                      >
-                        {report.status}
+
+              {/* Pagination - Always show when there are incidents */}
+              {incidents.length > 0 && (
+                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                    {/* Page info */}
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">
+                        Page {currentPage} of {totalPages || 1}
+                      </span>
+                      <span className="ml-2 text-gray-500">
+                        ({totalIncidents} total incidents)
                       </span>
                     </div>
+                    
+                    {/* Pagination controls */}
+                    <div className="flex items-center gap-2">
+                      {/* First page button */}
+                      <button
+                        onClick={() => handlePageChange(1)}
+                        disabled={currentPage === 1}
+                        className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        First
+                      </button>
+                      
+                      {/* Previous button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage - 1)}
+                        disabled={currentPage === 1}
+                        className="p-2 rounded-lg border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+                      
+                      {/* Page numbers */}
+                      <div className="flex items-center gap-1">
+                        {getPageNumbers().map((page, index) => (
+                          <React.Fragment key={index}>
+                            {page === '...' ? (
+                              <span className="px-3 py-2 text-gray-500">...</span>
+                            ) : (
+                              <button
+                                onClick={() => handlePageChange(page)}
+                                className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                  currentPage === page
+                                    ? 'bg-blue-600 text-white shadow-sm'
+                                    : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 hover:border-gray-400'
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            )}
+                          </React.Fragment>
+                        ))}
+                      </div>
+                      
+                      {/* Next button */}
+                      <button
+                        onClick={() => handlePageChange(currentPage + 1)}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className="p-2 rounded-lg border border-gray-300 bg-white text-gray-500 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                      
+                      {/* Last page button */}
+                      <button
+                        onClick={() => handlePageChange(totalPages)}
+                        disabled={currentPage === totalPages || totalPages === 0}
+                        className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                      >
+                        Last
+                      </button>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-
-            {/* Empty State - Both Mobile and Desktop */}
-            {!hasReports && (
-              <div className="flex flex-col items-center justify-center py-16">
-                <div className="bg-gray-100 p-6 rounded-full mb-6">
-                  <MessageSquare className="h-12 w-12 text-gray-400" />
+                  
+                  {/* Mobile pagination - simplified */}
+                  <div className="sm:hidden mt-4 flex justify-center items-center gap-4">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      Previous
+                    </button>
+                    
+                    <span className="text-sm text-gray-700 font-medium">
+                      {currentPage} / {totalPages || 1}
+                    </span>
+                    
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === totalPages || totalPages === 0}
+                      className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">
-                  You haven't submitted any reports yet
-                </h3>
-                <p className="text-gray-600 text-center">
-                  Click "Report an Incident" to get started
-                </p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-        )}
+        ) : !loading && !hasReports ? (
+          /* Empty State - Both Mobile and Desktop */
+          <div className="flex flex-col items-center justify-center py-16">
+            <div className="bg-gray-100 p-6 rounded-full mb-6">
+              <MessageSquare className="h-12 w-12 text-gray-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2 text-center">
+              You haven't submitted any reports yet
+            </h3>
+            <p className="text-gray-600 text-center">
+              Click "Report an Incident" to get started
+            </p>
+          </div>
+        ) : null}
       </div>
 
       {/* Floating SOS Button */}
-      <button className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg flex items-center justify-center">
-        <Link to='/sos'>
+      <Link to="/sos">
+        <button className="fixed bottom-6 left-1/2 -translate-x-1/2 md:left-auto md:right-6 md:translate-x-0 w-16 h-16 bg-red-600 hover:bg-red-700 text-white rounded-full shadow-lg flex items-center justify-center">
           <span className="text-sm font-bold">SOS</span>
-        </Link>
-      </button>
-
-      {/* Toggle button for testing - Remove in production */}
+        </button>
+      </Link>
     </div>
   );
 };

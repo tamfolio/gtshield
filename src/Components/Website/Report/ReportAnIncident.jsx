@@ -7,11 +7,14 @@ import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
 
-function ReportAnIncident({ setCurrentPage,setTrackingId }) {
+// Alternative approach using fetch API for geocoding
+const GOOGLE_MAPS_API_KEY = "AIzaSyALniH6V8qHvDGFQzIM6dAWetIwQbx6ueU";
+
+function ReportAnIncident({ setCurrentPage, setTrackingId }) {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
- // Update your selectors to match the normalized structure
-const userData = useSelector((state) => state.user?.currentUser?.user);
-const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
+  const userData = useSelector((state) => state.user?.currentUser?.user);
+  const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
+  
   const [formData, setFormData] = useState({
     incidentType: "",
     description: "",
@@ -31,12 +34,116 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
   const [ticketId, setTicketId] = useState("");
   const [showDraftSuccess, setShowDraftSuccess] = useState(false);
 
+  // Function to reverse geocode coordinates to address using direct API call
+  const reverseGeocode = useCallback(async (latitude, longitude) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}&region=ng&language=en`
+      );
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.results.length > 0) {
+        return data.results[0].formatted_address;
+      } else {
+        console.error('Geocoding failed:', data.status);
+        return `${latitude}, ${longitude}`;
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      // Fallback to coordinates if geocoding fails
+      return `${latitude}, ${longitude}`;
+    }
+  }, []);
+
+  // Function to get user's current location
+  const getCurrentLocation = useCallback(() => {
+    setIsLoadingLocation(true);
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const { latitude, longitude } = position.coords;
+          setUserLocation({ latitude, longitude });
+
+          try {
+            // Convert coordinates to human-readable address
+            const address = await reverseGeocode(latitude, longitude);
+            
+            setFormData((prev) => ({
+              ...prev,
+              address: address,
+              useMyLocation: true,
+            }));
+          } catch (error) {
+            // If geocoding fails, fallback to coordinates
+            setFormData((prev) => ({
+              ...prev,
+              address: `${latitude}, ${longitude}`,
+              useMyLocation: true,
+            }));
+          }
+
+          setIsLoadingLocation(false);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          setIsLoadingLocation(false);
+          
+          let errorMessage = "Unable to get your location. Please enter your address manually.";
+          
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = "Location access denied. Please enable location permissions and try again.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = "Location information is unavailable. Please enter your address manually.";
+              break;
+            case error.TIMEOUT:
+              errorMessage = "Location request timed out. Please try again or enter your address manually.";
+              break;
+          }
+          
+          alert(errorMessage);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    } else {
+      setIsLoadingLocation(false);
+      alert("Geolocation is not supported by this browser.");
+    }
+  }, [reverseGeocode]);
+
+  // Alternative function for forward geocoding (address to coordinates)
+  const forwardGeocode = useCallback(async (address) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}&region=ng&language=en`
+      );
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.results.length > 0) {
+        const { lat, lng } = data.results[0].geometry.location;
+        return { latitude: lat, longitude: lng };
+      } else {
+        console.error('Forward geocoding failed:', data.status);
+        return null;
+      }
+    } catch (error) {
+      console.error("Forward geocoding error:", error);
+      return null;
+    }
+  }, []);
+
   // Fetch police stations on component mount
   useEffect(() => {
     const getTypes = async () => {
       try {
         const rawData = await fetchIncidentTypes();
-        console.log("API response:", rawData); // fetch from API
+        console.log("API response:", rawData);
         const formattedData = rawData?.data.map((item) => ({
           label: item.name,
           value: item.id,
@@ -46,6 +153,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
         console.error("Error fetching incident types:", error);
       }
     };
+    
     const getStations = async () => {
       try {
         const rawData = await fetchStations();
@@ -64,46 +172,26 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
     getTypes();
   }, []);
 
-  // Function to get user's current location
-  const getCurrentLocation = useCallback(() => {
-    setIsLoadingLocation(true);
-
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setUserLocation({ latitude, longitude });
-
-          // You might want to use a geocoding service to convert coordinates to address
-          // For now, we'll just set the coordinates as the address
-          setFormData((prev) => ({
-            ...prev,
-            address: `${latitude}, ${longitude}`,
-            useMyLocation: true,
-          }));
-
-          setIsLoadingLocation(false);
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-          setIsLoadingLocation(false);
-          alert(
-            "Unable to get your location. Please enter your address manually."
-          );
-        }
-      );
-    } else {
-      setIsLoadingLocation(false);
-      alert("Geolocation is not supported by this browser.");
-    }
-  }, []);
-
   const handleDescriptionChange = (e) => {
     setFormData((prev) => ({ ...prev, description: e.target.value }));
   };
 
-  const handleAddressChange = (e) => {
-    setFormData((prev) => ({ ...prev, address: e.target.value }));
+  const handleAddressChange = async (e) => {
+    const newAddress = e.target.value;
+    setFormData((prev) => ({ ...prev, address: newAddress }));
+    
+    // Optional: If you want to get coordinates when user manually enters an address
+    // You can debounce this for better performance
+    if (newAddress.length > 10 && !formData.useMyLocation) {
+      try {
+        const coords = await forwardGeocode(newAddress);
+        if (coords) {
+          setUserLocation(coords);
+        }
+      } catch (error) {
+        console.log("Could not geocode manually entered address");
+      }
+    }
   };
 
   const handleMediaUpload = (e) => {
@@ -140,120 +228,12 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
       setFormData((prev) => ({ ...prev, incidentType: null }));
       return;
     }
-  
     setFormData((prev) => ({ ...prev, incidentType: selectedOption }));
   }, []);
-  
 
   const handleStationChange = useCallback((selected) => {
     setFormData((prev) => ({ ...prev, nearestPoliceStation: selected }));
   }, []);
-
-  const SuccessModal = () => (
-    <div
-      className="fixed inset-0 bg-[rgba(16,24,40,0.7)] bg-opacity-50 flex items-center justify-center z-50"
-      onClick={() => setShowSuccess(false)} // close on backdrop click
-    >
-      <div
-        className="relative bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center shadow-2xl"
-        onClick={(e) => e.stopPropagation()} // prevent modal click from closing
-      >
-        {/* Close button */}
-        <button
-          onClick={() => setShowSuccess(false)}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Icon */}
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Check className="w-8 h-8 text-green-600" />
-        </div>
-
-        {/* Title */}
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Report submitted successfully
-        </h2>
-
-        {/* Description */}
-        <p className="text-gray-600 mb-6">
-          Your Ticket ID is <span className="font-medium">{ticketId}</span>
-        </p>
-
-        {/* Buttons */}
-        <div className="space-y-3">
-          <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-            View Report
-          </button>
-
-          <button
-            onClick={() => setShowSuccess(false)}
-            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-          >
-            Stay on Page
-          </button>
-
-          <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            <Link to={isAuthenticated === "true" ? "/dashboard" : "/"}>
-              Redirect to Dashboard
-            </Link>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-
-  const SuccessDraftModal = () => (
-    <div
-      className="fixed inset-0 bg-[rgba(16,24,40,0.7)] bg-opacity-50 flex items-center justify-center z-50"
-      onClick={() => setShowDraftSuccess(false)} // close on backdrop click
-    >
-      <div
-        className="relative bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center shadow-2xl"
-        onClick={(e) => e.stopPropagation()} // prevent modal click from closing
-      >
-        {/* Close button */}
-        <button
-          onClick={() => setShowDraftSuccess(false)}
-          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Icon */}
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Check className="w-8 h-8 text-green-600" />
-        </div>
-
-        {/* Title */}
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Saved As Draft
-        </h2>
-
-        {/* Description */}
-        <p className="text-gray-600 mb-6">Report Saved as Draft</p>
-
-        {/* Buttons */}
-        <div className="space-y-3">
-          <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-            View Draft
-          </button>
-
-          <button
-            onClick={() => setShowDraftSuccess(false)}
-            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
-          >
-            Stay on Page
-          </button>
-
-          <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            <Link to="/dashboard">Redirect to Dashboard</Link>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
 
   const handleLocationCheckboxChange = useCallback(
     (checked) => {
@@ -275,23 +255,119 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
     setFormData((prev) => ({ ...prev, hideIdentity: e.target.checked }));
   };
 
-  const handleSubmit = async () => {
-    // Validate required fields
-    if (!formData.incidentType || !formData.description || !formData.address) {
-      alert(
-        "Please fill in all required fields (Incident Type, Description, and Address)"
-      );
+  const handleAnonSubmit = async () => {
+    if (!formData.incidentType || !formData.description) {
+      alert("Please fill in all required fields (Incident Type, Description, and Address)");
       return;
     }
 
     try {
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
-        isDraft: false, // Set to false for actual submission
+        isDraft: null,
+        address: "",
+        description: formData.description,
+        isIdentityHidden: null,
+        isLocationHidden: false,
+        isAnonymous: true,
+        channel: "web",
+        stationId: null,
+        userId: null,
+      };
+
+      console.log("🚀 Submitting form with data:", formData);
+      console.log("🚀 Body data:", bodyData);
+
+      const formPayload = new FormData();
+      formPayload.append("data", JSON.stringify(bodyData));
+      if (formData.image) {
+        formPayload.append("image", formData.image);
+      }
+
+      const res = await userRequest(token).post("/incident/new", formPayload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      console.log("✅ Incident reported:", res.data);
+      setShowSuccess(true);
+      setTrackingId(res.data.data.ticketId);
+      setTicketId(res.data.data.ticketId);
+
+      if (setCurrentPage) {
+        setCurrentPage("confirmation");
+      }
+    } catch (err) {
+      console.error("❌ Failed to submit incident:", err);
+      toast(err.response.data.message);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    if (!formData.incidentType || !formData.description || !formData.address) {
+      alert("Please fill in all required fields (Incident Type, Description, and Address)");
+      return;
+    }
+
+    try {
+      const bodyData = {
+        incidentTypeId: formData.incidentType?.value,
+        isDraft: true,
         address: formData.address,
         description: formData.description,
         isIdentityHidden: formData.hideIdentity,
-        isLocationHidden: false, // You can add another checkbox for this if needed
+        isLocationHidden: false,
+        isAnonymous: false,
+        channel: "web",
+        stationId: formData.nearestPoliceStation?.value || null,
+        userId: userData.id,
+        ...(userLocation && {
+          latitude: userLocation.latitude,
+          longitude: userLocation.longitude,
+        }),
+      };
+
+      console.log("🚀 Submitting form with data:", formData);
+      console.log("🚀 Body data:", bodyData);
+
+      const formPayload = new FormData();
+      formPayload.append("data", JSON.stringify(bodyData));
+      if (formData.image) {
+        formPayload.append("image", formData.image);
+      }
+
+      const res = await userRequest(token).post("/incident/new", formPayload, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      setShowDraftSuccess(true);
+      console.log("✅ Incident reported:", res.data);
+
+      if (setCurrentPage) {
+        setCurrentPage("confirmation");
+      }
+    } catch (err) {
+      console.error("❌ Failed to submit incident:", err);
+      toast(err.response.data.message);
+    }
+  };
+  const handleSubmit = async () => {
+    if (!formData.incidentType || !formData.description || !formData.address) {
+      alert("Please fill in all required fields (Incident Type, Description, and Address)");
+      return;
+    }
+
+    try {
+      const bodyData = {
+        incidentTypeId: formData.incidentType?.value,
+        isDraft: false,
+        address: formData.address,
+        description: formData.description,
+        isIdentityHidden: formData.hideIdentity,
+        isLocationHidden: false,
         isAnonymous: false,
         channel: "web",
         stationId: formData.nearestPoliceStation?.value || null,
@@ -322,7 +398,6 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
       setTicketId(res.data.data.ticketId);
       setTrackingId(res.data.data.ticketId);
 
-      // Navigate to confirmation page or show success message
       if (setCurrentPage) {
         setCurrentPage("confirmation");
       }
@@ -332,158 +407,106 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
     }
   };
 
-  const handleAnonSubmit = async () => {
-    // Validate required fields
-    if (!formData.incidentType || !formData.description) {
-      alert(
-        "Please fill in all required fields (Incident Type, Description, and Address)"
-      );
-      return;
-    }
+  const SuccessDraftModal = () => (
+    <div
+      className="fixed inset-0 bg-[rgba(16,24,40,0.7)] bg-opacity-50 flex items-center justify-center z-50"
+      onClick={() => setShowDraftSuccess(false)}
+    >
+      <div
+        className="relative bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={() => setShowDraftSuccess(false)}
+          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-    try {
-      const bodyData = {
-        incidentTypeId: formData.incidentType?.value,
-        isDraft: null, // Set to false for actual submission
-        address: "",
-        description: formData.description,
-        isIdentityHidden: null,
-        isLocationHidden: false, // You can add another checkbox for this if needed
-        isAnonymous: true,
-        channel: "web",
-        stationId: null,
-        userId: null,
-      };
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Check className="w-8 h-8 text-green-600" />
+        </div>
 
-      console.log("🚀 Submitting form with data:", formData);
-      console.log("🚀 Body data:", bodyData);
-      
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Saved As Draft
+        </h2>
 
-      const formPayload = new FormData();
-      formPayload.append("data", JSON.stringify(bodyData));
-      if (formData.image) {
-        formPayload.append("image", formData.image);
-      }
+        <p className="text-gray-600 mb-6">Report Saved as Draft</p>
 
-      const res = await userRequest(token).post("/incident/new", formPayload, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+        <div className="space-y-3">
+          <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+            View Draft
+          </button>
 
-      console.log("✅ Incident reported:", res.data);
-      setShowSuccess(true);
-      setTrackingId(res.data.data.ticketId)
-      setTicketId(res.data.data.ticketId);
+          <button
+            onClick={() => setShowDraftSuccess(false)}
+            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+          >
+            Stay on Page
+          </button>
 
-      // Navigate to confirmation page or show success message
-      if (setCurrentPage) {
-        setCurrentPage("confirmation");
-      }
-    } catch (err) {
-      console.error("❌ Failed to submit incident:", err);
-      toast(err.response.data.message);
-    }
-  };
+          <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+            <Link to="/dashboard">Redirect to Dashboard</Link>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+  const SuccessModal = () => (
+    <div
+      className="fixed inset-0 bg-[rgba(16,24,40,0.7)] bg-opacity-50 flex items-center justify-center z-50"
+      onClick={() => setShowSuccess(false)}
+    >
+      <div
+        className="relative bg-white rounded-lg p-8 max-w-md w-full mx-4 text-center shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={() => setShowSuccess(false)}
+          className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 transition-colors z-10"
+        >
+          <X className="w-5 h-5" />
+        </button>
 
-  const handleSaveAsDraft = async () => {
-    // Validate required fields
-    if (!formData.incidentType || !formData.description || !formData.address) {
-      alert(
-        "Please fill in all required fields (Incident Type, Description, and Address)"
-      );
-      return;
-    }
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Check className="w-8 h-8 text-green-600" />
+        </div>
 
-    try {
-      const bodyData = {
-        incidentTypeId: formData.incidentType?.value,
-        isDraft: true, // Set to false for actual submission
-        address: formData.address,
-        description: formData.description,
-        isIdentityHidden: formData.hideIdentity,
-        isLocationHidden: false, // You can add another checkbox for this if needed
-        isAnonymous: false,
-        channel: "web",
-        stationId: formData.nearestPoliceStation?.value || null,
-        userId: userData.id,
-        ...(userLocation && {
-          latitude: userLocation.latitude,
-          longitude: userLocation.longitude,
-        }),
-      };
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          Report submitted successfully
+        </h2>
 
-      console.log("🚀 Submitting form with data:", formData);
-      console.log("🚀 Body data:", bodyData);
+        <p className="text-gray-600 mb-6">
+          Your Ticket ID is <span className="font-medium">{ticketId}</span>
+        </p>
 
-      const formPayload = new FormData();
-      formPayload.append("data", JSON.stringify(bodyData));
-      if (formData.image) {
-        formPayload.append("image", formData.image);
-      }
+        <div className="space-y-3">
+          <button className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors">
+            View Report
+          </button>
 
-      const res = await userRequest(token).post("/incident/new", formPayload, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      });
+          <button
+            onClick={() => setShowSuccess(false)}
+            className="w-full bg-gray-100 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-200 transition-colors"
+          >
+            Stay on Page
+          </button>
 
-      setShowDraftSuccess(true);
-
-      console.log("✅ Incident reported:", res.data);
-
-      // Navigate to confirmation page or show success message
-      if (setCurrentPage) {
-        setCurrentPage("confirmation");
-      }
-    } catch (err) {
-      console.error("❌ Failed to submit incident:", err);
-      toast(err.response.data.message);
-    }
-  };
+          <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+            <Link to={isAuthenticated === "true" ? "/dashboard" : "/"}>
+              Redirect to Dashboard
+            </Link>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   useEffect(() => {
     if (isAuthenticated && formData.useMyLocation) {
-      handleLocationCheckboxChange(true); // or directly call the function that gets location
+      handleLocationCheckboxChange(true);
     }
   }, [isAuthenticated]);
-
-  //   try {
-  //     const bodyData = {
-  //       incidentTypeId: formData.incidentType,
-  //       isDraft: true,
-  //       address: formData.address,
-  //       description: formData.description,
-  //       isIdentityHidden: formData.hideIdentity,
-  //       isLocationHidden: false,
-  //       isAnonymous: false,
-  //       stationId: formData.nearestPoliceStation || null,
-  //       userId: "01JX7KE5HB162HF41SYZ6PWJGV",
-  //       ...(userLocation && {
-  //         latitude: userLocation.latitude,
-  //         longitude: userLocation.longitude,
-  //       }),
-  //     };
-
-  //     const formPayload = new FormData();
-  //     formPayload.append("data", JSON.stringify(bodyData));
-  //     if (formData.image) {
-  //       formPayload.append("image", formData.image);
-  //     }
-
-  //     const res = await userRequest.post("/incident/new", formPayload, {
-  //       headers: {
-  //         "Content-Type": "multipart/form-data",
-  //       },
-  //     });
-
-  //     console.log("✅ Draft saved:", res.data);
-  //     alert("Report saved as draft successfully!");
-  //   } catch (err) {
-  //     console.error("❌ Failed to save draft:", err);
-  //     alert("Failed to save draft. Please try again.");
-  //   }
-  // };
 
   return (
     <>
@@ -511,8 +534,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
                     Report An Incident
                   </h1>
                   <p className="text-gray-600">
-                    Explain what happened and elaborate on the incident you would
-                    like to report.
+                    Explain what happened and elaborate on the incident you would like to report.
                   </p>
                 </div>
               )}
@@ -551,15 +573,12 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
                       required
                     />
 
-                    {/* Use My Location Checkbox */}
                     <div className="mt-2 flex items-center">
                       <input
                         type="checkbox"
                         id="useMyLocation"
                         checked={formData.useMyLocation}
-                        onChange={(e) =>
-                          handleLocationCheckboxChange(e.target.checked)
-                        }
+                        onChange={(e) => handleLocationCheckboxChange(e.target.checked)}
                         className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <label
@@ -622,9 +641,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
                       <button
                         type="button"
                         className="text-blue-600 hover:text-blue-700"
-                        onClick={() =>
-                          document.getElementById("file-upload").click()
-                        }
+                        onClick={() => document.getElementById("file-upload").click()}
                       >
                         Click to upload
                       </button>
@@ -660,9 +677,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
                               onClick={() =>
                                 setFormData((prev) => ({
                                   ...prev,
-                                  images: prev.images.filter(
-                                    (_, i) => i !== index
-                                  ),
+                                  images: prev.images.filter((_, i) => i !== index),
                                 }))
                               }
                               className="text-red-500 text-xs"

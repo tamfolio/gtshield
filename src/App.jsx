@@ -50,14 +50,12 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/reports" element={<GatewayShieldReports />} />
         <Route path="/feedback" element={<FeedbackPage />} />
-        <Route path="/communities" element={<Community />} />
         <Route path="/sos" element={<SosComponent />} />
         <Route path="/call-emergency-contact" element={<CallEmergencyContact />} />
         <Route path="/emergency-contact" element={<EmergencyContact />} />
         <Route path="/survey" element={<Survey />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/forgot-password" element={<ForgotPasswordFlow />} />
-        <Route path="/communities/:id" element={<BlogPostDetail />} />
         <Route path="/reports/:id" element={<ReportDetails />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>
