@@ -431,7 +431,7 @@ const MainView = ({ onStart, onCall }) => (
         onClick={() => window.open("tel:08000009111", "_self")}
         className="w-full py-3 md:py-4 bg-white border-[1px] border-solid border-[#D5D7DA] text-[#414651] rounded-lg font-medium"
       >
-        Call Contact Center
+        Call Support
       </button>
     </div>
   </div>
