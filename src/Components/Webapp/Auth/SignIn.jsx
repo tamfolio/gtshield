@@ -281,7 +281,7 @@ export default function SignIn() {
                 onClick={() => console.log("Sign up clicked")}
                 className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
               >
-                <Link to="/signup">Sign up</Link>
+                <Link to="/sign-up">Sign up</Link>
               </button>
             </p>
           </div>
