@@ -29,7 +29,7 @@ const Dashboard = () => {
   
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(5);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(0);
   const [totalIncidents, setTotalIncidents] = useState(0);
   

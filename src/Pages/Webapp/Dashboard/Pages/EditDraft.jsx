@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { userRequest } from "../../../../requestMethod";
-import { Upload, MapPin, ArrowLeft } from "lucide-react";
+import { Upload, MapPin, ArrowLeft, X } from "lucide-react";
 import Select from "react-select";
 import { fetchIncidentTypes, fetchStations } from "../../../../Api/incidentApi";
 import { useSelector } from "react-redux";
@@ -28,6 +28,8 @@ function EditDraftIncident() {
     images: [],
     video: null,
     hideIdentity: false,
+    existingImages: [], // Track existing images separately
+    removedImages: [], // Track which existing images to remove
   });
 
   const [stations, setStations] = useState([]);
@@ -47,19 +49,24 @@ function EditDraftIncident() {
         setIncidentTypes(formattedData);
       } catch (error) {
         console.error("Error fetching incident types:", error);
+        toast.error("Failed to load incident types");
       }
     };
 
     const getStations = async () => {
       try {
         const rawData = await fetchStations();
-        const formattedData = rawData?.data.map((item) => ({
+        // Handle both possible response structures
+        const stationsArray = rawData?.data?.stations || rawData?.data || rawData;
+        const formattedData = stationsArray.map((item) => ({
           label: item.formation,
           value: item.id,
         }));
         setStations(formattedData);
+        console.log("🏪 Stations loaded:", formattedData);
       } catch (error) {
         console.error("Error fetching stations:", error);
+        toast.error("Failed to load police stations");
       }
     };
 
@@ -82,6 +89,7 @@ function EditDraftIncident() {
           description: incidentData.description || "",
           address: incidentData.address || "",
           hideIdentity: incidentData.isIdentityHidden || false,
+          existingImages: incidentData.incidentImages || [],
         }));
 
       } catch (error) {
@@ -112,6 +120,35 @@ function EditDraftIncident() {
       }
     }
   }, [incident, incidentTypes]);
+
+  // Set police station when both incident data and stations are loaded
+  useEffect(() => {
+    if (incident && stations.length > 0 && incident.station) {
+      console.log("🔍 Looking for station match...");
+      console.log("Incident station:", incident.station);
+      console.log("Available stations:", stations);
+      
+      const matchingStation = stations.find(
+        station => station.value === incident.station.id || 
+                   station.value === incident.stationId ||
+                   station.label === incident.station.formation
+      );
+      
+      console.log("✅ Found matching station:", matchingStation);
+      
+      if (matchingStation) {
+        setFormData(prev => ({
+          ...prev,
+          nearestPoliceStation: matchingStation
+        }));
+      } else {
+        console.log("❌ No matching station found");
+        // Log available options for debugging
+        console.log("Station IDs available:", stations.map(s => s.value));
+        console.log("Looking for station ID:", incident.station?.id || incident.stationId);
+      }
+    }
+  }, [incident, stations]);
 
   // Function to get user's current location
   const getCurrentLocation = useCallback(() => {
@@ -161,7 +198,9 @@ function EditDraftIncident() {
       return;
     }
 
-    if (newImages.length + formData.images.length > 3) {
+    // Calculate total images (existing + new)
+    const totalImages = formData.existingImages.length - formData.removedImages.length + formData.images.length + newImages.length;
+    if (totalImages > 3) {
       toast.error("You can upload up to 3 images only.");
       return;
     }
@@ -175,6 +214,20 @@ function EditDraftIncident() {
       ...prev,
       images: [...prev.images, ...newImages],
       video: newVideos[0] || prev.video,
+    }));
+  };
+
+  const handleRemoveExistingImage = (imageUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      removedImages: [...prev.removedImages, imageUrl]
+    }));
+  };
+
+  const handleRestoreExistingImage = (imageUrl) => {
+    setFormData(prev => ({
+      ...prev,
+      removedImages: prev.removedImages.filter(url => url !== imageUrl)
     }));
   };
 
@@ -267,7 +320,7 @@ function EditDraftIncident() {
       const formPayload = new FormData();
       formPayload.append("data", JSON.stringify(bodyData));
       
-      // Add images if any (using correct field name from original)
+      // Add new images
       if (formData.images && formData.images.length > 0) {
         formData.images.forEach((image) => {
           formPayload.append("image", image);
@@ -303,8 +356,6 @@ function EditDraftIncident() {
     navigate("/reports");
   };
 
-
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -339,6 +390,11 @@ function EditDraftIncident() {
       </div>
     );
   }
+
+  // Filter existing images that haven't been removed
+  const visibleExistingImages = formData.existingImages.filter(
+    img => !formData.removedImages.includes(img)
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -438,6 +494,11 @@ function EditDraftIncident() {
                 className="react-select-container"
                 classNamePrefix="react-select"
               />
+              {formData.nearestPoliceStation && (
+                <p className="mt-1 text-sm text-gray-600">
+                  Selected: {formData.nearestPoliceStation.label}
+                </p>
+              )}
             </div>
 
             {/* Incident Description */}
@@ -486,30 +547,41 @@ function EditDraftIncident() {
                 />
               </div>
 
-              {/* Display existing images from the incident */}
-              {incident.incidentImages && incident.incidentImages.length > 0 && (
+              {/* Display existing images */}
+              {formData.existingImages && formData.existingImages.length > 0 && (
                 <div className="mt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">
                     Existing Images:
                   </h4>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    {incident.incidentImages.map((image, index) => (
-                      <div key={index} className="relative">
-                        <img
-                          src={image}
-                          alt={`Existing evidence ${index + 1}`}
-                          className="w-full h-24 object-cover rounded-lg"
-                        />
-                      </div>
-                    ))}
+                    {formData.existingImages
+                      .filter(image => !formData.removedImages.includes(image))
+                      .map((image, index) => (
+                        <div key={index} className="relative group">
+                          <img
+                            src={image}
+                            alt={`Existing evidence ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-lg"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveExistingImage(image)}
+                            className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-90 hover:opacity-100 transition-opacity"
+                            title="Remove image"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
                   </div>
                 </div>
               )}
 
+              {/* Display new images */}
               {formData.images.length > 0 && (
                 <div className="mt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">
-                    New Images:
+                    New Images to Upload:
                   </h4>
                   <ul className="text-sm text-gray-600 space-y-1">
                     {formData.images.map((img, index) => (
@@ -517,7 +589,7 @@ function EditDraftIncident() {
                         key={index}
                         className="flex items-center justify-between"
                       >
-                        {img.name}
+                        <span className="text-green-600">{img.name}</span>
                         <button
                           type="button"
                           onClick={() =>
@@ -538,13 +610,14 @@ function EditDraftIncident() {
                 </div>
               )}
 
+              {/* Display video */}
               {formData.video && (
                 <div className="mt-4">
                   <h4 className="text-sm font-medium text-gray-700 mb-2">
                     Video:
                   </h4>
                   <div className="flex items-center justify-between text-sm text-gray-600">
-                    {formData.video.name}
+                    <span className="text-green-600">{formData.video.name}</span>
                     <button
                       type="button"
                       onClick={() =>
@@ -560,6 +633,16 @@ function EditDraftIncident() {
                   </div>
                 </div>
               )}
+
+              {/* Media count indicator */}
+              <div className="mt-2 text-xs text-gray-500">
+                Images: {visibleExistingImages.length + formData.images.length}/3 
+                {formData.removedImages.length > 0 && (
+                  <span className="text-red-500 ml-2">
+                    ({formData.removedImages.length} will be removed)
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Hide Identity Checkbox */}
