@@ -299,7 +299,7 @@ function EditDraftIncident() {
       
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
-        isDraft: false, // Set to false for actual submission (no longer a draft)
+        isDraft: false, 
         address: formData.address.trim(),
         description: formData.description.trim(),
         isIdentityHidden: formData.hideIdentity,

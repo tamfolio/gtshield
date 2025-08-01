@@ -15,6 +15,25 @@ import { Link, useNavigate,useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { userRequest } from "../../../requestMethod";
 
+const AdminStatCard = ({ title, value, change, isNegative, valueColor = "text-gray-900" }) => (
+  <div className="bg-white rounded-lg shadow-sm border border-gray-100 p-4">
+    <div className="flex items-start justify-between mb-3">
+      <h3 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+        {title}
+      </h3>
+      <div className="flex items-center text-xs">
+        <span className={`mr-1 ${isNegative ? "text-red-500" : "text-green-500"}`}>
+          {isNegative ? "↓" : "↑"}
+        </span>
+        <span className="text-gray-600">{change}</span>
+      </div>
+    </div>
+    <div className={`text-2xl font-bold ${valueColor}`}>
+      {value}
+    </div>
+  </div>
+);
+
 const Dashboard = () => {
   const navigate = useNavigate();
   // Update your selectors to match the normalized structure

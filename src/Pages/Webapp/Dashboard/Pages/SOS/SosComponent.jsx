@@ -3,6 +3,7 @@ import Navbar from "../../../../../Components/Website/Navbar";
 import { userRequest } from "../../../../../requestMethod";
 import { useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
+import { House } from "lucide-react";
 
 function SosComponent() {
   const [currentView, setCurrentView] = useState("main");
@@ -404,17 +405,22 @@ const MainView = ({ onStart, onCall }) => (
     className="flex flex-col items-center justify-center w-full px-4 sm:px-8 md:px-16 lg:px-[230px]"
     style={{ minHeight: "calc(100vh - 64px)" }}
   >
-    <div className="w-full flex items-start justify-start mb-8 md:mb-16">
-      <h1 className="text-xl md:text-2xl font-semibold text-gray-900 text-left">
+    <div className="max-w-6xl w-full flex flex-col items-start justify-start mb-8 md:mb-20">
+      <div className="flex text-[#717680] gap-3 mb-4">
+      <House />
+        <p>&gt;</p>
+        <p className="font-semibold">SOS</p>
+      </div>
+      <h1 className="text-xl md:text-2xl font-bold text-gray-900 text-left">
         Emergency
       </h1>
     </div>
-    <div className="mb-8 md:mb-16">
+    <div className="mb-5 md:mb-5">
       <button className="w-24 h-24 md:w-32 md:h-32 bg-red-500 hover:bg-red-600 rounded-full flex items-center justify-center text-white text-lg md:text-xl font-bold shadow-lg">
         SOS
       </button>
     </div>
-    <h2 className="text-base md:text-lg text-gray-700 mb-6 md:mb-8 font-semibold text-center">
+    <h2 className="text-base md:text-xl text-gray-700 mb-6 md:mb-20 font-semibold text-center">
       Choose Emergency Action
     </h2>
     <div className="space-y-4 flex flex-col w-full max-w-sm">
