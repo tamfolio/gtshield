@@ -158,7 +158,7 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
       try {
         const rawData = await fetchStations();
         console.log("Stations API response:", rawData);
-        const formattedData = rawData?.data.map((item) => ({
+        const formattedData = rawData?.data.stations.map((item) => ({
           label: item.formation,
           value: item.id,
         }));
@@ -171,6 +171,8 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
     getStations();
     getTypes();
   }, []);
+
+  console.log(stations)
 
   const handleDescriptionChange = (e) => {
     setFormData((prev) => ({ ...prev, description: e.target.value }));

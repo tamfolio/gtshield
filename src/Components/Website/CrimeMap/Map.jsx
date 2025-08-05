@@ -419,10 +419,10 @@ const Map = () => {
   };
 
   const legendItems = [
-    { color: 'bg-yellow-500', label: '0-2 reports/km²', description: 'Low crime concentration' },
-    { color: 'bg-orange-500', label: '3-7 reports/km²', description: 'Moderate crime activity' },
-    { color: 'bg-red-600', label: '8+ reports/km²', description: 'High concentration / Hotspot area' },
-    { color: 'bg-gray-300', label: '0 reports/km²', description: 'Normal Zone' }
+    { color: 'bg-yellow-500', label: '0-2 reports', description: 'Low crime concentration' },
+    { color: 'bg-orange-500', label: '3-7 reports', description: 'Moderate crime activity' },
+    { color: 'bg-red-600', label: '8+ reports', description: 'High concentration / Hotspot area' },
+    { color: 'bg-gray-300', label: '0 reports', description: 'Normal Zone' }
   ];
 
   // Get selected LGA details for display
