@@ -12,6 +12,7 @@ import { userRequest } from "../../../../../requestMethod";
 import {useDispatch, useSelector} from 'react-redux'
 import { toast } from "react-toastify";
 import { LogOut } from "../../../../../Redux/LoginSlice";
+import DeleteAccount from "./DeleteAccount";
 
 function Profile() {
   const dispatch = useDispatch();
@@ -113,6 +114,16 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
               </div>
             </div>
           </button>
+          <button
+            onClick={() => setSelectedScreen("Delete Account")}
+            className={`block w-full text-left px-3 py-2 rounded-md font-medium ${
+              selectedScreen === "Delete Account"
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
+            }`}
+          >
+            Account Deletion
+          </button>
 
           <button className="block w-full text-left px-3 py-2 rounded-md font-medium" onClick={handleLogout}>
             Logout
@@ -148,6 +159,7 @@ const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.to
           {selectedScreen === "Password" && <Password />}
           {selectedScreen === "Emergency Contact" && <EmergencyContact />}
           {selectedScreen === "Notifications" && <ProfileNotifications />}
+          {selectedScreen === "Delete Account" && <DeleteAccount />}
         </div>
       </div>
     </div>
