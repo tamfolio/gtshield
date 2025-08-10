@@ -94,6 +94,7 @@ function DeleteAccount() {
       const res = await userRequest(token).delete("/user/delete");
 
       dispatch(LogOut());
+      toast.success("Your account has been deleted successfully")
       navigate("/");
     } catch (error) {
       console.error("Account deletion failed:", error);
