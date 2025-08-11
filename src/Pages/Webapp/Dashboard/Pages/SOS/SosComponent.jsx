@@ -29,6 +29,28 @@ function SosComponent() {
     (state) => state?.user?.currentUser?.tokens?.access?.token
   );
 
+  // Function to get the best supported WebM audio format
+  const getSupportedMimeType = () => {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/ogg',
+      'audio/mp4',
+      'audio/wav'
+    ];
+    
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        console.log('Using supported MIME type:', type);
+        return type;
+      }
+    }
+    
+    console.log('Using default MIME type');
+    return 'audio/webm'; // Fallback
+  };
+
   // Effects for timer and playback
   useEffect(() => {
     let interval;
@@ -92,7 +114,14 @@ function SosComponent() {
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
+      
       audioContextRef.current = new (window.AudioContext ||
         window.webkitAudioContext)();
       analyserRef.current = audioContextRef.current.createAnalyser();
@@ -100,19 +129,45 @@ function SosComponent() {
       source.connect(analyserRef.current);
       analyserRef.current.fftSize = 256;
 
-      mediaRecorderRef.current = new MediaRecorder(stream);
-      const chunks = [];
-      mediaRecorderRef.current.ondataavailable = (event) => {
-        if (event.data.size > 0) chunks.push(event.data);
+      // Get the best supported MIME type (prioritizing WebM)
+      const mimeType = getSupportedMimeType();
+      
+      // Configure MediaRecorder with WebM format
+      const options = {
+        mimeType: mimeType,
+        audioBitsPerSecond: 128000 // 128 kbps for good quality
       };
+
+      mediaRecorderRef.current = new MediaRecorder(stream, options);
+      const chunks = [];
+      
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          chunks.push(event.data);
+          console.log('Audio chunk received:', event.data.size, 'bytes');
+        }
+      };
+      
       mediaRecorderRef.current.onstop = () => {
-        const blob = new Blob(chunks, { type: "audio/wav" });
+        // Create blob with the same MIME type used for recording
+        const blob = new Blob(chunks, { type: mimeType });
+        console.log('Recording completed:', {
+          size: blob.size,
+          type: blob.type,
+          chunks: chunks.length
+        });
+        
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach((track) => track.stop());
       };
 
-      mediaRecorderRef.current.start();
+      mediaRecorderRef.current.onerror = (event) => {
+        console.error('MediaRecorder error:', event.error);
+        alert('Recording error occurred. Please try again.');
+      };
+
+      mediaRecorderRef.current.start(1000); // Collect data every second
       setIsRecording(true);
       setRecordingTime(0);
       getAudioLevels();
@@ -144,7 +199,15 @@ function SosComponent() {
 
   const handlePlayPause = () => {
     if (!audioRef.current) return;
-    isPlaying ? audioRef.current.pause() : audioRef.current.play();
+    
+    if (isPlaying) {
+      audioRef.current.pause();
+    } else {
+      audioRef.current.play().catch(error => {
+        console.error('Error playing audio:', error);
+        alert('Unable to play audio. The recording format may not be supported.');
+      });
+    }
     setIsPlaying(!isPlaying);
   };
 
@@ -178,9 +241,9 @@ function SosComponent() {
   };
 
   const handleSend = async () => {
-    // Validation
-    if (!audioBlob) {
-      alert("No audio recording found. Please record your message first.");
+    // Check if we have either audio or text description
+    if (!audioBlob && !textDescription.trim()) {
+      alert("Please either record an audio message or provide a text description.");
       return;
     }
 
@@ -203,14 +266,49 @@ function SosComponent() {
       // Append the JSON data
       formData.append("data", JSON.stringify(sosData));
 
-      // Convert audioBlob to File and append
-      const audioFile = new File([audioBlob], "emergency-audio.wav", {
-        type: "audio/wav",
-      });
-      formData.append("audio", audioFile);
+      // Add audio if available with proper filename extension
+      if (audioBlob) {
+        const fileExtension = audioBlob.type.includes('webm') ? 'webm' : 
+                            audioBlob.type.includes('ogg') ? 'ogg' : 
+                            audioBlob.type.includes('mp4') ? 'mp4' : 'webm';
+        
+        // Create File object with proper name and type
+        const audioFile = new File([audioBlob], `emergency-audio.${fileExtension}`, {
+          type: audioBlob.type,
+        });
+        
+        formData.append("audio", audioFile);
+        
+        console.log('Audio attached:', {
+          type: audioBlob.type,
+          size: audioBlob.size,
+          filename: `emergency-audio.${fileExtension}`,
+          file: audioFile
+        });
+      } else {
+        console.log('No audio to attach - sending text-only emergency alert');
+      }
 
-      // Make the API call using userRequest (same pattern as your review submission)
-      const res = await userRequest(token).post("/sos/new", formData);
+      // Log FormData contents for debugging
+      console.log('FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`${key}:`, {
+            name: value.name,
+            size: value.size,
+            type: value.type
+          });
+        } else {
+          console.log(`${key}:`, value);
+        }
+      }
+
+      // Make the API call using userRequest
+      const res = await userRequest(token).post("/sos/new", formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
 
       console.log("✅ Emergency alert sent:", res.data);
 
@@ -219,7 +317,7 @@ function SosComponent() {
     } catch (err) {
       console.error("❌ Failed to send emergency alert:", err);
 
-      // Show user-friendly error message (same pattern as your review code)
+      // Show user-friendly error message
       const errorMessage =
         err.response?.data?.error ||
         err.response?.data?.message ||
@@ -269,7 +367,6 @@ function SosComponent() {
   const handleStayOnPage = () => {
     setShowSuccessModal(false);
     resetToRecordingView();
-    //reset all the inputs , the recording and the text , i still want to be on the recording page , but fresh 
   };
 
   const handleRedirectToDashboard = () => {
@@ -309,6 +406,7 @@ function SosComponent() {
           textDescription={textDescription}
           setTextDescription={setTextDescription}
           isSubmitting={isSubmitting}
+          audioBlob={audioBlob}
         />
       )}
       {currentView === "recorded" && (
@@ -325,6 +423,7 @@ function SosComponent() {
           textDescription={textDescription}
           setTextDescription={setTextDescription}
           isSubmitting={isSubmitting}
+          audioBlob={audioBlob}
         />
       )}
       {audioUrl && (
@@ -334,6 +433,9 @@ function SosComponent() {
           onEnded={() => {
             setIsPlaying(false);
             setPlaybackTime(0);
+          }}
+          onError={(e) => {
+            console.error('Audio playback error:', e);
           }}
           style={{ display: "none" }}
         />
@@ -454,6 +556,7 @@ const RecordingView = ({
   textDescription,
   setTextDescription,
   isSubmitting,
+  audioBlob
 }) => {
   const timeLeft = 15 - time;
   const progressPercent = (time / 15) * 100;
@@ -549,6 +652,20 @@ const RecordingView = ({
           )}
         </div>
 
+        {/* Audio status indicator */}
+        {audioBlob && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center space-x-2">
+              <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.785l-4.016-2.677A1 1 0 014 13.5v-7a1 1 0 01.367-.608l4.016-2.677zM15 6.5v7a1 1 0 11-2 0v-7a1 1 0 112 0z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm text-green-700 font-medium">
+                Audio recorded ({Math.round(audioBlob.size / 1024)}KB, {audioBlob.type})
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Recording limit caveat - only show when recording */}
         {isRecording && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
@@ -597,14 +714,14 @@ const RecordingView = ({
         {!isRecording && (
           <button
             onClick={onSend}
-            disabled={isSubmitting}
+            disabled={isSubmitting || (!audioBlob && !textDescription.trim())}
             className={`w-full py-3 md:py-4 rounded-lg font-medium text-sm md:text-base ${
-              isSubmitting
+              isSubmitting || (!audioBlob && !textDescription.trim())
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-blue-600 hover:bg-blue-700"
             } text-white`}
           >
-            {isSubmitting ? "Sending..." : "Send"}
+            {isSubmitting ? "Sending..." : "Send Emergency Alert"}
           </button>
         )}
       </div>
@@ -625,6 +742,7 @@ const RecordedView = ({
   textDescription,
   setTextDescription,
   isSubmitting,
+  audioBlob
 }) => {
   const progress = time > 0 ? playbackTime / time : 0;
   return (
@@ -657,7 +775,7 @@ const RecordedView = ({
               <div className="flex items-center space-x-2">
                 <div className="w-2 h-2 md:w-3 md:h-3 bg-green-600 rounded-full"></div>
                 <span className="text-xs md:text-sm font-medium">
-                  Recording completed
+                  Recording completed ({audioBlob ? Math.round(audioBlob.size / 1024) + 'KB' : ''})
                 </span>
               </div>
             </div>
@@ -702,7 +820,7 @@ const RecordedView = ({
               : "bg-blue-600 hover:bg-blue-700"
           } text-white`}
         >
-          {isSubmitting ? "Sending..." : "Send"}
+          {isSubmitting ? "Sending Emergency Alert..." : "Send Emergency Alert"}
         </button>
       </div>
     </div>
