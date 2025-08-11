@@ -34,9 +34,37 @@ const SosComponent = ({ token, userRequest, userData, userLocation }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Function to get the best supported audio format
+  const getSupportedMimeType = () => {
+    const types = [
+      'audio/webm;codecs=opus',
+      'audio/webm',
+      'audio/ogg;codecs=opus',
+      'audio/ogg',
+      'audio/mp4',
+      'audio/wav'
+    ];
+    
+    for (const type of types) {
+      if (MediaRecorder.isTypeSupported(type)) {
+        console.log('Using supported MIME type:', type);
+        return type;
+      }
+    }
+    
+    console.log('Using default MIME type');
+    return 'audio/webm'; // Fallback
+  };
+
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true
+        } 
+      });
       
       // Set up audio analysis
       audioContextRef.current = new AudioContext();
@@ -44,19 +72,45 @@ const SosComponent = ({ token, userRequest, userData, userLocation }) => {
       analyserRef.current = audioContextRef.current.createAnalyser();
       source.connect(analyserRef.current);
       
-      const mediaRecorder = new MediaRecorder(stream);
+      // Get the best supported MIME type
+      const mimeType = getSupportedMimeType();
+      
+      // Configure MediaRecorder with WebM format
+      const options = {
+        mimeType: mimeType,
+        audioBitsPerSecond: 128000 // 128 kbps for good quality
+      };
+      
+      const mediaRecorder = new MediaRecorder(stream, options);
       const chunks = [];
       
-      mediaRecorder.ondataavailable = (e) => chunks.push(e.data);
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          chunks.push(e.data);
+        }
+      };
+      
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/wav' });
+        // Create blob with the same MIME type used for recording
+        const blob = new Blob(chunks, { type: mimeType });
         setAudioBlob(blob);
         setAudioUrl(URL.createObjectURL(blob));
         setCurrentView('recorded');
+        
+        console.log('Recording completed:', {
+          size: blob.size,
+          type: blob.type,
+          duration: time
+        });
+      };
+      
+      mediaRecorder.onerror = (event) => {
+        console.error('MediaRecorder error:', event.error);
+        alert('Recording error occurred. Please try again.');
       };
       
       mediaRecorderRef.current = mediaRecorder;
-      mediaRecorder.start();
+      mediaRecorder.start(1000); // Collect data every second
       setIsRecording(true);
       setCurrentView('recording');
       
@@ -103,7 +157,10 @@ const SosComponent = ({ token, userRequest, userData, userLocation }) => {
         audioRef.current.pause();
         if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
       } else {
-        audioRef.current.play();
+        audioRef.current.play().catch(error => {
+          console.error('Error playing audio:', error);
+          alert('Unable to play audio. The recording format may not be supported.');
+        });
         playbackIntervalRef.current = setInterval(() => {
           setPlaybackTime(audioRef.current.currentTime);
         }, 100);
@@ -143,9 +200,18 @@ const SosComponent = ({ token, userRequest, userData, userLocation }) => {
       const formPayload = new FormData();
       formPayload.append('data', JSON.stringify(bodyData));
       
-      // Add audio if available
+      // Add audio if available with proper filename extension
       if (audioBlob) {
-        formPayload.append('audio', audioBlob, 'emergency_audio.wav');
+        const fileExtension = audioBlob.type.includes('webm') ? 'webm' : 
+                            audioBlob.type.includes('ogg') ? 'ogg' : 
+                            audioBlob.type.includes('mp4') ? 'mp4' : 'webm';
+        
+        formPayload.append('audio', audioBlob, `emergency_audio.${fileExtension}`);
+        console.log('Audio attached:', {
+          type: audioBlob.type,
+          size: audioBlob.size,
+          filename: `emergency_audio.${fileExtension}`
+        });
       }
 
       const res = await userRequest(token).post('/sos/new', formPayload, {
@@ -326,6 +392,10 @@ const SosComponent = ({ token, userRequest, userData, userLocation }) => {
               setIsPlaying(false);
               setPlaybackTime(0);
               if (playbackIntervalRef.current) clearInterval(playbackIntervalRef.current);
+            }}
+            onError={(e) => {
+              console.error('Audio playback error:', e);
+              alert('Unable to play audio. The recording format may not be supported.');
             }}
           />
         )}
