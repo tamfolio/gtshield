@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { userRequest } from "../../../requestMethod";
 import { Upload, MapPin, Search, X, Check } from "lucide-react";
 import Select from "react-select";
@@ -9,6 +9,93 @@ import { toast } from "react-toastify";
 
 // Alternative approach using fetch API for geocoding
 const GOOGLE_MAPS_API_KEY = "AIzaSyALniH6V8qHvDGFQzIM6dAWetIwQbx6ueU";
+
+// Address Autocomplete Component
+const AddressAutocomplete = ({ value, onChange, disabled, placeholder }) => {
+  const inputRef = useRef(null);
+  const autocompleteRef = useRef(null);
+  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
+
+  useEffect(() => {
+    // Check if Google Maps API is loaded
+    const checkGoogleMaps = () => {
+      if (window.google && window.google.maps && window.google.maps.places) {
+        setIsGoogleLoaded(true);
+      } else {
+        // If not loaded, wait and check again
+        setTimeout(checkGoogleMaps, 100);
+      }
+    };
+
+    checkGoogleMaps();
+  }, []);
+
+  useEffect(() => {
+    if (!isGoogleLoaded || !inputRef.current || disabled) return;
+
+    try {
+      // Initialize Google Places Autocomplete
+      autocompleteRef.current = new window.google.maps.places.Autocomplete(
+        inputRef.current,
+        {
+          types: ['address'],
+          componentRestrictions: { country: 'ng' }, // Restrict to Nigeria
+          fields: ['formatted_address', 'geometry', 'address_components']
+        }
+      );
+
+      // Listen for place selection
+      const listener = autocompleteRef.current.addListener('place_changed', () => {
+        const place = autocompleteRef.current.getPlace();
+        if (place.formatted_address) {
+          onChange({
+            target: { 
+              value: place.formatted_address,
+              // Pass coordinates if needed
+              coordinates: place.geometry?.location ? {
+                lat: place.geometry.location.lat(),
+                lng: place.geometry.location.lng()
+              } : null
+            }
+          });
+        }
+      });
+
+      return () => {
+        if (window.google && listener) {
+          window.google.maps.event.removeListener(listener);
+        }
+      };
+    } catch (error) {
+      console.error("Error initializing Google Places Autocomplete:", error);
+    }
+  }, [isGoogleLoaded, disabled, onChange]);
+
+  return (
+    <input
+      ref={inputRef}
+      type="text"
+      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+      placeholder={placeholder}
+      value={value}
+      onChange={onChange}
+      disabled={disabled}
+    />
+  );
+};
+
+// Calculate distance between coordinates
+const calculateDistance = (lat1, lon1, lat2, lon2) => {
+  const R = 6371; // Earth's radius in kilometers
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = 
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+    Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c; // Distance in kilometers
+};
 
 function ReportAnIncident({ setCurrentPage, setTrackingId }) {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
@@ -27,12 +114,36 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
   });
 
   const [stations, setStations] = useState([]);
+  const [filteredStations, setFilteredStations] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [incidentTypes, setIncidentTypes] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [ticketId, setTicketId] = useState("");
   const [showDraftSuccess, setShowDraftSuccess] = useState(false);
+
+  // Load Google Maps API if not already loaded
+  useEffect(() => {
+    const loadGoogleMapsAPI = () => {
+      // Check if already loaded
+      if (window.google && window.google.maps && window.google.maps.places) {
+        return;
+      }
+
+      // Check if script already exists
+      if (document.querySelector('script[src*="maps.googleapis.com"]')) {
+        return;
+      }
+
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    };
+
+    loadGoogleMapsAPI();
+  }, []);
 
   // Function to reverse geocode coordinates to address using direct API call
   const reverseGeocode = useCallback(async (latitude, longitude) => {
@@ -161,6 +272,8 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
         const formattedData = rawData?.data.stations.map((item) => ({
           label: item.formation,
           value: item.id,
+          latitude: item.latitude || item.lat, // Adjust based on API response
+          longitude: item.longitude || item.lng, // Adjust based on API response
         }));
         setStations(formattedData);
       } catch (error) {
@@ -172,6 +285,45 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
     getTypes();
   }, []);
 
+  // Filter stations by proximity when user location changes
+  useEffect(() => {
+    if (!userLocation || !stations.length) {
+      setFilteredStations(stations);
+      return;
+    }
+
+    const stationsWithDistance = stations.map(station => {
+      // Skip stations without coordinates
+      if (!station.latitude || !station.longitude) {
+        return {
+          ...station,
+          distance: Infinity,
+        };
+      }
+
+      const distance = calculateDistance(
+        userLocation.latitude,
+        userLocation.longitude,
+        station.latitude,
+        station.longitude
+      );
+      
+      return {
+        ...station,
+        distance,
+        label: `${station.label} (${distance.toFixed(1)}km away)` // Show distance in label
+      };
+    });
+
+    // Sort by distance and take closest 10 stations
+    const sortedStations = stationsWithDistance
+      .filter(station => station.distance !== Infinity) // Remove stations without coordinates
+      .sort((a, b) => a.distance - b.distance)
+      .slice(0, 10);
+
+    setFilteredStations(sortedStations);
+  }, [userLocation, stations]);
+
   console.log(stations)
 
   const handleDescriptionChange = (e) => {
@@ -182,9 +334,14 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
     const newAddress = e.target.value;
     setFormData((prev) => ({ ...prev, address: newAddress }));
     
-    // Optional: If you want to get coordinates when user manually enters an address
-    // You can debounce this for better performance
-    if (newAddress.length > 10 && !formData.useMyLocation) {
+    // If coordinates came from autocomplete, use them
+    if (e.target.coordinates) {
+      setUserLocation({
+        latitude: e.target.coordinates.lat,
+        longitude: e.target.coordinates.lng
+      });
+    } else if (newAddress.length > 10 && !formData.useMyLocation) {
+      // Fallback to geocoding for manually typed addresses
       try {
         const coords = await forwardGeocode(newAddress);
         if (coords) {
@@ -257,7 +414,6 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
     setFormData((prev) => ({ ...prev, hideIdentity: e.target.checked }));
   };
 
- 
   const handleSaveAsDraft = async () => {
     if (!formData.incidentType || !formData.description || !formData.address) {
       alert("Please fill in all required fields (Incident Type, Description, and Address)");
@@ -478,6 +634,7 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
       </div>
     </div>
   );
+  
   const SuccessModal = () => (
     <div
       className="fixed inset-0 bg-[rgba(16,24,40,0.7)] bg-opacity-50 flex items-center justify-center z-50"
@@ -589,14 +746,11 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Address *
                     </label>
-                    <input
-                      type="text"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Your Address"
+                    <AddressAutocomplete
                       value={formData.address}
                       onChange={handleAddressChange}
                       disabled={formData.useMyLocation}
-                      required
+                      placeholder="Start typing your address..."
                     />
 
                     <div className="mt-2 flex items-center">
@@ -628,14 +782,24 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                       Nearest Police Station
+                      {userLocation && (
+                        <span className="text-xs text-gray-500 ml-1">
+                          (Showing closest stations)
+                        </span>
+                      )}
                     </label>
                     <Select
-                      options={stations}
+                      options={filteredStations}
                       value={formData.nearestPoliceStation}
                       onChange={handleStationChange}
                       placeholder="Search for nearest police station"
                       isSearchable
                       isClearable
+                      noOptionsMessage={() => 
+                        userLocation 
+                          ? "No stations found nearby" 
+                          : "Enable location to see nearby stations"
+                      }
                       className="react-select-container"
                       classNamePrefix="react-select"
                     />
