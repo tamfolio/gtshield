@@ -204,7 +204,7 @@ const Dashboard = () => {
       <Navbar isAuthenticated={true} />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-1 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header Section */}
         <div className="mb-8 flex flex-col md:flex-row items-center justify-between">
           <div className="mb-6">
@@ -217,15 +217,17 @@ const Dashboard = () => {
           </div>
 
           {/* Buttons - Mobile: Stacked, Desktop: Side by side */}
-          <div className="flex gap-3 justify-center">
-            <Link to="/emergency-contact">
-              <button className="bg-white text-[14px] hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg font-medium border border-gray-300 w-full sm:w-auto">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <Link to="/emergency-contact" className="w-full sm:w-auto">
+              <button className="bg-white text-[14px] hover:bg-gray-50 text-gray-700 px-6 py-3 rounded-lg font-medium border border-gray-300 w-full">
                 Emergency Contact
               </button>
             </Link>
-            <button className="text-[14px] bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium w-full sm:w-auto">
-              <Link to="/report-incident">Report an Incident</Link>
-            </button>
+            <Link to="/report-incident" className="w-full sm:w-auto">
+              <button className="text-[14px] bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium w-full">
+                Report an Incident
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -251,21 +253,46 @@ const Dashboard = () => {
 
         {/* Reports Section */}
         {!loading && hasReports ? (
-          <div className="w-full lg:w-2/3">
+          <div className="w-full">
             <div className="bg-white rounded-lg shadow-sm border border-[#E9EAEB]">
-              {/* Header with pagination info and page size selector */}
-              <div className="px-6 py-4 border-b border-b-[#E9EAEB] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    Recent Reports
-                  </h2>
-                </div>
-                
-    
+              {/* Header */}
+              <div className="px-4 sm:px-6 py-4 border-b border-b-[#E9EAEB]">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  Recent Reports
+                </h2>
               </div>
 
-              {/* Desktop Table View */}
-              <div className="overflow-x-auto">
+              {/* Mobile Card View - Only show on mobile */}
+              <div className="block md:hidden">
+                <div className="divide-y divide-gray-200">
+                  {incidents?.map((report) => (
+                    <div key={report.id} className="p-4 hover:bg-gray-50">
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-sm font-medium text-gray-900">
+                          {report.incidentType}
+                        </h3>
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(report.incidentStatus)}`}
+                        >
+                          {report.incidentStatus}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500 mb-3">
+                        {formatDate(report.datePublished)}
+                      </p>
+                      <button
+                        className="text-blue-600 hover:text-blue-800 font-medium text-sm"
+                        onClick={() => navigate(`/reports/${report.id}`)}
+                      >
+                        View Details →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Desktop Table View - Only show on desktop */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
@@ -278,7 +305,7 @@ const Dashboard = () => {
                       <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Status
                       </th>
-                      <th className="hidden md:block px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Action
                       </th>
                     </tr>
@@ -313,11 +340,11 @@ const Dashboard = () => {
                 </table>
               </div>
 
-              {/* Pagination - Always show when there are incidents */}
+              {/* Pagination */}
               {incidents.length > 0 && (
-                <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-                  <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-                    {/* Page info */}
+                <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50">
+                  {/* Desktop pagination */}
+                  <div className="hidden sm:flex justify-between items-center">
                     <div className="text-sm text-gray-700">
                       <span className="font-medium">
                         Page {currentPage} of {totalPages || 1}
@@ -327,9 +354,7 @@ const Dashboard = () => {
                       </span>
                     </div>
                     
-                    {/* Pagination controls */}
                     <div className="flex items-center gap-2">
-                      {/* First page button */}
                       <button
                         onClick={() => handlePageChange(1)}
                         disabled={currentPage === 1}
@@ -338,7 +363,6 @@ const Dashboard = () => {
                         First
                       </button>
                       
-                      {/* Previous button */}
                       <button
                         onClick={() => handlePageChange(currentPage - 1)}
                         disabled={currentPage === 1}
@@ -347,7 +371,6 @@ const Dashboard = () => {
                         <ChevronLeft className="h-4 w-4" />
                       </button>
                       
-                      {/* Page numbers */}
                       <div className="flex items-center gap-1">
                         {getPageNumbers().map((page, index) => (
                           <React.Fragment key={index}>
@@ -369,7 +392,6 @@ const Dashboard = () => {
                         ))}
                       </div>
                       
-                      {/* Next button */}
                       <button
                         onClick={() => handlePageChange(currentPage + 1)}
                         disabled={currentPage === totalPages || totalPages === 0}
@@ -378,7 +400,6 @@ const Dashboard = () => {
                         <ChevronRight className="h-4 w-4" />
                       </button>
                       
-                      {/* Last page button */}
                       <button
                         onClick={() => handlePageChange(totalPages)}
                         disabled={currentPage === totalPages || totalPages === 0}
@@ -390,7 +411,7 @@ const Dashboard = () => {
                   </div>
                   
                   {/* Mobile pagination - simplified */}
-                  <div className="sm:hidden mt-4 flex justify-center items-center gap-4">
+                  <div className="flex sm:hidden justify-center items-center gap-4">
                     <button
                       onClick={() => handlePageChange(currentPage - 1)}
                       disabled={currentPage === 1}
@@ -413,12 +434,19 @@ const Dashboard = () => {
                       <ChevronRight className="h-4 w-4" />
                     </button>
                   </div>
+
+                  {/* Mobile page info */}
+                  <div className="flex sm:hidden justify-center mt-3">
+                    <div className="text-sm text-gray-700">
+                      <span className="font-medium">{totalIncidents} total incidents</span>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
           </div>
         ) : !loading && !hasReports ? (
-          /* Empty State - Both Mobile and Desktop */
+          /* Empty State */
           <div className="flex flex-col items-center justify-center py-16">
             <div className="bg-gray-100 p-6 rounded-full mb-6">
               <MessageSquare className="h-12 w-12 text-gray-400" />
