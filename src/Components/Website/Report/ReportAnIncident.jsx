@@ -386,7 +386,7 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
     try {
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
-        isDraft: null,
+        isDraft: false,
         address: "",
         description: formData.description,
         isIdentityHidden: null,
