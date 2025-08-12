@@ -299,7 +299,7 @@ const Dashboard = () => {
                             {report.incidentStatus}
                           </span>
                         </td>
-                        <td className="hidden md:block px-6 py-4 whitespace-nowrap text-sm">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm">
                           <button
                             className="text-blue-600 hover:text-blue-800 font-medium"
                             onClick={() => navigate(`/reports/${report.id}`)}

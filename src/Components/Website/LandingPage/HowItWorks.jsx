@@ -6,20 +6,20 @@ const sections = [
     title: "Web",
     description:
       "Create an account to report incidents, track updates, and view crime maps",
-    image: "/assets/HWIW1.png",
+    image: "/assets/Frame 1171276270 (1).png",
   },
   {
     id: "mobile",
     title: "Mobile App",
     description: "Upload photos/videos and get real-time notifications",
-    image: "/assets/HWIW2.png",
+    image: "/assets/Frame 1171276270 (2).png",
   },
   {
     id: "ivr",
     title: "IVR Call",
     description:
       "Dial our toll-free number 0801GATEWAYSHIELD and report by voice (coming soon)",
-    image: "/assets/HIW4.png",
+    image: "/assets/Frame 427323121 (1).png",
   },
   {
     id: "anonymous",

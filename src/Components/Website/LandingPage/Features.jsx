@@ -50,8 +50,8 @@ function Features() {
           </div>
         </div>
         <div className="w-full md:w-1/2">
-          <img src="/assets/features.png" alt="" className="hidden md:block" />
-          <img src="/assets/features-mobile.png" alt="" className="block md:hidden" />
+          <img src="/assets/Mockup wrap.png" alt="" className="hidden md:block" />
+          <img src="/assets/Mockup wrap.png" alt="" className="block md:hidden" />
         </div>
       </div>
     </div>
