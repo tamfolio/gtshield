@@ -2,106 +2,81 @@ import React, { useState, useCallback, useEffect, useRef } from "react";
 import { userRequest } from "../../../requestMethod";
 import { Upload, MapPin, Search, X, Check } from "lucide-react";
 import Select from "react-select";
-import { fetchIncidentTypes, fetchStations } from "../../../Api/incidentApi";
+import { fetchIncidentTypes } from "../../../Api/incidentApi";
 import { useSelector } from "react-redux";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
-
+import {
+  OgunStateAddressAutocomplete,
+  fetchOgunStateStations,
+  isCoordinateInOgunState,
+} from "./OgunStateAddressAutocomplete";
 // Alternative approach using fetch API for geocoding
 const GOOGLE_MAPS_API_KEY = "AIzaSyALniH6V8qHvDGFQzIM6dAWetIwQbx6ueU";
 
-// Address Autocomplete Component
+// Simple Address Input Component (no Google API complexity)
 const AddressAutocomplete = ({ value, onChange, disabled, placeholder }) => {
-  const inputRef = useRef(null);
-  const autocompleteRef = useRef(null);
-  const [isGoogleLoaded, setIsGoogleLoaded] = useState(false);
-
-  useEffect(() => {
-    // Check if Google Maps API is loaded
-    const checkGoogleMaps = () => {
-      if (window.google && window.google.maps && window.google.maps.places) {
-        setIsGoogleLoaded(true);
-      } else {
-        // If not loaded, wait and check again
-        setTimeout(checkGoogleMaps, 100);
-      }
-    };
-
-    checkGoogleMaps();
-  }, []);
-
-  useEffect(() => {
-    if (!isGoogleLoaded || !inputRef.current || disabled) return;
-
-    try {
-      // Initialize Google Places Autocomplete
-      autocompleteRef.current = new window.google.maps.places.Autocomplete(
-        inputRef.current,
-        {
-          types: ['address'],
-          componentRestrictions: { country: 'ng' }, // Restrict to Nigeria
-          fields: ['formatted_address', 'geometry', 'address_components']
-        }
-      );
-
-      // Listen for place selection
-      const listener = autocompleteRef.current.addListener('place_changed', () => {
-        const place = autocompleteRef.current.getPlace();
-        if (place.formatted_address) {
-          onChange({
-            target: { 
-              value: place.formatted_address,
-              // Pass coordinates if needed
-              coordinates: place.geometry?.location ? {
-                lat: place.geometry.location.lat(),
-                lng: place.geometry.location.lng()
-              } : null
-            }
-          });
-        }
-      });
-
-      return () => {
-        if (window.google && listener) {
-          window.google.maps.event.removeListener(listener);
-        }
-      };
-    } catch (error) {
-      console.error("Error initializing Google Places Autocomplete:", error);
-    }
-  }, [isGoogleLoaded, disabled, onChange]);
-
   return (
     <input
-      ref={inputRef}
       type="text"
       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       placeholder={placeholder}
-      value={value}
+      value={value || ""}
       onChange={onChange}
       disabled={disabled}
     />
   );
 };
 
-// Calculate distance between coordinates
-const calculateDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Earth's radius in kilometers
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-  return R * c; // Distance in kilometers
-};
+// Fetch nearby stations using the correct API endpoint
+const fetchNearbyStations = async (latitude, longitude) => {
+  try {
+    const url = `https://admin-api.thegatewayshield.com/api/v1/feedback/caseReview/stations?longitude=${longitude}&latitude=${latitude}`;
+    console.log("Fetching stations from:", url);
 
+    const response = await fetch(url);
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log("Stations API response:", data);
+
+    if (data.success && data.data && Array.isArray(data.data)) {
+      const stations = data.data.map((station) => ({
+        label: `${
+          station.formation || station.name || `Station ${station.id}`
+        } ${station.distance ? `(${station.distance.toFixed(1)}km away)` : ""}`,
+        value: station.id,
+        latitude: station.latitude,
+        longitude: station.longitude,
+        distance: station.distance || 0,
+        formation: station.formation,
+        name: station.name,
+      }));
+
+      // Sort by distance
+      stations.sort((a, b) => a.distance - b.distance);
+
+      console.log(`Found ${stations.length} stations:`, stations);
+      return stations;
+    }
+
+    console.log("No stations found in response");
+    return [];
+  } catch (error) {
+    console.error("Error fetching nearby stations:", error);
+    throw error; // Re-throw to handle in calling function
+  }
+};
 function ReportAnIncident({ setCurrentPage, setTrackingId }) {
   const isAuthenticated = localStorage.getItem("isAuthenticated") === "true";
   const userData = useSelector((state) => state.user?.currentUser?.user);
-  const token = useSelector((state) => state.user?.currentUser?.tokens?.access?.token);
-  
+  const token = useSelector(
+    (state) => state.user?.currentUser?.tokens?.access?.token
+  );
+
   const [formData, setFormData] = useState({
     incidentType: "",
     description: "",
@@ -114,31 +89,41 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
   });
 
   const [stations, setStations] = useState([]);
-  const [filteredStations, setFilteredStations] = useState([]);
   const [userLocation, setUserLocation] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [isLoadingStations, setIsLoadingStations] = useState(false);
   const [incidentTypes, setIncidentTypes] = useState([]);
   const [showSuccess, setShowSuccess] = useState(false);
   const [ticketId, setTicketId] = useState("");
   const [showDraftSuccess, setShowDraftSuccess] = useState(false);
+  const [addressError, setAddressError] = useState("");
+  const [isValidatingAddress, setIsValidatingAddress] = useState(false);
 
-  // Load Google Maps API if not already loaded
+  // Load Google Maps API if not already loaded (with async loading)
   useEffect(() => {
     const loadGoogleMapsAPI = () => {
-      // Check if already loaded
       if (window.google && window.google.maps && window.google.maps.places) {
         return;
       }
 
-      // Check if script already exists
       if (document.querySelector('script[src*="maps.googleapis.com"]')) {
         return;
       }
 
-      const script = document.createElement('script');
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+      const script = document.createElement("script");
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places&callback=initMap`;
       script.async = true;
       script.defer = true;
+
+      // Add callback function to window
+      window.initMap = () => {
+        console.log("Google Maps API loaded successfully");
+      };
+
+      script.onerror = () => {
+        console.error("Failed to load Google Maps API");
+      };
+
       document.head.appendChild(script);
     };
 
@@ -152,11 +137,11 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
         `https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&key=${GOOGLE_MAPS_API_KEY}&region=ng&language=en`
       );
       const data = await response.json();
-      
-      if (data.status === 'OK' && data.results.length > 0) {
+
+      if (data.status === "OK" && data.results.length > 0) {
         return data.results[0].formatted_address;
       } else {
-        console.error('Geocoding failed:', data.status);
+        console.error("Geocoding failed:", data.status);
         return `${latitude}, ${longitude}`;
       }
     } catch (error) {
@@ -165,6 +150,46 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
       return `${latitude}, ${longitude}`;
     }
   }, []);
+
+  // Address validation function
+  const validateAddress = async (address) => {
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          address
+        )}&key=${GOOGLE_MAPS_API_KEY}&region=ng&language=en`
+      );
+      const data = await response.json();
+
+      if (data.status === "OK" && data.results.length > 0) {
+        const result = data.results[0];
+        const { lat, lng } = result.geometry.location;
+
+        // Check if the address is in Nigeria
+        const isInNigeria = result.address_components.some(
+          (component) =>
+            component.types.includes("country") && component.short_name === "NG"
+        );
+
+        if (!isInNigeria) {
+          throw new Error("Please enter a valid Nigerian address");
+        }
+
+        return {
+          isValid: true,
+          coordinates: { latitude: lat, longitude: lng },
+          formattedAddress: result.formatted_address,
+        };
+      } else {
+        throw new Error("Address not found. Please enter a valid address.");
+      }
+    } catch (error) {
+      return {
+        isValid: false,
+        error: error.message || "Invalid address",
+      };
+    }
+  };
 
   // Function to get user's current location
   const getCurrentLocation = useCallback(() => {
@@ -177,16 +202,30 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
           setUserLocation({ latitude, longitude });
 
           try {
-            // Convert coordinates to human-readable address
             const address = await reverseGeocode(latitude, longitude);
-            
+
             setFormData((prev) => ({
               ...prev,
               address: address,
               useMyLocation: true,
+              nearestPoliceStation: null,
             }));
+
+            // Fetch nearby stations
+            setIsLoadingStations(true);
+            try {
+              const nearbyStations = await fetchNearbyStations(
+                latitude,
+                longitude
+              );
+              setStations(nearbyStations);
+            } catch (error) {
+              console.error("Error fetching stations:", error);
+              setStations([]);
+            } finally {
+              setIsLoadingStations(false);
+            }
           } catch (error) {
-            // If geocoding fails, fallback to coordinates
             setFormData((prev) => ({
               ...prev,
               address: `${latitude}, ${longitude}`,
@@ -199,27 +238,31 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
         (error) => {
           console.error("Error getting location:", error);
           setIsLoadingLocation(false);
-          
-          let errorMessage = "Unable to get your location. Please enter your address manually.";
-          
-          switch(error.code) {
+
+          let errorMessage =
+            "Unable to get your location. Please enter your address manually.";
+
+          switch (error.code) {
             case error.PERMISSION_DENIED:
-              errorMessage = "Location access denied. Please enable location permissions and try again.";
+              errorMessage =
+                "Location access denied. Please enable location permissions and try again.";
               break;
             case error.POSITION_UNAVAILABLE:
-              errorMessage = "Location information is unavailable. Please enter your address manually.";
+              errorMessage =
+                "Location information is unavailable. Please enter your address manually.";
               break;
             case error.TIMEOUT:
-              errorMessage = "Location request timed out. Please try again or enter your address manually.";
+              errorMessage =
+                "Location request timed out. Please try again or enter your address manually.";
               break;
           }
-          
+
           alert(errorMessage);
         },
         {
           enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 60000
+          timeout: 15000, // Increased timeout
+          maximumAge: 300000, // 5 minutes
         }
       );
     } else {
@@ -228,28 +271,7 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
     }
   }, [reverseGeocode]);
 
-  // Alternative function for forward geocoding (address to coordinates)
-  const forwardGeocode = useCallback(async (address) => {
-    try {
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${GOOGLE_MAPS_API_KEY}&region=ng&language=en`
-      );
-      const data = await response.json();
-      
-      if (data.status === 'OK' && data.results.length > 0) {
-        const { lat, lng } = data.results[0].geometry.location;
-        return { latitude: lat, longitude: lng };
-      } else {
-        console.error('Forward geocoding failed:', data.status);
-        return null;
-      }
-    } catch (error) {
-      console.error("Forward geocoding error:", error);
-      return null;
-    }
-  }, []);
-
-  // Fetch police stations on component mount
+  // Fetch incident types on component mount
   useEffect(() => {
     const getTypes = async () => {
       try {
@@ -264,67 +286,9 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
         console.error("Error fetching incident types:", error);
       }
     };
-    
-    const getStations = async () => {
-      try {
-        const rawData = await fetchStations();
-        console.log("Stations API response:", rawData);
-        const formattedData = rawData?.data.stations.map((item) => ({
-          label: item.formation,
-          value: item.id,
-          latitude: item.latitude || item.lat, // Adjust based on API response
-          longitude: item.longitude || item.lng, // Adjust based on API response
-        }));
-        setStations(formattedData);
-      } catch (error) {
-        console.error("Error fetching stations:", error);
-      }
-    };
 
-    getStations();
     getTypes();
   }, []);
-
-  // Filter stations by proximity when user location changes
-  useEffect(() => {
-    if (!userLocation || !stations.length) {
-      setFilteredStations(stations);
-      return;
-    }
-
-    const stationsWithDistance = stations.map(station => {
-      // Skip stations without coordinates
-      if (!station.latitude || !station.longitude) {
-        return {
-          ...station,
-          distance: Infinity,
-        };
-      }
-
-      const distance = calculateDistance(
-        userLocation.latitude,
-        userLocation.longitude,
-        station.latitude,
-        station.longitude
-      );
-      
-      return {
-        ...station,
-        distance,
-        label: `${station.label} (${distance.toFixed(1)}km away)` // Show distance in label
-      };
-    });
-
-    // Sort by distance and take closest 10 stations
-    const sortedStations = stationsWithDistance
-      .filter(station => station.distance !== Infinity) // Remove stations without coordinates
-      .sort((a, b) => a.distance - b.distance)
-      .slice(0, 10);
-
-    setFilteredStations(sortedStations);
-  }, [userLocation, stations]);
-
-  console.log(stations)
 
   const handleDescriptionChange = (e) => {
     setFormData((prev) => ({ ...prev, description: e.target.value }));
@@ -333,26 +297,42 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
   const handleAddressChange = async (e) => {
     const newAddress = e.target.value;
     setFormData((prev) => ({ ...prev, address: newAddress }));
-    
-    // If coordinates came from autocomplete, use them
-    if (e.target.coordinates) {
-      setUserLocation({
-        latitude: e.target.coordinates.lat,
-        longitude: e.target.coordinates.lng
-      });
-    } else if (newAddress.length > 10 && !formData.useMyLocation) {
-      // Fallback to geocoding for manually typed addresses
-      try {
-        const coords = await forwardGeocode(newAddress);
-        if (coords) {
-          setUserLocation(coords);
-        }
-      } catch (error) {
-        console.log("Could not geocode manually entered address");
+    setAddressError("");
+
+    // Clear stations when address changes manually
+    if (!formData.useMyLocation) {
+      setFormData((prev) => ({ ...prev, nearestPoliceStation: null }));
+      setStations([]);
+
+      // Only validate if user typed a substantial address (not from autocomplete)
+      if (newAddress.length > 15 && !newAddress.includes(",")) {
+        setIsValidatingAddress(true);
+
+        clearTimeout(window.validationTimeout);
+        window.validationTimeout = setTimeout(async () => {
+          const validation = await validateAddress(newAddress);
+
+          if (validation.isValid) {
+            setUserLocation(validation.coordinates);
+
+            setIsLoadingStations(true);
+            const nearbyStations = await fetchNearbyStations(
+              validation.coordinates.latitude,
+              validation.coordinates.longitude
+            );
+            setStations(nearbyStations);
+            setIsLoadingStations(false);
+          } else {
+            setAddressError(validation.error);
+            setUserLocation(null);
+            setStations([]);
+          }
+
+          setIsValidatingAddress(false);
+        }, 2000);
       }
     }
   };
-
   const handleMediaUpload = (e) => {
     const files = Array.from(e.target.files);
 
@@ -383,7 +363,7 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
   };
 
   const handleIncidentTypeChange = useCallback((selectedOption) => {
-    if (!selectedOption || typeof selectedOption !== 'object') {
+    if (!selectedOption || typeof selectedOption !== "object") {
       setFormData((prev) => ({ ...prev, incidentType: null }));
       return;
     }
@@ -394,32 +374,103 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
     setFormData((prev) => ({ ...prev, nearestPoliceStation: selected }));
   }, []);
 
-  const handleLocationCheckboxChange = useCallback(
-    (checked) => {
-      if (checked) {
-        getCurrentLocation();
-      } else {
-        setFormData((prev) => ({
-          ...prev,
-          useMyLocation: false,
-          address: "",
-        }));
-        setUserLocation(null);
+const getCurrentLocationOgunState = useCallback(() => {
+  setIsLoadingLocation(true);
+
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setUserLocation({ latitude, longitude });
+
+        // Check if user is in Ogun State
+        const inOgunState = isCoordinateInOgunState(latitude, longitude);
+        
+        if (!inOgunState) {
+          const confirmProceed = window.confirm(
+            'Your current location appears to be outside Ogun State. Do you want to continue or would you prefer to enter an Ogun State address manually?'
+          );
+          
+          if (!confirmProceed) {
+            setIsLoadingLocation(false);
+            setFormData(prev => ({ ...prev, useMyLocation: false }));
+            return;
+          }
+        }
+
+        try {
+          const address = await reverseGeocode(latitude, longitude);
+          
+          setFormData((prev) => ({
+            ...prev,
+            address: address,
+            useMyLocation: true,
+            nearestPoliceStation: null
+          }));
+
+          // Fetch Ogun State stations using your working API
+          setIsLoadingStations(true);
+          const nearbyStations = await fetchOgunStateStations(latitude, longitude);
+          setStations(nearbyStations);
+          
+          if (inOgunState && nearbyStations.length > 0) {
+            console.log(`Found ${nearbyStations.length} police stations in Ogun State near you`);
+          }
+          
+          setIsLoadingStations(false);
+        } catch (error) {
+          setFormData((prev) => ({
+            ...prev,
+            address: `${latitude}, ${longitude}`,
+            useMyLocation: true,
+          }));
+          setIsLoadingStations(false);
+        }
+
+        setIsLoadingLocation(false);
+      },
+      (error) => {
+        console.error("Error getting location:", error);
+        setIsLoadingLocation(false);
+        
+        let errorMessage = "Unable to get your location. Please enter your Ogun State address manually.";
+        alert(errorMessage);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 300000
       }
-    },
-    [getCurrentLocation]
-  );
+    );
+  } else {
+    setIsLoadingLocation(false);
+    alert("Geolocation is not supported by this browser. Please enter your Ogun State address manually.");
+  }
+}, [reverseGeocode]);
+
 
   const handleHideIdentityChange = (e) => {
     setFormData((prev) => ({ ...prev, hideIdentity: e.target.checked }));
   };
 
+  const handleRedirectToDashboard = () => {
+    setShowSuccess(false);
+    setShowDraftSuccess(false);
+    if (isAuthenticated) {
+      window.location.href = "/dashboard";
+    } else {
+      window.location.href = "/";
+    }
+  };
+
   const handleSaveAsDraft = async () => {
     if (!formData.incidentType || !formData.description || !formData.address) {
-      alert("Please fill in all required fields (Incident Type, Description, and Address)");
+      alert(
+        "Please fill in all required fields (Incident Type, Description, and Address)"
+      );
       return;
     }
-  
+
     try {
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
@@ -437,32 +488,32 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
           longitude: userLocation.longitude,
         }),
       };
-  
+
       console.log("🚀 Submitting form with data:", formData);
       console.log("🚀 Body data:", bodyData);
-  
+
       const formPayload = new FormData();
       formPayload.append("data", JSON.stringify(bodyData));
-      
+
       // Append images correctly
       formData.images.forEach((image, index) => {
-        formPayload.append(`images`, image); // or `image_${index}` depending on backend expectation
+        formPayload.append(`images`, image);
       });
-      
+
       // Append video if exists
       if (formData.video) {
         formPayload.append("video", formData.video);
       }
-  
+
       const res = await userRequest(token).post("/incident/new", formPayload, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       setShowDraftSuccess(true);
       console.log("✅ Incident reported:", res.data);
-  
+
       if (setCurrentPage) {
         setCurrentPage("confirmation");
       }
@@ -471,13 +522,15 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
       toast(err.response.data.message);
     }
   };
-  
+
   const handleSubmit = async () => {
     if (!formData.incidentType || !formData.description || !formData.address) {
-      alert("Please fill in all required fields (Incident Type, Description, and Address)");
+      alert(
+        "Please fill in all required fields (Incident Type, Description, and Address)"
+      );
       return;
     }
-  
+
     try {
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
@@ -495,34 +548,34 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
           longitude: userLocation.longitude,
         }),
       };
-  
+
       console.log("🚀 Submitting form with data:", formData);
       console.log("🚀 Body data:", bodyData);
-  
+
       const formPayload = new FormData();
       formPayload.append("data", JSON.stringify(bodyData));
-      
+
       // Append images correctly
       formData.images.forEach((image, index) => {
-        formPayload.append(`images`, image); // or `image_${index}` depending on backend expectation
+        formPayload.append(`images`, image);
       });
-      
+
       // Append video if exists
       if (formData.video) {
         formPayload.append("video", formData.video);
       }
-  
+
       const res = await userRequest(token).post("/incident/new", formPayload, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       console.log("✅ Incident reported:", res.data);
       setShowSuccess(true);
       setTicketId(res.data.data.ticketId);
       setTrackingId(res.data.data.ticketId);
-  
+
       if (setCurrentPage) {
         setCurrentPage("confirmation");
       }
@@ -531,14 +584,15 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
       toast(err.response.data.message);
     }
   };
-  
-  // Also fix the handleAnonSubmit function
+
   const handleAnonSubmit = async () => {
     if (!formData.incidentType || !formData.description) {
-      alert("Please fill in all required fields (Incident Type and Description)");
+      alert(
+        "Please fill in all required fields (Incident Type and Description)"
+      );
       return;
     }
-  
+
     try {
       const bodyData = {
         incidentTypeId: formData.incidentType?.value,
@@ -552,34 +606,34 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
         stationId: null,
         userId: null,
       };
-  
+
       console.log("🚀 Submitting form with data:", formData);
       console.log("🚀 Body data:", bodyData);
-  
+
       const formPayload = new FormData();
       formPayload.append("data", JSON.stringify(bodyData));
-      
+
       // Append images correctly for anonymous submission too
       formData.images.forEach((image, index) => {
         formPayload.append(`images`, image);
       });
-      
+
       // Append video if exists
       if (formData.video) {
         formPayload.append("video", formData.video);
       }
-  
+
       const res = await userRequest(token).post("/incident/new", formPayload, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
       });
-  
+
       console.log("✅ Incident reported:", res.data);
       setShowSuccess(true);
       setTrackingId(res.data.data.ticketId);
       setTicketId(res.data.data.ticketId);
-  
+
       if (setCurrentPage) {
         setCurrentPage("confirmation");
       }
@@ -627,14 +681,17 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
             Stay on Page
           </button>
 
-          <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            <Link to="/dashboard">Redirect to Dashboard</Link>
+          <button
+            onClick={handleRedirectToDashboard}
+            className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Redirect to Dashboard
           </button>
         </div>
       </div>
     </div>
   );
-  
+
   const SuccessModal = () => (
     <div
       className="fixed inset-0 bg-[rgba(16,24,40,0.7)] bg-opacity-50 flex items-center justify-center z-50"
@@ -675,21 +732,173 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
             Stay on Page
           </button>
 
-          <button className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
-            <Link to={isAuthenticated === "true" ? "/dashboard" : "/"}>
-              Redirect to Dashboard
-            </Link>
+          <button
+            onClick={handleRedirectToDashboard}
+            className="w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+          >
+            Redirect to Dashboard
           </button>
         </div>
       </div>
     </div>
   );
+ const handleOgunStatePlaceSelect = async (addressData) => {
+  console.log('🏠 Ogun State place selected:', addressData);
+  
+  setUserLocation(addressData.coordinates);
+  setAddressError("");
+  
+  setFormData((prev) => ({
+    ...prev,
+    address: addressData.formatted_address,
+    nearestPoliceStation: null
+  }));
+  
+  // Show location context
+  if (addressData.isInOgunState) {
+    console.log('✅ Address confirmed in Ogun State');
+  } else {
+    console.log('⚠️ Address outside Ogun State - will show nearest available stations');
+  }
+  
+  setIsLoadingStations(true);
+  
+  try {
+    const nearbyStations = await fetchOgunStateStations(
+      addressData.coordinates.latitude, 
+      addressData.coordinates.longitude
+    );
+    
+    if (nearbyStations.length === 0) {
+      console.warn('No police stations found near this location');
+    } else {
+      console.log(`✅ Loaded ${nearbyStations.length} Ogun State stations`);
+    }
+    
+    setStations(nearbyStations);
+    
+  } catch (error) {
+    console.error('❌ Error loading Ogun State stations:', error);
+    setStations([]);
+  } finally {
+    setIsLoadingStations(false);
+  }
+};
+  const handleQuickAreaSelect = async (area) => {
+    console.log(`🎯 Quick selecting area: ${area}`);
+
+    // Use Google Geocoding to get coordinates for the area
+    try {
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+          area + ", Ogun State, Nigeria"
+        )}&key=${GOOGLE_MAPS_API_KEY}`
+      );
+
+      const data = await response.json();
+
+      if (data.status === "OK" && data.results.length > 0) {
+        const result = data.results[0];
+        const { lat, lng } = result.geometry.location;
+
+        const addressData = {
+          formatted_address: result.formatted_address,
+          coordinates: { latitude: lat, longitude: lng },
+          isInOgunState: true,
+        };
+
+        setFormData((prev) => ({ ...prev, address: result.formatted_address }));
+        await handleOgunStatePlaceSelect(addressData);
+      }
+    } catch (error) {
+      console.error("Error with quick area select:", error);
+      toast.error(`Failed to load ${area} location`);
+    }
+  };
+
+const getOgunStationPlaceholder = () => {
+  if (isLoadingStations) return "Searching for stations...";
+  if (!userLocation) return "Please enter an address first";
+  if (stations.length === 0) return "No stations found nearby";
+  return "Select nearest police station";
+};
+
+  const getOgunStationNoOptionsMessage = () => {
+    if (!userLocation)
+      return "Enter a valid Ogun State address to see nearby stations";
+    return "No police stations found in Ogun State near this location. You can still submit your report.";
+  };
+
+  // Enhanced getCurrentLocation for Ogun State context
+const handleLocationCheckboxChange = useCallback(
+  async (checked) => {
+    if (checked) {
+      getCurrentLocationOgunState(); 
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        useMyLocation: false,
+        address: "",
+        nearestPoliceStation: null,
+      }));
+      setUserLocation(null);
+      setStations([]);
+      setAddressError("");
+    }
+  },
+  [getCurrentLocationOgunState] // Now this dependency exists
+);
+
+
+
+  // Enhanced placeholder messages for police stations select
+  const getStationPlaceholder = () => {
+    if (isLoadingStations) return "Loading nearby stations...";
+    if (!userLocation) return "Please enter a valid address first";
+    if (stations.length === 0)
+      return "No stations found nearby - try a different address";
+    return "Select nearest police station";
+  };
+
+  const getStationNoOptionsMessage = () => {
+    if (!userLocation) return "Enter a valid address to see nearby stations";
+    return "No stations found nearby. The area might not have registered stations.";
+  };
 
   useEffect(() => {
     if (isAuthenticated && formData.useMyLocation) {
       handleLocationCheckboxChange(true);
     }
   }, [isAuthenticated]);
+
+  const handlePlaceSelect = async (addressData) => {
+    console.log("Place selected:", addressData);
+
+    setUserLocation(addressData.coordinates);
+    setAddressError(""); // Clear any previous errors
+
+    // Update form data with the selected address
+    setFormData((prev) => ({
+      ...prev,
+      address: addressData.formatted_address,
+      nearestPoliceStation: null, // Clear previous station selection
+    }));
+
+    // Fetch nearby stations
+    setIsLoadingStations(true);
+    try {
+      const nearbyStations = await fetchNearbyStations(
+        addressData.coordinates.latitude,
+        addressData.coordinates.longitude
+      );
+      setStations(nearbyStations);
+    } catch (error) {
+      console.error("Error fetching nearby stations:", error);
+      setStations([]);
+    } finally {
+      setIsLoadingStations(false);
+    }
+  };
 
   return (
     <>
@@ -717,7 +926,8 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
                     Report An Incident
                   </h1>
                   <p className="text-gray-600">
-                    Explain what happened and elaborate on the incident you would like to report.
+                    Explain what happened and elaborate on the incident you
+                    would like to report.
                   </p>
                 </div>
               )}
@@ -741,70 +951,146 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
                 </div>
 
                 {/* Address */}
-                {isAuthenticated && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Address *
-                    </label>
-                    <AddressAutocomplete
-                      value={formData.address}
-                      onChange={handleAddressChange}
-                      disabled={formData.useMyLocation}
-                      placeholder="Start typing your address..."
-                    />
+             {isAuthenticated && (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      Address *
+    </label>
+    
+    <OgunStateAddressAutocomplete
+      value={formData.address}
+      onChange={handleAddressChange}
+      disabled={formData.useMyLocation}
+      placeholder="Start typing your address in Ogun State..."
+      onPlaceSelect={handleOgunStatePlaceSelect}
+    />
+    
+    {/* Location validation feedback */}
+    {isValidatingAddress && (
+      <p className="mt-1 text-sm text-blue-600 flex items-center">
+        <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-600 mr-2"></div>
+        Validating address...
+      </p>
+    )}
+    
+    {addressError && (
+      <p className="mt-1 text-sm text-red-600">{addressError}</p>
+    )}
+    
+    {userLocation && !addressError && !isValidatingAddress && (
+      <div className="mt-1">
+        {isCoordinateInOgunState(userLocation.latitude, userLocation.longitude) ? (
+          <p className="text-sm text-green-600 flex items-center">
+            <Check className="w-3 h-3 mr-1" />
+            Address verified
+          </p>
+        ) : (
+          <p className="text-sm text-amber-600 flex items-center">
+            <MapPin className="w-3 h-3 mr-1" />
+            Address outside Ogun State - closest stations will be shown
+          </p>
+        )}
+      </div>
+    )}
 
-                    <div className="mt-2 flex items-center">
-                      <input
-                        type="checkbox"
-                        id="useMyLocation"
-                        checked={formData.useMyLocation}
-                        onChange={(e) => handleLocationCheckboxChange(e.target.checked)}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <label
-                        htmlFor="useMyLocation"
-                        className="ml-2 text-sm text-gray-700 flex items-center"
-                      >
-                        <MapPin className="w-4 h-4 mr-1" />
-                        Use my Location
-                        {isLoadingLocation && (
-                          <span className="ml-2 text-blue-500">
-                            Getting location...
-                          </span>
-                        )}
-                      </label>
-                    </div>
-                  </div>
-                )}
+    <div className="mt-2 flex items-center">
+      <input
+        type="checkbox"
+        id="useMyLocation"
+        checked={formData.useMyLocation}
+        onChange={(e) => handleLocationCheckboxChange(e.target.checked)}
+        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+      />
+      <label
+        htmlFor="useMyLocation"
+        className="ml-2 text-sm text-gray-700 flex items-center"
+      >
+        <MapPin className="w-4 h-4 mr-1" />
+        Use my current location
+        {isLoadingLocation && (
+          <span className="ml-2 text-blue-500">
+            Getting location...
+          </span>
+        )}
+      </label>
+    </div>
+    
+    {/* Quick location suggestions */}
+    {/* <div className="mt-2">
+      <p className="text-xs text-gray-500 mb-1">Quick select areas:</p>
+      <div className="flex flex-wrap gap-1">
+        {['Abeokuta', 'Ijebu Ode', 'Sagamu', 'Ilaro', 'Ota', 'Sango Ota'].map(area => (
+          <button
+            key={area}
+            type="button"
+            onClick={() => handleQuickAreaSelect(area)}
+            className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 rounded border text-gray-600"
+          >
+            {area}
+          </button>
+        ))}
+      </div>
+    </div> */}
+  </div>
+)}
 
-                {/* Nearest Police Station */}
                 {isAuthenticated && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Nearest Police Station
-                      {userLocation && (
-                        <span className="text-xs text-gray-500 ml-1">
-                          (Showing closest stations)
-                        </span>
-                      )}
-                    </label>
-                    <Select
-                      options={filteredStations}
-                      value={formData.nearestPoliceStation}
-                      onChange={handleStationChange}
-                      placeholder="Search for nearest police station"
-                      isSearchable
-                      isClearable
-                      noOptionsMessage={() => 
-                        userLocation 
-                          ? "No stations found nearby" 
-                          : "Enable location to see nearby stations"
-                      }
-                      className="react-select-container"
-                      classNamePrefix="react-select"
-                    />
-                  </div>
-                )}
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      Nearest Police Station
+      {stations.length > 0 && (
+        <span className="text-xs text-gray-500 ml-1">
+          ({stations.length} stations found)
+        </span>
+      )}
+      {isLoadingStations && (
+        <span className="text-xs text-blue-600 ml-1">
+          Searching stations...
+        </span>
+      )}
+    </label>
+
+    <Select
+      options={stations}
+      value={formData.nearestPoliceStation}
+      onChange={handleStationChange}
+      placeholder={getOgunStationPlaceholder()}
+      isSearchable
+      isClearable
+      isDisabled={!userLocation || isLoadingStations}
+      isLoading={isLoadingStations}
+      noOptionsMessage={() => getOgunStationNoOptionsMessage()}
+      className="react-select-container"
+      classNamePrefix="react-select"
+      formatOptionLabel={(option) => (
+        <div>
+          <div className="font-medium text-sm">
+            {option.formation || option.name}
+          </div>
+          {option.distance && (
+            <div className="text-xs text-gray-500">
+              {option.distance.toFixed(1)}km away
+            </div>
+          )}
+        </div>
+      )}
+    />
+
+    {/* Station selection guidance */}
+    {/* {stations.length === 0 && userLocation && !isLoadingStations && (
+      <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded">
+        <p className="text-sm text-amber-700">
+          No police stations found near this location.
+        </p>
+        <p className="text-xs text-amber-700 mt-1">
+          You can still submit your report - it will be routed to the appropriate authorities.
+        </p>
+      </div>
+    )} */}
+  </div>
+)}
+
+
 
                 {/* Incident Description */}
                 <div>
@@ -831,7 +1117,9 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
                       <button
                         type="button"
                         className="text-blue-600 hover:text-blue-700"
-                        onClick={() => document.getElementById("file-upload").click()}
+                        onClick={() =>
+                          document.getElementById("file-upload").click()
+                        }
                       >
                         Click to upload
                       </button>
@@ -867,7 +1155,9 @@ function ReportAnIncident({ setCurrentPage, setTrackingId }) {
                               onClick={() =>
                                 setFormData((prev) => ({
                                   ...prev,
-                                  images: prev.images.filter((_, i) => i !== index),
+                                  images: prev.images.filter(
+                                    (_, i) => i !== index
+                                  ),
                                 }))
                               }
                               className="text-red-500 text-xs"
