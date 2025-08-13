@@ -3,12 +3,13 @@ import { Upload, Copy, Check, Search, Loader2, AlertCircle } from "lucide-react"
 import Select from "react-select";
 import { fetchIncidentTypes, fetchStations } from "../../../Api/incidentApi";
 import ReportAnIncident from "./ReportAnIncident";
+import { useNavigate } from "react-router-dom";
 
 const IncidentReportingSystem = ({ isAuthenticated }) => {
   const [currentPage, setCurrentPage] = useState("report");
   const [incidentTypes, setIncidentTypes] = useState([]);
   const [copied, setCopied] = useState(false);
-
+  const navigate = useNavigate();
   const [StationsAvailable, setStationsAvailable] = useState([]);
   const [formData, setFormData] = useState({
     incidentType: "",
@@ -169,7 +170,10 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
                   Stay on Page
                 </button>
                 <button
-                  onClick={handleResetForm}
+                    onClick={() => {
+                      handleResetForm();
+                      navigate('/dashboard');
+                    }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 >
                   Redirect to Dashboard
