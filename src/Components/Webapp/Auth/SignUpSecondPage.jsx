@@ -59,10 +59,6 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
       newErrors.gender = "Gender is required";
     }
 
-    if (!formData.username?.trim()) {
-      newErrors.username = "Username is required";
-    }
-
     if (!formData.password) {
       newErrors.password = "Password is required";
     } else {
@@ -317,11 +313,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
   };
 
   const states = [
-    "Abia", "Adamawa", "Akwa Ibom", "Anambra", "Bauchi", "Bayelsa", "Benue", 
-    "Borno", "Cross River", "Delta", "Ebonyi", "Edo", "Ekiti", "Enugu", "Gombe", 
-    "Imo", "Jigawa", "Kaduna", "Kano", "Katsina", "Kebbi", "Kogi", "Kwara", 
-    "Lagos", "Nasarawa", "Niger", "Ogun", "Ondo", "Osun", "Oyo", "Plateau", 
-    "Rivers", "Sokoto", "Taraba", "Yobe", "Zamfara", "FCT (Abuja)"
+    "Ogun"
   ];
 
   const genders = ["Male", "Female", "Others"];
@@ -613,28 +605,6 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
                 ))}
               </select>
               {errors.gender && <p className="mt-1 text-xs text-red-500">{errors.gender}</p>}
-            </div>
-
-            {/* Username */}
-            <div>
-              <label
-                htmlFor="username"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Username *
-              </label>
-              <input
-                id="username"
-                name="username"
-                type="text"
-                value={formData.username || ''}
-                onChange={handleInputChange}
-                placeholder="Your Username"
-                className={`w-full px-3 py-2 border rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.username ? 'border-red-500' : 'border-gray-300'
-                }`}
-              />
-              {errors.username && <p className="mt-1 text-xs text-red-500">{errors.username}</p>}
             </div>
 
             {/* Password */}

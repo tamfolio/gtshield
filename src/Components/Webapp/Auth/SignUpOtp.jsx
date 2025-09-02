@@ -73,8 +73,6 @@ export const SignUpOtp = ({ formData,  onPrevious, onSubmit }) => {
     return `+234${cleanPhone}`;
   };
 
-
-
   const handleFinalSubmit = async () => {
     const otp = otpDigits.join("");
     const {
@@ -83,7 +81,6 @@ export const SignUpOtp = ({ formData,  onPrevious, onSubmit }) => {
       state,
       address,
       gender,
-      username,
       password,
     } = formData;
 
@@ -91,7 +88,6 @@ export const SignUpOtp = ({ formData,  onPrevious, onSubmit }) => {
     const formattedPhoneNumber = formatPhoneNumber(phoneNumber);
 
     const payload = {
-      userName: username,
       fullName,
       address,
       phoneNumber: formattedPhoneNumber,
