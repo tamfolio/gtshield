@@ -388,7 +388,7 @@ const SignUpSecondPage = ({ onNext, formData, setFormData }) => {
               )}
               {errors.phoneNumber && <p className="mt-1 text-xs text-red-500">{errors.phoneNumber}</p>}
               <p className="mt-1 text-xs text-gray-500">
-                Enter 10 digits starting with 7, 8, or 9 (payload will include +234)
+                Enter 10 digits starting with 7, 8, or 9 
               </p>
             </div>
 
