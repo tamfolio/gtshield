@@ -1,5 +1,12 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Upload, Copy, Check, Search, Loader2, AlertCircle } from "lucide-react";
+import {
+  Upload,
+  Copy,
+  Check,
+  Search,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import Select from "react-select";
 import { fetchIncidentTypes, fetchStations } from "../../../Api/incidentApi";
 import ReportAnIncident from "./ReportAnIncident";
@@ -73,31 +80,34 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
     setCurrentPage("report");
   }, []);
 
-  const handleSearchTrackingIdChange = useCallback((e) => {
-    const value = e.target.value;
-    setSearchTrackingId(value);
-    
-    // Clear previous results when user starts typing
-    if (trackingResult || trackingError) {
-      setTrackingResult(null);
-      setTrackingError("");
-    }
-  }, [trackingResult, trackingError]);
+  const handleSearchTrackingIdChange = useCallback(
+    (e) => {
+      const value = e.target.value;
+      setSearchTrackingId(value);
+
+      // Clear previous results when user starts typing
+      if (trackingResult || trackingError) {
+        setTrackingResult(null);
+        setTrackingError("");
+      }
+    },
+    [trackingResult, trackingError]
+  );
 
   // Mock API function for tracking - replace with your actual API call
   const trackIncident = async (trackingId) => {
     const response = await fetch(`/api/track-incident/${trackingId}`);
-    
+
     if (!response.ok) {
-      throw new Error('Tracking ID not found');
+      throw new Error("Tracking ID not found");
     }
-    
+
     return await response.json();
   };
 
   const handleTrackSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!searchTrackingId.trim()) {
       setTrackingError("Please enter a tracking ID");
       return;
@@ -109,15 +119,15 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
 
     try {
       // Mock delay to simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
       // Mock response based on the tracking ID for demonstration
       if (searchTrackingId.toUpperCase() === "DHDHEYUUIAIAI") {
         setTrackingResult({
           status: "Pending",
           dateSubmitted: "06 May, 2025",
           report: "Police are on their way.",
-          trackingId: searchTrackingId.toUpperCase()
+          trackingId: searchTrackingId.toUpperCase(),
         });
       } else if (searchTrackingId.toUpperCase() === "DDSFFSAAD") {
         throw new Error("TRACKING ID not found.");
@@ -127,7 +137,7 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
           status: "Under Investigation",
           dateSubmitted: "05 May, 2025",
           report: "Case has been assigned to an officer.",
-          trackingId: searchTrackingId.toUpperCase()
+          trackingId: searchTrackingId.toUpperCase(),
         });
       }
     } catch (error) {
@@ -153,16 +163,21 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
               </h2>
 
               <p className="text-gray-600 mb-6 text-sm">
-                Your Ticket ID is <span className="font-mono font-semibold">{trackingId}</span>
+                Your Ticket ID is{" "}
+                <span className="font-mono font-semibold">{trackingId}</span>
               </p>
 
               <div className="flex flex-col gap-3">
-                <button
-                  onClick={() => setCurrentPage("track")}
+                {/* <button
+                  onClick={() => {
+                    handleResetForm();
+                    navigate("/dashboard");
+                  }}
+                  // onClick={() => navigate(`/reports/${trackingId}`)}
                   className="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
                 >
                   View Report
-                </button>
+                </button> */}
                 <button
                   onClick={handleResetForm}
                   className="w-full px-4 py-2 text-blue-600 hover:text-blue-700  bg-transparent border border-blue-300 rounded-md"
@@ -170,10 +185,10 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
                   Stay on Page
                 </button>
                 <button
-                    onClick={() => {
-                      handleResetForm();
-                      navigate('/dashboard');
-                    }}
+                  onClick={() => {
+                    handleResetForm();
+                    navigate("/dashboard");
+                  }}
                   className="w-full px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
                 >
                   Redirect to Dashboard
@@ -294,7 +309,7 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
                   <input
                     type="text"
                     className={`w-full pl-10 pr-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      trackingError ? 'border-red-300' : 'border-gray-300'
+                      trackingError ? "border-red-300" : "border-gray-300"
                     }`}
                     placeholder="Your tracking ID"
                     value={searchTrackingId}
@@ -305,11 +320,9 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
                     <AlertCircle className="absolute right-3 top-1/2 transform -translate-y-1/2 text-red-500 w-4 h-4" />
                   )}
                 </div>
-                
+
                 {trackingError && (
-                  <p className="mt-2 text-sm text-red-600">
-                    {trackingError}
-                  </p>
+                  <p className="mt-2 text-sm text-red-600">{trackingError}</p>
                 )}
               </div>
 
@@ -326,7 +339,7 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
                       Searching...
                     </>
                   ) : (
-                    'Submit'
+                    "Submit"
                   )}
                 </button>
               )}
@@ -337,19 +350,31 @@ const IncidentReportingSystem = ({ isAuthenticated }) => {
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <div className="space-y-3">
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Status: </span>
-                    <span className="text-sm text-gray-900">{trackingResult.status}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Status:{" "}
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {trackingResult.status}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Date Submitted: </span>
-                    <span className="text-sm text-gray-900">{trackingResult.dateSubmitted}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Date Submitted:{" "}
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {trackingResult.dateSubmitted}
+                    </span>
                   </div>
                   <div>
-                    <span className="text-sm font-medium text-gray-700">Report: </span>
-                    <span className="text-sm text-gray-900">{trackingResult.report}</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Report:{" "}
+                    </span>
+                    <span className="text-sm text-gray-900">
+                      {trackingResult.report}
+                    </span>
                   </div>
                 </div>
-                
+
                 {/* Option to search again */}
                 <button
                   onClick={() => {
