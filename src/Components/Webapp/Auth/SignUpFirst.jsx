@@ -71,21 +71,37 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
         throw new Error("No email returned from Google");
       }
 
-      // Store info in formData using decoded JWT data
+      // Send JWT token to your backend and get OTP response
+      const response = await publicRequest.post("/auth/signup/google", { 
+        token: idToken  // Send the JWT token directly
+      });
+
+      console.log("Google signup response:", response.data);
+
+      // Extract OTP from backend response
+      const { data } = response.data;
+      const otp = data.otp || data.token; // Use otp or token field from response
+
+      // Store info in formData including the OTP for auto-submission
       setFormData((prev) => ({
         ...prev,
         email: userEmail,
-        firstName: decoded.given_name || "",
-        lastName: decoded.family_name || "",
+        fullName: decoded.name || `${decoded.given_name || ""} ${decoded.family_name || ""}`.trim(),
         avatar: decoded.picture || "",
+        otp: otp, // Store OTP to skip OTP screen
+        isGoogleSignup: true, // Flag to indicate Google signup
       }));
 
-      // Send JWT token to your backend
-      await publicRequest.post("/auth/signup/google", { 
-        token: idToken  // Send the JWT token directly
+      console.log("Stored formData with OTP:", {
+        email: userEmail,
+        fullName: decoded.name,
+        otp: otp,
+        isGoogleSignup: true
       });
       
-      onNext();
+      // Skip OTP screen and go directly to profile completion
+      onNext("profile"); // Pass specific step to skip OTP
+      
     } catch (err) {
       console.error("Google signup error:", err);
       const msg =
@@ -265,14 +281,6 @@ const SignUpFirstPage = ({ onNext, error, formData, setFormData }) => {
             <SocialButton provider="google" icon="/assets/google.png">
               Sign up with Google
             </SocialButton>
-
-            {/* <SocialButton provider="facebook" icon="/assets/facebook.png">
-              Sign up with Facebook
-            </SocialButton>
-
-            <SocialButton provider="apple" icon="/assets/apple.png">
-              Sign up with Apple
-            </SocialButton> */}
           </div>
 
           {/* Login Link */}

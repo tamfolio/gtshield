@@ -27,7 +27,12 @@ function Footer() {
         <div>
           <h1 className="text-[#3538CD] font-semibold">Get the app</h1>
           <div className="flex flex-row md:flex-col gap-4">
-            <img src="/assets/app_store.png" alt="" className="my-4" />
+            <a
+              target="blank"
+              href="https://play.google.com/store/apps/details?id=com.thegatewayshield.app&pcampaignid=web_share"
+            >
+              <img src="/assets/app_store.png" alt="" className="my-4" />
+            </a>
             <img src="/assets/google_play.png" alt="" className="my-4" />
           </div>
         </div>
@@ -44,7 +49,10 @@ function Footer() {
           {/* <a href="">
             <img src="/assets/Social icon (1).png" alt="" />
           </a> */}
-          <a href="https://www.facebook.com/profile.php?id=61578132210959/" target="blank">
+          <a
+            href="https://www.facebook.com/profile.php?id=61578132210959/"
+            target="blank"
+          >
             <img src="/assets/Social icon (2).png" alt="" />
           </a>
           <a href="https://www.instagram.com/gatewayshield" target="blank">
