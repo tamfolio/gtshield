@@ -113,6 +113,7 @@ const LocationPermission = () => {
 };
 
 function SignUp() {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [currentPermission, setCurrentPermission] = useState(0);
   const [formData, setFormData] = useState({
@@ -130,16 +131,29 @@ function SignUp() {
     acceptTerms: true,
   });
 
-  const goToNextPage = () => {
-    setCurrentPage(2);
+  // Updated handleNext function to handle Google signup
+  const handleNext = (stepOrData) => {
+    if (stepOrData === "profile") {
+      // Google signup - skip directly to profile page (page 2)
+      setCurrentPage(2);
+      return;
+    }
+    
+    // Regular flow - go to next page
+    setCurrentPage(prev => prev + 1);
   };
 
   const goToPreviousPage = () => {
     setCurrentPage(1);
   };
 
+  // Handle completion for Google users (go directly to login)
+  const handleGoogleSignupComplete = () => {
+    navigate("/login");
+  };
+
   const handleSecondPageSubmit = () => {
-    // Start the permission flow
+    // Start the permission flow for email users
     setCurrentPermission(1);
   };
 
@@ -159,8 +173,7 @@ function SignUp() {
   const handleLocationPermission = (permission) => {
     console.log("Location permission:", permission);
     setCurrentPermission(0); // End permission flow
-    // Here you can redirect to the main app or dashboard
-    alert("All permissions handled! Redirecting to app...");
+    navigate("/login"); // Navigate to login after permissions
   };
 
   return (
@@ -168,7 +181,7 @@ function SignUp() {
       <Navbar isAuthenticated={false} />
       {currentPage === 1 && (
         <SignUpFirstPage
-          onNext={goToNextPage}
+          onNext={handleNext}
           formData={formData}
           setFormData={setFormData}
         />
@@ -179,6 +192,7 @@ function SignUp() {
           setFormData={setFormData}
           onNext={() => setCurrentPage(3)}
           onPrevious={goToPreviousPage}
+          onComplete={handleGoogleSignupComplete}
         />
       )}
       {currentPage === 3 && (

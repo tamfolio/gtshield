@@ -209,7 +209,7 @@ const Dashboard = () => {
         <div className="mb-8 flex flex-col md:flex-row items-center justify-between">
           <div className="mb-6">
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Welcome {userData?.userName},
+              Welcome {userData?.fullName},
             </h1>
             <p className="text-gray-600">
               Ready to make your community safer? Let's get started.
