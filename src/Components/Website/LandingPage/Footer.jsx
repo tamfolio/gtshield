@@ -14,7 +14,6 @@ function Footer() {
             <p className="mb-3">
               Nigeria Police Force, State Headquarters, Elerewan, Abeokuta.
             </p>
-            <p className="mb-3">+2348000009111</p>
             <p>support@gatewayshield.com</p>
           </div>
           <div className="mt-8 flex gap-4 md:gap-8 items-center justify-start font-semibold text-[16px] text-[#535862]">
