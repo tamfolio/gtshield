@@ -1,6 +1,25 @@
-import React from "react";
+import React, { useMemo } from "react";
+
+const APP_STORE_URL =
+  "https://apps.apple.com/ng/app/gateway-shield-app/id6755301579";
+const PLAY_STORE_URL =
+  "https://play.google.com/store/apps/details?id=com.thegatewayshield.app&pcampaignid=web_share";
+
+function getAppStoreInfo() {
+  const ua = navigator.userAgent;
+  if (/android/i.test(ua)) {
+    return { href: PLAY_STORE_URL, src: "/assets/google_play.png", alt: "Get it on Google Play" };
+  }
+  if (/iphone|ipad|ipod/i.test(ua)) {
+    return { href: APP_STORE_URL, src: "/assets/app_store.png", alt: "Download on the App Store" };
+  }
+  // Desktop / unknown — show both
+  return null;
+}
 
 function Hero() {
+  const store = useMemo(() => getAppStoreInfo(), []);
+
   return (
     <>
       {/* ── Hero Section ── */}
@@ -31,36 +50,51 @@ function Hero() {
           </button>
         </div>
 
-        {/* App Download Badges */}
+        {/* App Download Badge(s) */}
         <div className="flex flex-col items-center mt-6 mb-16 gap-3">
           <p className="text-sm text-[#535862] font-medium">
             Also available on mobile
           </p>
           <div className="flex flex-row items-center gap-3">
-            <a
-              href="https://apps.apple.com/ng/app/gateway-shield-app/id6755301579"
-              target="_blank"
-              rel="noreferrer"
-              className="transition-opacity hover:opacity-80"
-            >
-              <img
-                src="/assets/app_store.png"
-                alt="Download on the App Store"
-                className="h-10 w-auto"
-              />
-            </a>
-            <a
-              href="https://play.google.com/store/apps/details?id=com.thegatewayshield.app&pcampaignid=web_share"
-              target="_blank"
-              rel="noreferrer"
-              className="transition-opacity hover:opacity-80"
-            >
-              <img
-                src="/assets/google_play.png"
-                alt="Get it on Google Play"
-                className="h-10 w-auto"
-              />
-            </a>
+            {store ? (
+              // Mobile: single relevant badge
+              <a
+                href={store.href}
+                target="_blank"
+                rel="noreferrer"
+                className="transition-opacity hover:opacity-80"
+              >
+                <img src={store.src} alt={store.alt} className="h-10 w-auto" />
+              </a>
+            ) : (
+              // Desktop: show both
+              <>
+                <a
+                  href={APP_STORE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-opacity hover:opacity-80"
+                >
+                  <img
+                    src="/assets/app_store.png"
+                    alt="Download on the App Store"
+                    className="h-10 w-auto"
+                  />
+                </a>
+                <a
+                  href={PLAY_STORE_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="transition-opacity hover:opacity-80"
+                >
+                  <img
+                    src="/assets/google_play.png"
+                    alt="Get it on Google Play"
+                    className="h-10 w-auto"
+                  />
+                </a>
+              </>
+            )}
           </div>
         </div>
 
