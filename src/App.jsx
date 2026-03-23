@@ -25,9 +25,9 @@ import "react-toastify/dist/ReactToastify.css";
 import ForgotPasswordFlow from "./Components/Webapp/Auth/ForgotPassword";
 import SosComponent from "./Pages/Webapp/Dashboard/Pages/SOS/SosComponent";
 import EmergencyContact from "./Pages/Webapp/Dashboard/Pages/SOS/EmergencyContact";
-import EditDraft from "./Pages/Webapp/Dashboard/Pages/EditDraft";
 import EditDraftIncident from "./Pages/Webapp/Dashboard/Pages/EditDraft";
 import CallEmergencyContact from "./Pages/Webapp/Dashboard/Pages/SOS/CallEmergencyContact";
+import Download from "./Pages/Website/Download"; // 👈 new
 
 function App() {
   return (
@@ -57,6 +57,7 @@ function App() {
         <Route path="/profile" element={<Profile />} />
         <Route path="/forgot-password" element={<ForgotPasswordFlow />} />
         <Route path="/reports/:id" element={<ReportDetails />} />
+        <Route path="/download" element={<Download />} /> {/* 👈 new */}
         <Route path="*" element={<ErrorPage />} />
       </Routes>
     </>
