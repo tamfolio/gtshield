@@ -1,78 +1,112 @@
 import React from "react";
-import { FaRegCirclePlay } from "react-icons/fa6";
 
 function Hero() {
   return (
     <>
-      <div className="px-4 md:!px-[10px] lg:!px-[208px]  bg-white flex flex-col items-center justify- pt-16 md:pt-[96px]">
-        <h1 className="font-semibold !mt-10 text-4xl lg:text-6xl text-center leading-[44px] lg:leading-[72px] mb-4 md:mb-8 px-4 md:px-[96px]">
+      {/* ── Hero Section ── */}
+      <div className="w-full bg-white flex flex-col items-center pt-16 md:pt-24 px-4 sm:px-8 md:px-16 lg:px-32 xl:px-52 2xl:px-64">
+        <h1 className="mt-10 font-semibold text-4xl sm:text-5xl lg:text-6xl xl:text-7xl text-center leading-tight mb-4 md:mb-8 max-w-5xl">
           Report Incidents. Save Lives. Stay Informed
         </h1>
-        <p className="px-4 md:!px-[128px] text-[20px] text-center text-[#535862]">
+
+        <p className="max-w-2xl xl:max-w-3xl text-lg sm:text-xl text-center text-[#535862]">
           Gateway Shield is your secure line to the police. Report crimes, get
           alerts, and keep your community safe.
         </p>
-        <div className="w-full flex flex-col-reverse md:flex-row justify-center gap-3 mt-8 md:mt-12 px-4 mb-16">
-          <div className="w-full md:w-1/3 lg:w-1/4 border-solid border-[1px] border-[#D5D7DA] rounded-md px-4 py-2 flex items-center justify-center gap-2">
-            <p
-              className="text-[16px] text-[#414651] font-semibold cursor-pointer"
-              onClick={() => {
-                const section = document.getElementById("How-it-Works");
-                if (section) {
-                  section.scrollIntoView({ behavior: "smooth" });
-                }
-              }}
+
+        {/* CTA Buttons */}
+        <div className="w-full flex flex-col-reverse sm:flex-row justify-center gap-3 mt-8 md:mt-12 max-w-xl xl:max-w-2xl">
+          <button
+            className="w-full sm:w-1/2 border border-[#D5D7DA] rounded-md px-4 py-2.5 text-[16px] text-[#414651] font-semibold cursor-pointer hover:bg-gray-50 transition-colors"
+            onClick={() => {
+              const section = document.getElementById("How-it-Works");
+              if (section) section.scrollIntoView({ behavior: "smooth" });
+            }}
+          >
+            How It Works
+          </button>
+
+          <button className="w-full sm:w-1/2 border border-[#444CE7] bg-[#444CE7] hover:bg-[#3640d4] transition-colors rounded-md px-4 py-2.5 text-[16px] text-white font-semibold">
+            Report Now
+          </button>
+        </div>
+
+        {/* App Download Badges */}
+        <div className="flex flex-col items-center mt-6 mb-16 gap-3">
+          <p className="text-sm text-[#535862] font-medium">
+            Also available on mobile
+          </p>
+          <div className="flex flex-row items-center gap-3">
+            <a
+              href="https://apps.apple.com/ng/app/gateway-shield-app/id6755301579"
+              target="_blank"
+              rel="noreferrer"
+              className="transition-opacity hover:opacity-80"
             >
-              How It Works
-            </p>
-          </div>
-          <div className="w-full md:w-1/3 lg:w-1/4 text-white border-solid border-[1px] border-[#444CE7] bg-[#444CE7] rounded-md px-4 py-2 flex items-center justify-center">
-            <p className="text-[16px] text-white font-semibold">Report Now</p>
+              <img
+                src="/assets/app_store.png"
+                alt="Download on the App Store"
+                className="h-10 w-auto"
+              />
+            </a>
+            <a
+              href="https://play.google.com/store/apps/details?id=com.thegatewayshield.app&pcampaignid=web_share"
+              target="_blank"
+              rel="noreferrer"
+              className="transition-opacity hover:opacity-80"
+            >
+              <img
+                src="/assets/google_play.png"
+                alt="Get it on Google Play"
+                className="h-10 w-auto"
+              />
+            </a>
           </div>
         </div>
-        <img src="/assets/Content.png" alt="" className="hidden md:block" />
+
+        {/* Hero Images */}
+        <img
+          src="/assets/Content.png"
+          alt="Platform preview"
+          className="hidden md:block w-full max-w-6xl object-contain"
+        />
         <img
           src="/assets/Container (2).png"
-          alt=""
-          className="block md:hidden"
+          alt="Platform preview"
+          className="block md:hidden w-full object-contain"
         />
       </div>
-      <div className="w-full flex flex-col md:flex-row items-center justify-center bg-[#FAFAFA] px-4 lg:px-[112px] py-16 lg:py-[96px] gap-8 lg:gap-20">
-        <div className="flex flex-col items-center w-full lg:w-[384px] text-center gap-3">
-          <h1 className="text-[48px] lg:text-6xl text-[#444CE7] font-semibold">
-            2,000+
-          </h1>
-          <p className="font-medium text-[18px] text-[#181D27]">
-            Reports Submitted
-          </p>
-          <span className="font-normal text-[16px] text-[#535862]">
-            Real incidents logged by citizens across the platform
-          </span>
-        </div>
-        <div className="flex flex-col items-center w-full lg:w-[384px] text-center gap-3">
-          <h1 className="text-[48px] lg:text-6xl text-[#444CE7] font-semibold">
-            1,000+
-          </h1>
-          <p className="font-medium text-[18px] text-[#181D27]">
-            Villages/Towns/Cities Protected
-          </p>
-          <span className="font-normal text-[16px] text-[#535862]">
-            Keeping communities safer with real-time alerts and police
-            collaboration
-          </span>
-        </div>
-        <div className="flex flex-col items-center  w-full lg:w-[384px] text-center gap-3">
-          <h1 className="text-[48px] lg:text-6xl text-[#444CE7] font-semibold">
-            4,000+
-          </h1>
-          <p className="font-medium text-[18px] text-[#181D27]">
-            User Registered
-          </p>
-          <span className="font-normal text-[16px] text-[#535862]">
-            Available on web, iOS and Android - trusted in every part of Ogun
-            State
-          </span>
-        </div>
+
+      {/* ── Stats Section ── */}
+      <div className="w-full bg-[#FAFAFA] flex flex-col md:flex-row items-center justify-center gap-10 lg:gap-16 xl:gap-24 px-4 sm:px-8 md:px-16 lg:px-28 xl:px-40 2xl:px-64 py-16 lg:py-24">
+        {[
+          {
+            stat: "2,000+",
+            label: "Reports Submitted",
+            desc: "Real incidents logged by citizens across the platform",
+          },
+          {
+            stat: "1,000+",
+            label: "Villages/Towns/Cities Protected",
+            desc: "Keeping communities safer with real-time alerts and police collaboration",
+          },
+          {
+            stat: "4,000+",
+            label: "Users Registered",
+            desc: "Available on web, iOS and Android — trusted in every part of Ogun State",
+          },
+        ].map(({ stat, label, desc }) => (
+          <div
+            key={label}
+            className="flex flex-col items-center w-full md:w-1/3 max-w-sm text-center gap-2"
+          >
+            <span className="text-5xl lg:text-6xl xl:text-7xl text-[#444CE7] font-semibold">
+              {stat}
+            </span>
+            <p className="font-medium text-lg text-[#181D27]">{label}</p>
+            <span className="font-normal text-base text-[#535862]">{desc}</span>
+          </div>
+        ))}
       </div>
     </>
   );

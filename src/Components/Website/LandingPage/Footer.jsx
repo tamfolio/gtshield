@@ -23,39 +23,43 @@ function Footer() {
             <Link to="/terms-of-use">Terms of Use</Link>
           </div>
         </div>
+
         <div>
           <h1 className="text-[#3538CD] font-semibold">Get the app</h1>
           <div className="flex flex-row md:flex-col gap-4">
             <a
-              target="blank"
-              href="https://play.google.com/store/apps/details?id=com.thegatewayshield.app&pcampaignid=web_share"
+              href="https://apps.apple.com/ng/app/gateway-shield-app/id6755301579"
+              target="_blank"
+              rel="noreferrer"
             >
-              <img src="/assets/app_store.png" alt="" className="my-4" />
+              <img src="/assets/app_store.png" alt="Download on the App Store" className="my-4" />
             </a>
-            <img src="/assets/google_play.png" alt="" className="my-4" />
+            <a
+              href="https://play.google.com/store/apps/details?id=com.thegatewayshield.app&pcampaignid=web_share"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <img src="/assets/google_play.png" alt="Get it on Google Play" className="my-4" />
+            </a>
           </div>
         </div>
       </div>
+
       <div className="w-full h-[1px] bg-[#E9EAEB] mt-16 mb-8"></div>
+
       <div className="flex flex-col-reverse md:flex-row items-start md:items-center md:justify-between gap-4">
         <p className="text-center text-sm text-gray-500">
           © {new Date().getFullYear()} Gateway Shield. All rights reserved.
         </p>
         <div className="flex items-center justify-center gap-6">
-          <a href="https://x.com/gatewayshield" target="blank">
-            <img src="/assets/Social icon.png" alt="" />
+          <a href="https://x.com/gatewayshield" target="_blank" rel="noreferrer">
+            <img src="/assets/Social icon.png" alt="X (Twitter)" />
           </a>
-          {/* <a href="">
-            <img src="/assets/Social icon (1).png" alt="" />
-          </a> */}
-          <a
-            href="https://www.facebook.com/profile.php?id=61578132210959/"
-            target="blank"
-          >
-            <img src="/assets/Social icon (2).png" alt="" />
+          <a href="https://www.facebook.com/profile.php?id=61578132210959/" target="_blank" rel="noreferrer">
+            <img src="/assets/Social icon (2).png" alt="Facebook" />
           </a>
-          <a href="https://www.instagram.com/gatewayshield" target="blank">
-            <img src="/assets/Social icon (3).png" alt="" />
+          <a href="https://www.instagram.com/gatewayshield" target="_blank" rel="noreferrer">
+            <img src="/assets/Social icon (3).png" alt="Instagram" />
           </a>
         </div>
       </div>
