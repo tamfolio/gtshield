@@ -1,6 +1,6 @@
 const WhatsAppButton = () => {
   const phoneNumber = "2347088896046";
-  const message = "Hello! I'd like to chat with you.";
+  const message = "Hello! I need help reporting a crime or incident on Gateway Shield.";
   const url = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(message)}`;
 
   return (
