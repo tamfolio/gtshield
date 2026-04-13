@@ -28,11 +28,13 @@ import EmergencyContact from "./Pages/Webapp/Dashboard/Pages/SOS/EmergencyContac
 import EditDraftIncident from "./Pages/Webapp/Dashboard/Pages/EditDraft";
 import CallEmergencyContact from "./Pages/Webapp/Dashboard/Pages/SOS/CallEmergencyContact";
 import Download from "./Pages/Website/Download"; // 👈 new
+import WhatsAppButton from "./Components/WhatsappButton";
 
 function App() {
   return (
     <>
       <ToastContainer position="top-right" autoClose={3000} />
+       <WhatsAppButton /> 
 
       <Routes>
         <Route path="/" element={<Homepage />} />
